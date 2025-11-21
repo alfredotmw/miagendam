@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+python-jose
+bcrypt
+pydantic
+pandas
+openpyxl
+psycopg2-binary
+gunicorn
