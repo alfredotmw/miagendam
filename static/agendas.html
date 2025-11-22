@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Agenda Médica</title>
+    <title>Agendas - Agenda Médica</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -45,6 +45,21 @@
             cursor: pointer;
         }
 
+        nav {
+            margin-bottom: 1rem;
+        }
+
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -63,34 +78,41 @@
             color: #495057;
         }
 
-        .btn-whatsapp {
-            background-color: #25D366;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
         }
+    </style>
+</head>
 
-        .btn-whatsapp:hover {
-            background-color: #128C7E;
-        }
+<body>
+    <div class="container">
+        <header>
+            <h1>Agendas Disponibles</h1>
+            <button class="logout" onclick="logout()">Cerrar Sesión</button>
+        </header>
+
+        <nav>
+            <a href="/static/dashboard.html">Dashboard</a>
+            <a href="/static/agendas.html">Agendas</a>
+            <a href="/static/nuevo_turno.html">Nuevo Turno</a>
+        </nav>
+
+        <div id="content">
+            <div class="loading">Cargando agendas...</div>
+        </div>
+    </div>
+
     <script>
         const token = localStorage.getItem('token');
         if (!token) {
             window.location.href = '/static/login.html';
         }
 
-        async function loadTurnos() {
+        async function loadAgendas() {
             try {
-                // Por defecto traemos los últimos 100 turnos. 
-                // Idealmente filtraríamos por fecha de hoy en el backend o aquí.
-                const response = await fetch('/turnos/?limit=50', {
+                const response = await fetch('/agendas/', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -101,17 +123,17 @@
                     return;
                 }
 
-                const turnos = await response.json();
-                renderTurnos(turnos);
+                const agendas = await response.json();
+                renderAgendas(agendas);
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('content').innerHTML = '<p style="color:red">Error al cargar turnos</p>';
+                document.getElementById('content').innerHTML = '<p style="color:red">Error al cargar agendas</p>';
             }
         }
 
-        function renderTurnos(turnos) {
-            if (turnos.length === 0) {
-                document.getElementById('content').innerHTML = '<p>No hay turnos registrados.</p>';
+        function renderAgendas(agendas) {
+            if (agendas.length === 0) {
+                document.getElementById('content').innerHTML = '<p>No hay agendas registradas.</p>';
                 return;
             }
 
@@ -119,28 +141,24 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Hora</th>
-                            <th>Paciente ID</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Profesional</th>
+                            <th>Activo</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
-            turnos.forEach(turno => {
+            agendas.forEach(agenda => {
                 html += `
                     <tr>
-                        <td>${turno.fecha}</td>
-                        <td>${turno.hora}</td>
-                        <td>${turno.paciente_id}</td>
-                        <td>${turno.estado}</td>
-                        <td>
-                            <button class="btn-whatsapp" onclick="sendWhatsApp(${turno.id})">
-                                📱 Recordatorio
-                            </button>
-                        </td>
+                        <td>${agenda.id}</td>
+                        <td>${agenda.nombre}</td>
+                        <td>${agenda.tipo}</td>
+                        <td>${agenda.profesional || '-'}</td>
+                        <td>${agenda.activo ? '✅' : '❌'}</td>
                     </tr>
                 `;
             });
@@ -149,34 +167,12 @@
             document.getElementById('content').innerHTML = html;
         }
 
-        async function sendWhatsApp(turnoId) {
-            try {
-                const response = await fetch(`/whatsapp/link/${turnoId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    alert('Error: ' + err.detail);
-                    return;
-                }
-
-                const data = await response.json();
-                window.open(data.link, '_blank');
-            } catch (error) {
-                console.error(error);
-                alert('Error al generar el link');
-            }
-        }
-
         function logout() {
             localStorage.removeItem('token');
             window.location.href = '/static/login.html';
         }
 
-        loadTurnos();
+        loadAgendas();
     </script>
 </body>
 

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Turno - Agenda Médica</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            margin: 0;
+            color: #333;
+        }
+
+        button.logout {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        nav {
+            margin-bottom: 1rem;
+        }
+
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        form {
+            display: grid;
+            gap: 1rem;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        .checkbox-group {
+            border: 1px solid #ccc;
+            padding: 0.5rem;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .checkbox-item input {
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        #message {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Nuevo Turno</h1>
+            <button class="logout" onclick="logout()">Cerrar Sesión</button>
+        </header>
+
+        <nav>
+            <a href="/static/dashboard.html">Dashboard</a>
+            <a href="/static/agendas.html">Agendas</a>
+            <a href="/static/nuevo_turno.html">Nuevo Turno</a>
+        </nav>
+
+        <form id="turnoForm">
+            <div>
+                <label for="paciente_id">ID Paciente:</label>
+                <input type="number" id="paciente_id" name="paciente_id" required placeholder="Ingrese ID del paciente">
+            </div>
+
+            <div>
+                <label for="agenda_id">Agenda:</label>
+                <select id="agenda_id" name="agenda_id" required>
+                    <option value="">Seleccione una agenda</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Prácticas:</label>
+                <div id="practicas_container" class="checkbox-group">
+                    Cargando prácticas...
+                </div>
+            </div>
+
+            <div>
+                <label for="fecha">Fecha:</label>
+                <input type="date" id="fecha" name="fecha" required>
+            </div>
+
+            <div>
+                <label for="hora">Hora:</label>
+                <input type="time" id="hora" name="hora" required>
+            </div>
+
+            <div>
+                <label for="medico_derivante">Médico Derivante (Opcional):</label>
+                <input type="text" id="medico_derivante" name="medico_derivante_nombre" placeholder="Nombre del médico">
+            </div>
+
+            <button type="submit">Crear Turno</button>
+        </form>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/static/login.html';
+        }
+
+        async function loadData() {
+            try {
+                // Cargar Agendas
+                const agendasRes = await fetch('/agendas/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const agendas = await agendasRes.json();
+                const agendaSelect = document.getElementById('agenda_id');
+                agendas.forEach(agenda => {
+                    const option = document.createElement('option');
+                    option.value = agenda.id;
+                    option.textContent = `${agenda.nombre} (${agenda.tipo})`;
+                    agendaSelect.appendChild(option);
+                });
+
+                // Cargar Prácticas
+                const practicasRes = await fetch('/practicas/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const practicas = await practicasRes.json();
+                const practicasContainer = document.getElementById('practicas_container');
+                practicasContainer.innerHTML = '';
+                practicas.forEach(practica => {
+                    const div = document.createElement('div');
+                    div.className = 'checkbox-item';
+                    div.innerHTML = `
+                        <input type="checkbox" name="practicas_ids" value="${practica.id}" id="p_${practica.id}">
+                        <label for="p_${practica.id}" style="margin-bottom:0; font-weight:normal">${practica.nombre}</label>
+                    `;
+                    practicasContainer.appendChild(div);
+                });
+
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                alert('Error al cargar datos iniciales');
+            }
+        }
+
+        document.getElementById('turnoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageDiv = document.getElementById('message');
+            messageDiv.style.display = 'none';
+            messageDiv.className = '';
+
+            const formData = new FormData(e.target);
+            const data = {
+                paciente_id: parseInt(formData.get('paciente_id')),
+                agenda_id: parseInt(formData.get('agenda_id')),
+                fecha: formData.get('fecha'),
+                hora: formData.get('hora') + ":00", // Agregar segundos
+                practicas_ids: [],
+                medico_derivante_nombre: formData.get('medico_derivante_nombre') || null
+            };
+
+            // Obtener prácticas seleccionadas
+            document.querySelectorAll('input[name="practicas_ids"]:checked').forEach(checkbox => {
+                data.practicas_ids.push(parseInt(checkbox.value));
+            });
+
+            if (data.practicas_ids.length === 0) {
+                alert('Debe seleccionar al menos una práctica');
+                return;
+            }
+
+            try {
+                const response = await fetch('/turnos/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageDiv.textContent = 'Turno creado exitosamente!';
+                    messageDiv.className = 'success';
+                    messageDiv.style.display = 'block';
+                    e.target.reset();
+                } else {
+                    messageDiv.textContent = 'Error: ' + (result.detail || 'Error desconocido');
+                    messageDiv.className = 'error';
+                    messageDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                messageDiv.textContent = 'Error de conexión';
+                messageDiv.className = 'error';
+                messageDiv.style.display = 'block';
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/static/login.html';
+        }
+
+        loadData();
+    </script>
+</body>
+
+</html>
