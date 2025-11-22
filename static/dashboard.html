@@ -6,113 +6,265 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Agenda Médica</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background-color: white;
+        .sidebar {
+            width: 250px;
+            background: #2d3748;
+            color: white;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header p {
+            font-size: 0.875rem;
+            color: #a0aec0;
+        }
+
+        .sidebar-nav {
+            margin-top: 2rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            color: #e2e8f0;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.75rem;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            flex: 1;
             padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        header {
+        .top-bar {
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 1rem;
         }
 
-        h1 {
-            margin: 0;
-            color: #333;
+        .top-bar h1 {
+            font-size: 1.75rem;
+            color: #2d3748;
         }
 
-        button.logout {
-            background-color: #dc3545;
+        .logout-btn {
+            background: #f56565;
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
             cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(245, 101, 101, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .content-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .content-card h2 {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin-bottom: 1.5rem;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        th,
-        td {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
         }
 
         th {
-            background-color: #f8f9fa;
-            color: #495057;
+            background: #f7fafc;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            color: #2d3748;
+        }
+
+        tr:hover {
+            background: #f7fafc;
         }
 
         .btn-whatsapp {
-            background-color: #25D366;
+            background: #25D366;
             color: white;
             border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
             cursor: pointer;
-            text-decoration: none;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+            font-size: 0.875rem;
+            transition: all 0.3s;
         }
 
         .btn-whatsapp:hover {
-            background-color: #128C7E;
+            background: #128C7E;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(37, 211, 102, 0.3);
         }
 
-        nav {
-            margin-bottom: 1rem;
+        .loading,
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #718096;
         }
 
-        nav a {
-            margin-right: 15px;
-            text-decoration: none;
-            color: #007bff;
-            font-weight: 500;
-        }
-
-        nav a:hover {
-            text-decoration: underline;
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            opacity: 0.5;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <h1>Turnos del Día</h1>
-            <button class="logout" onclick="logout()">Cerrar Sesión</button>
-        </header>
-
-        <nav>
-            <a href="/static/dashboard.html">Dashboard</a>
-            <a href="/static/agendas.html">Agendas</a>
-            <a href="/static/nuevo_turno.html">Nuevo Turno</a>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>📅 Agenda Médica</h2>
+            <p>Sistema de Gestión</p>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/static/dashboard.html" class="nav-item active">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                    </path>
+                </svg>
+                Dashboard
+            </a>
+            <a href="/static/agendas.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Agendas
+            </a>
+            <a href="/static/nuevo_turno.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Nuevo Turno
+            </a>
         </nav>
+    </div>
 
-        <div id="content">
-            <div class="loading">Cargando turnos...</div>
+    <div class="main-content">
+        <div class="top-bar">
+            <h1>Dashboard</h1>
+            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Turnos Hoy</h3>
+                <div class="value" id="stat-today">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Turnos Pendientes</h3>
+                <div class="value" id="stat-pending">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Turnos Completados</h3>
+                <div class="value" id="stat-completed">-</div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h2>Turnos Recientes</h2>
+            <div id="content">
+                <div class="loading">Cargando turnos...</div>
+            </div>
         </div>
     </div>
 
@@ -124,8 +276,6 @@
 
         async function loadTurnos() {
             try {
-                // Por defecto traemos los últimos 100 turnos. 
-                // Idealmente filtraríamos por fecha de hoy en el backend o aquí.
                 const response = await fetch('/turnos/?limit=50', {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -138,6 +288,7 @@
                 }
 
                 const turnos = await response.json();
+                updateStats(turnos);
                 renderTurnos(turnos);
             } catch (error) {
                 console.error('Error:', error);
@@ -145,9 +296,27 @@
             }
         }
 
+        function updateStats(turnos) {
+            const today = new Date().toISOString().split('T')[0];
+            const todayTurnos = turnos.filter(t => t.fecha === today);
+            const pending = turnos.filter(t => t.estado === 'PENDIENTE');
+            const completed = turnos.filter(t => t.estado === 'COMPLETADO');
+
+            document.getElementById('stat-today').textContent = todayTurnos.length;
+            document.getElementById('stat-pending').textContent = pending.length;
+            document.getElementById('stat-completed').textContent = completed.length;
+        }
+
         function renderTurnos(turnos) {
             if (turnos.length === 0) {
-                document.getElementById('content').innerHTML = '<p>No hay turnos registrados.</p>';
+                document.getElementById('content').innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        <p>No hay turnos registrados</p>
+                    </div>
+                `;
                 return;
             }
 
