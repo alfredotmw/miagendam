@@ -115,16 +115,18 @@ def seed_practicas(db: Session):
 def init_data():
     db = SessionLocal()
 
-    # Si ya hay datos, no seedear de nuevo
+    # Siempre intentar crear el usuario admin si no existe
+    seed_users(db)
+
+    # Si ya hay datos de obras sociales y prácticas, no seedear de nuevo esa parte
     if db.query(ObraSocial).first() and db.query(Practica).first():
-        print("➡️ Base de datos ya inicializada. No se cargan datos.")
+        print("➡️ Base de datos de obras/prácticas ya inicializada.")
         db.close()
         return
 
-    print("⏳ Inicializando datos…")
+    print("⏳ Inicializando datos de Obras Sociales y Prácticas…")
     seed_obras_sociales(db)
     seed_practicas(db)
-    seed_users(db)
     print("✅ Datos iniciales cargados correctamente.")
 
     db.close()
