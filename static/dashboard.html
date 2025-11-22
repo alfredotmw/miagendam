@@ -80,6 +80,42 @@
         .btn-whatsapp:hover {
             background-color: #128C7E;
         }
+
+        nav {
+            margin-bottom: 1rem;
+        }
+
+        nav a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Turnos del Día</h1>
+            <button class="logout" onclick="logout()">Cerrar Sesión</button>
+        </header>
+
+        <nav>
+            <a href="/static/dashboard.html">Dashboard</a>
+            <a href="/static/agendas.html">Agendas</a>
+            <a href="/static/nuevo_turno.html">Nuevo Turno</a>
+        </nav>
+
+        <div id="content">
+            <div class="loading">Cargando turnos...</div>
+        </div>
+    </div>
+
     <script>
         const token = localStorage.getItem('token');
         if (!token) {
