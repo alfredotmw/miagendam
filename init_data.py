@@ -110,21 +110,73 @@ def seed_practicas(db: Session):
     db.commit()
 
 
+def seed_agendas(db: Session):
+    from models.agenda import Agenda
+    
+    # Agendas de Servicios
+    servicios = [
+        {"nombre": "QUIMIOTERAPIA SAN MARTIN", "tipo": "QUIMIOTERAPIA"},
+        {"nombre": "QUIMIOTERAPIA COLOMBIA", "tipo": "QUIMIOTERAPIA"},
+        {"nombre": "RADIOTERAPIA SAN MARTIN", "tipo": "RADIOTERAPIA"},
+        {"nombre": "RADIOTERAPIA COLOMBIA", "tipo": "RADIOTERAPIA"},
+        {"nombre": "TOMOGRAFIAS Y RX", "tipo": "TOMOGRAFIA"},
+        {"nombre": "ECOGRAFIAS", "tipo": "ECOGRAFIA"},
+        {"nombre": "CAMARA GAMMA", "tipo": "CAMARA_GAMMA"},
+        {"nombre": "PET", "tipo": "PET"},
+        {"nombre": "ELECTRO Y MAPEOS", "tipo": "ELECTRO_MAPEO"},
+    ]
+
+    for servicio in servicios:
+        if not db.query(Agenda).filter_by(nombre=servicio["nombre"]).first():
+            db.add(Agenda(
+                nombre=servicio["nombre"],
+                tipo=servicio["tipo"],
+                profesional=None
+            ))
+
+    # Agendas de Médicos
+    medicos = [
+        "Dr. Ruiz Franchescutti",
+        "Dr. Fernandez Cespedes",
+        "Dra. Natalia Ayala",
+        "Dr. Lanari",
+        "Dr. Monzòn",
+        "Dr. Alinez",
+        "Dra. Gutierrez",
+        "Dra. Cabral Castella",
+        "Dra. Serial",
+        "Dra. Rewhald"
+    ]
+
+    for medico in medicos:
+        nombre_agenda = f"CONSULTORIO {medico.upper()}"
+        if not db.query(Agenda).filter_by(nombre=nombre_agenda).first():
+            db.add(Agenda(
+                nombre=nombre_agenda,
+                tipo="CONSULTA_MEDICA",
+                profesional=medico
+            ))
+
+    db.commit()
+
+
 def init_data():
     db = SessionLocal()
 
     # Siempre intentar crear el usuario admin si no existe
     seed_users(db)
 
-    # Si ya hay datos de obras sociales y prácticas, no seedear de nuevo esa parte
-    if db.query(ObraSocial).first() and db.query(Practica).first():
-        print("➡️ Base de datos de obras/prácticas ya inicializada.")
+    # Si ya hay datos de obras sociales, prácticas y agendas, no seedear de nuevo
+    from models.agenda import Agenda
+    if db.query(ObraSocial).first() and db.query(Practica).first() and db.query(Agenda).first():
+        print("➡️ Base de datos ya inicializada.")
         db.close()
         return
 
-    print("⏳ Inicializando datos de Obras Sociales y Prácticas…")
+    print("⏳ Inicializando datos de Obras Sociales, Prácticas y Agendas…")
     seed_obras_sociales(db)
     seed_practicas(db)
+    seed_agendas(db)
     print("✅ Datos iniciales cargados correctamente.")
 
     db.close()
