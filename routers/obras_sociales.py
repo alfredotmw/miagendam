@@ -6,6 +6,11 @@ from schemas.obra_social import ObraSocialCreate, ObraSocialUpdate, ObraSocialOu
 from typing import List
 from auth.jwt import get_current_user
 
+router = APIRouter(
+    prefix="/obras-sociales",
+    tags=["Obras Sociales"]
+)
+
 @router.post("/", response_model=ObraSocialOut)
 def crear_obra_social(obra: ObraSocialCreate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     existente = db.query(ObraSocial).filter(ObraSocial.nombre == obra.nombre).first()
