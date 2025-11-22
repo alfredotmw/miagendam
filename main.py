@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from database import Base, engine
 from routers import user, agendas, turnos, pacientes, exports, practicas, obras_sociales
 from init_data import init_data  # 👉 AGREGADO
+import models  # 👉 AGREGADO para registrar tablas
 
 # Crear tablas en la base de datos
 Base.metadata.create_all(bind=engine)
