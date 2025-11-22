@@ -5,14 +5,12 @@ from models.practica import Practica, CategoriaPractica
 
 
 from models.user import User, UserRole
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
 
 def seed_users(db: Session):
     if not db.query(User).filter_by(username="Alfredo").first():
         print("👤 Creando usuario administrador 'Alfredo'...")
-        hashed_password = pwd_context.hash("1234")
+        hashed_password = bcrypt.hashpw("1234".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         admin = User(username="Alfredo", password=hashed_password, role=UserRole.ADMIN)
         db.add(admin)
         db.commit()

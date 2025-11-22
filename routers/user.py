@@ -2,14 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User, UserRole
-from passlib.context import CryptContext
+import bcrypt
 from auth.jwt import create_access_token
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-# Contexto de hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 # 🧱 Modelos Pydantic
@@ -40,7 +38,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="El usuario ya existe")
 
-    hashed_password = pwd_context.hash(user.password)
+    hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     db_user = User(username=user.username, password=hashed_password, role=user.role)
     db.add(db_user)
     db.commit()
@@ -55,7 +53,7 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     if not db_user:
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
 
-    if not pwd_context.verify(user.password, db_user.password):
+    if not bcrypt.checkpw(user.password.encode('utf-8'), db_user.password.encode('utf-8')):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
 
     token_data = {"sub": db_user.username, "role": db_user.role}
