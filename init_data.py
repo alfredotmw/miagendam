@@ -4,6 +4,19 @@ from models.obra_social import ObraSocial
 from models.practica import Practica, CategoriaPractica
 
 
+from models.user import User, UserRole
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def seed_users(db: Session):
+    if not db.query(User).filter_by(username="Alfredo").first():
+        print("👤 Creando usuario administrador 'Alfredo'...")
+        hashed_password = pwd_context.hash("1234")
+        admin = User(username="Alfredo", password=hashed_password, role=UserRole.ADMIN)
+        db.add(admin)
+        db.commit()
+
 def seed_obras_sociales(db: Session):
     obras = [
         "IOSCOR", "PAMI", "OSECAC", "MINISTERIO DE SALUD PUBLICA CORRIENTES",
@@ -111,6 +124,7 @@ def init_data():
     print("⏳ Inicializando datos…")
     seed_obras_sociales(db)
     seed_practicas(db)
+    seed_users(db)
     print("✅ Datos iniciales cargados correctamente.")
 
     db.close()
