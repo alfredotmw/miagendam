@@ -250,6 +250,11 @@
                     return;
                 }
 
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server Error (${response.status}): ${errorText}`);
+                }
+
                 let turnos = await response.json();
 
                 // Normalize dates
@@ -266,7 +271,10 @@
                 updateNextTurn(turnos);
             } catch (error) {
                 console.error('Error loading turnos:', error);
-                document.getElementById('timeline-content').innerHTML = '<p style="color:red; text-align:center;">Error al cargar datos</p>';
+                document.getElementById('timeline-content').innerHTML = `<div style="color:red; text-align:center; padding: 2rem;">
+                    <p>Error al cargar datos:</p>
+                    <small>${error.message}</small>
+                </div>`;
             }
         }
 
