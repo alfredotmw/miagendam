@@ -99,6 +99,12 @@ def seed_practicas(db: Session):
             "ESTUDIO DINAMICO RENAL",
             "CURVA DE CAPTACION TIROIDEA",
             "BARRIDO CORPORAL TOTAL"
+        ],
+        "CONSULTA_MEDICA": [
+            "CONSULTA",
+            "CONTROL",
+            "RECETA",
+            "CERTIFICADO"
         ]
     }
 

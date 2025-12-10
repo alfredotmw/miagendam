@@ -21,7 +21,33 @@ def crear_paciente(paciente: PacienteCreate, db: Session = Depends(get_db), curr
     existente = db.query(Paciente).filter(Paciente.dni == paciente.dni).first()
     if existente:
         raise HTTPException(status_code=400, detail="Ya existe un paciente con ese DNI")
-    nuevo = Paciente(**paciente.dict())
+    
+    # Manejo de Obra Social dinámica (OBLIGATORIO)
+    if not paciente.obra_social_id and not paciente.obra_social_nombre:
+        raise HTTPException(status_code=400, detail="La Obra Social es obligatoria")
+
+    if paciente.obra_social_nombre:
+        nombre_os = paciente.obra_social_nombre.strip().upper() # FORCE UPPERCASE
+        os_existente = db.query(ObraSocial).filter(ObraSocial.nombre == nombre_os).first()
+        if os_existente:
+            paciente.obra_social_id = os_existente.id
+        else:
+            nueva_os = ObraSocial(nombre=nombre_os)
+            db.add(nueva_os)
+            db.commit()
+            db.refresh(nueva_os)
+            paciente.obra_social_id = nueva_os.id
+
+    # Excluir obra_social_nombre del dict antes de crear el modelo
+    paciente_data = paciente.dict(exclude={"obra_social_nombre"})
+    
+    # FORCE UPPERCASE for text fields
+    if paciente_data.get('nombre'): paciente_data['nombre'] = paciente_data['nombre'].upper()
+    if paciente_data.get('apellido'): paciente_data['apellido'] = paciente_data['apellido'].upper()
+    if paciente_data.get('sexo'): paciente_data['sexo'] = paciente_data['sexo'].upper()
+    if paciente_data.get('direccion'): paciente_data['direccion'] = paciente_data['direccion'].upper()
+
+    nuevo = Paciente(**paciente_data)
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)
@@ -56,14 +82,43 @@ def obtener_paciente(paciente_id: int, db: Session = Depends(get_db)):
     return paciente
 
 
+# 🟢 Obtener un paciente por DNI
+@router.get("/dni/{dni}", response_model=PacienteOut)
+def obtener_paciente_por_dni(dni: str, db: Session = Depends(get_db)):
+    paciente = db.query(Paciente).filter(Paciente.dni == dni).first()
+    if not paciente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    return paciente
+
+
 # 🟢 Actualizar paciente
 @router.put("/{paciente_id}", response_model=PacienteOut)
 def actualizar_paciente(paciente_id: int, datos: PacienteUpdate, db: Session = Depends(get_db)):
     paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
-    for key, value in datos.dict(exclude_unset=True).items():
+
+    # Manejo de Obra Social dinámica en update
+    if datos.obra_social_nombre:
+        nombre_os = datos.obra_social_nombre.strip().upper() # FORCE UPPERCASE
+        os_existente = db.query(ObraSocial).filter(ObraSocial.nombre == nombre_os).first()
+        if os_existente:
+            datos.obra_social_id = os_existente.id
+        else:
+            nueva_os = ObraSocial(nombre=nombre_os)
+            db.add(nueva_os)
+            db.commit()
+            db.refresh(nueva_os)
+            datos.obra_social_id = nueva_os.id
+    
+    # Excluir obra_social_nombre del dict antes de actualizar
+    update_data = datos.dict(exclude_unset=True, exclude={"obra_social_nombre"})
+    
+    for key, value in update_data.items():
+        if isinstance(value, str): # FORCE UPPERCASE
+            value = value.upper()
         setattr(paciente, key, value)
+    
     db.commit()
     db.refresh(paciente)
     return paciente

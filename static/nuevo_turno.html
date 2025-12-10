@@ -5,237 +5,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nuevo Turno - Agenda Médica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css?v=2">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* Styles moved to styles.css */
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-        }
-
-        .sidebar {
-            width: 250px;
-            background: #2d3748;
-            color: white;
-            padding: 2rem 0;
-            position: fixed;
-            height: 100vh;
-            left: 0;
-            top: 0;
-        }
-
-        .sidebar-header {
-            padding: 0 1.5rem 2rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .sidebar-header p {
-            font-size: 0.875rem;
-            color: #a0aec0;
-        }
-
-        .sidebar-nav {
-            margin-top: 2rem;
-        }
-
-        .nav-item {
-            padding: 0.75rem 1.5rem;
-            color: #e2e8f0;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid #667eea;
-        }
-
-        .nav-item svg {
-            width: 20px;
-            height: 20px;
-            margin-right: 0.75rem;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            flex: 1;
-            padding: 2rem;
-        }
-
-        .top-bar {
-            background: white;
-            padding: 1.5rem 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .top-bar h1 {
-            font-size: 1.75rem;
-            color: #2d3748;
-        }
-
-        .logout-btn {
-            background: #f56565;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: #e53e3e;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(245, 101, 101, 0.3);
-        }
-
-        .content-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-        }
-
-        .content-card h2 {
-            font-size: 1.5rem;
-            color: #2d3748;
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            color: #4a5568;
-            margin-bottom: 0.5rem;
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        input:focus,
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .checkbox-group {
-            border: 2px solid #e2e8f0;
-            padding: 1rem;
-            border-radius: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-            background: #f7fafc;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem;
-            margin-bottom: 0.5rem;
-            background: white;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-
-        .checkbox-item:hover {
-            background: #edf2f7;
-        }
-
-        .checkbox-item input {
-            width: auto;
-            margin-right: 0.75rem;
-        }
-
-        .checkbox-item label {
-            margin: 0;
-            font-weight: normal;
-            cursor: pointer;
-        }
-
-        .submit-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: all 0.3s;
-            width: 100%;
-        }
-
-        .submit-btn:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .message {
+        /* Specific overrides for this page */
+        #multi_day_container {
+            background: #ebf8ff;
             padding: 1rem;
             border-radius: 8px;
             margin-top: 1rem;
-            display: none;
-        }
-
-        .message.success {
-            background: #c6f6d5;
-            color: #22543d;
-            border: 2px solid #9ae6b4;
-        }
-
-        .message.error {
-            background: #fed7d7;
-            color: #742a2a;
-            border: 2px solid #fc8181;
+            border: 1px solid #bee3f8;
         }
     </style>
 </head>
 
 <body>
+    <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>📅 Agenda Médica</h2>
-            <p>Sistema de Gestión</p>
+            <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
+            <h3>Agenda Médica</h3>
         </div>
         <nav class="sidebar-nav">
             <a href="/static/dashboard.html" class="nav-item">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2H6a2 2 0 01-2-2v2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
                     </path>
                 </svg>
                 Dashboard
@@ -254,169 +51,635 @@
                 </svg>
                 Nuevo Turno
             </a>
+            <a href="/static/historial_turnos.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Historial Paciente
+            </a>
         </nav>
+
+        <button class="logout-btn" onclick="logout()">
+            <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                </path>
+            </svg>
+            Cerrar Sesión
+        </button>
     </div>
 
+    <!-- Main Content -->
     <div class="main-content">
-        <div class="top-bar">
-            <h1>Nuevo Turno</h1>
-            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+        <div class="page-header">
+            <h1 class="page-title">Nuevo Turno</h1>
+            <p class="page-subtitle">Complete el formulario para agendar un nuevo turno.</p>
         </div>
 
-        <div class="content-card">
-            <h2>Crear Turno</h2>
+        <div class="form-container">
             <form id="turnoForm">
-                <div class="form-group">
-                    <label for="paciente_id">ID Paciente *</label>
-                    <input type="number" id="paciente_id" name="paciente_id" required
-                        placeholder="Ingrese ID del paciente">
-                </div>
+                <!-- Sección Paciente -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        Datos del Paciente
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>DNI *</label>
+                            <div class="search-group">
+                                <input type="text" id="dni" required placeholder="Ingrese DNI"
+                                    onkeypress="if(event.key === 'Enter') { event.preventDefault(); buscarPaciente(); }">
+                                <button type="button" class="search-btn" onclick="buscarPaciente()">Buscar</button>
+                            </div>
+                        </div>
+                        <input type="hidden" id="paciente_id">
 
-                <div class="form-group">
-                    <label for="agenda_id">Agenda *</label>
-                    <select id="agenda_id" name="agenda_id" required>
-                        <option value="">Seleccione una agenda</option>
-                    </select>
-                </div>
+                        <div class="form-group">
+                            <label>Nombre *</label>
+                            <input type="text" id="nombre" required style="text-transform: uppercase;">
+                        </div>
 
-                <div class="form-group">
-                    <label>Prácticas *</label>
-                    <div id="practicas_container" class="checkbox-group">
-                        Cargando prácticas...
+                        <div class="form-group">
+                            <label>Apellido *</label>
+                            <input type="text" id="apellido" required style="text-transform: uppercase;">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Fecha de Nacimiento</label>
+                            <input type="date" id="fecha_nacimiento" onchange="calcularEdad()">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Edad</label>
+                            <input type="text" id="edad" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Sexo</label>
+                            <select id="sexo">
+                                <option value="">Seleccionar...</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                                <option value="X">Otro</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Teléfono Fijo / Otro</label>
+                            <input type="tel" id="telefono" placeholder="Opcional">
+                        </div>
+
+                        <!-- NUEVO CAMPO CELULAR -->
+                        <div class="form-group">
+                            <label>Celular (WhatsApp) *</label>
+                            <input type="tel" id="celular" required placeholder="Fundamental para recordatorios">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Obra Social</label>
+                            <input type="text" id="obra_social_input" list="obras_list"
+                                placeholder="Buscar Obra Social..." style="text-transform: uppercase;">
+                            <datalist id="obras_list"></datalist>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="fecha">Fecha *</label>
-                    <input type="date" id="fecha" name="fecha" required>
-                </div>
+                <!-- Sección Turno -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        Datos del Turno
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Agenda *</label>
+                            <select id="agenda_id" required>
+                                <option value="">Seleccionar Agenda...</option>
+                            </select>
+                        </div>
 
-                <div class="form-group">
-                    <label for="hora">Hora *</label>
-                    <input type="time" id="hora" name="hora" required>
-                </div>
+                        <div class="form-group">
+                            <label>Médico Derivante *</label>
+                            <input type="text" id="medico_derivante" list="medicos_list"
+                                placeholder="Buscar o escribir nombre..." style="text-transform: uppercase;" required>
+                            <datalist id="medicos_list"></datalist>
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label for="medico_derivante">Médico Derivante (Opcional)</label>
-                    <input type="text" id="medico_derivante" name="medico_derivante_nombre"
-                        placeholder="Nombre del médico">
-                </div>
+                    <!-- Prácticas -->
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label>Prácticas *</label>
+                        <div id="practicas_container" class="checkbox-container">
+                            <div style="color: #a0aec0; text-align: center; padding: 1rem;">Seleccione una agenda
+                                primero
+                            </div>
+                        </div>
+                    </div>
 
-                <button type="submit" class="submit-btn">Crear Turno</button>
+                    <!-- Patología (Condicional) -->
+                    <div id="patologia_container" class="form-group" style="display: none; margin-top: 1rem;">
+                        <label>Patología *</label>
+                        <input type="text" id="patologia" list="patologias_list" style="text-transform: uppercase;">
+                        <datalist id="patologias_list"></datalist>
+                    </div>
+
+                    <!-- Fecha y Hora -->
+                    <div class="form-grid" style="margin-top: 1.5rem;">
+                        <div class="form-group">
+                            <label>Fecha de Inicio *</label>
+                            <div id="single_date_container">
+                                <input type="date" id="fecha">
+                            </div>
+
+                            <!-- Multi Date Input (Radiotherapy) -->
+                            <div id="multi_day_container" style="display: none;">
+                                <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #4a5568;">
+                                    Seleccione la fecha de inicio (se marcarán días hábiles automáticamente):
+                                </p>
+                                <div id="fechas_multi" class="checkbox-container" style="max-height: 150px;"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Hora *</label>
+                            <div class="search-group">
+                                <input type="time" id="hora" required>
+                                <button type="button" class="search-btn"
+                                    style="background-color: var(--secondary-color);" onclick="checkAvailability()">Ver
+                                    Disponibles</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="submit-btn" onclick="submitForm()">Confirmar y Crear</button>
+                </div>
             </form>
+        </div>
+    </div>
 
-            <div id="message" class="message"></div>
+    <!-- Slots Modal -->
+    <div id="slotsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Horarios Disponibles</h3>
+                <button type="button" class="close-modal"
+                    onclick="document.getElementById('slotsModal').style.display='none'">&times;</button>
+            </div>
+            <p id="slotsInfo" style="margin-bottom: 1rem; color: #718096; font-size: 0.9rem;"></p>
+            <div id="slotsList" class="slots-grid">
+                <!-- Slots generated here -->
+            </div>
         </div>
     </div>
 
     <script>
         const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/static/login.html';
-        }
+        if (!token) window.location.href = '/static/login.html';
+
+        let allPracticas = [];
+        let allAgendas = [];
 
         async function loadData() {
             try {
-                // Cargar Agendas
-                const agendasRes = await fetch('/agendas/', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const agendas = await agendasRes.json();
+                // 1. Agendas
+                const agendasRes = await fetch('/agendas/', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (agendasRes.status === 401) return logout();
+                allAgendas = await agendasRes.json();
+
                 const agendaSelect = document.getElementById('agenda_id');
-                agendas.forEach(agenda => {
-                    const option = document.createElement('option');
-                    option.value = agenda.id;
-                    option.textContent = `${agenda.nombre} (${agenda.tipo})`;
-                    agendaSelect.appendChild(option);
+                allAgendas.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a.id;
+                    opt.textContent = `${a.nombre} (${a.tipo})`;
+                    opt.dataset.tipo = a.tipo;
+                    agendaSelect.appendChild(opt);
                 });
 
-                // Cargar Prácticas
-                const practicasRes = await fetch('/practicas/', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                // 2. Prácticas
+                const practicasRes = await fetch('/practicas/', { headers: { 'Authorization': `Bearer ${token}` } });
+                allPracticas = await practicasRes.json();
+
+                // 3. Obras Sociales
+                const osRes = await fetch('/obras-sociales/', { headers: { 'Authorization': `Bearer ${token}` } });
+                const obras = await osRes.json();
+                const osList = document.getElementById('obras_list');
+                obras.forEach(os => {
+                    const opt = document.createElement('option');
+                    opt.value = os.nombre;
+                    osList.appendChild(opt);
                 });
-                const practicas = await practicasRes.json();
-                const practicasContainer = document.getElementById('practicas_container');
-                practicasContainer.innerHTML = '';
-                practicas.forEach(practica => {
-                    const div = document.createElement('div');
-                    div.className = 'checkbox-item';
-                    div.innerHTML = `
-                        <input type="checkbox" name="practicas_ids" value="${practica.id}" id="p_${practica.id}">
-                        <label for="p_${practica.id}">${practica.nombre}</label>
-                    `;
-                    practicasContainer.appendChild(div);
+
+                // 4. Médicos
+                const medRes = await fetch('/medicos/', { headers: { 'Authorization': `Bearer ${token}` } });
+                const medicos = await medRes.json();
+                const medList = document.getElementById('medicos_list');
+                medicos.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.nombre;
+                    medList.appendChild(opt);
                 });
+
+                // 5. Patologías
+                const patRes = await fetch('/turnos/patologias', { headers: { 'Authorization': `Bearer ${token}` } });
+                const patologias = await patRes.json();
+                const patList = document.getElementById('patologias_list');
+                patologias.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    patList.appendChild(opt);
+                });
+
+                // 6. URL Params
+                const params = new URLSearchParams(window.location.search);
+                const agendaId = params.get('agenda_id');
+                const fecha = params.get('fecha');
+                const hora = params.get('hora');
+
+                if (agendaId) {
+                    agendaSelect.value = agendaId;
+                    filtrarPracticas();
+                    toggleSpecialFields();
+                }
+                if (fecha) document.getElementById('fecha').value = fecha;
+                if (hora) document.getElementById('hora').value = hora;
 
             } catch (error) {
-                console.error('Error cargando datos:', error);
-                alert('Error al cargar datos iniciales');
+                console.error(error);
+                alert('Error cargando datos iniciales. Por favor recargue la página.');
             }
         }
 
-        document.getElementById('turnoForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const messageDiv = document.getElementById('message');
-            messageDiv.style.display = 'none';
-            messageDiv.className = 'message';
+        async function buscarPaciente() {
+            const dni = document.getElementById('dni').value;
+            if (!dni) return alert('Ingrese un DNI');
 
-            const formData = new FormData(e.target);
-            const data = {
-                paciente_id: parseInt(formData.get('paciente_id')),
-                agenda_id: parseInt(formData.get('agenda_id')),
-                fecha: formData.get('fecha'),
-                hora: formData.get('hora') + ":00",
-                practicas_ids: [],
-                medico_derivante_nombre: formData.get('medico_derivante_nombre') || null
-            };
+            const btn = document.querySelector('.search-group .search-btn');
+            const originalText = btn.textContent;
+            btn.textContent = '...';
+            btn.disabled = true;
 
-            document.querySelectorAll('input[name="practicas_ids"]:checked').forEach(checkbox => {
-                data.practicas_ids.push(parseInt(checkbox.value));
-            });
+            try {
+                const res = await fetch(`/pacientes/dni/${dni}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
 
-            if (data.practicas_ids.length === 0) {
-                messageDiv.textContent = 'Debe seleccionar al menos una práctica';
-                messageDiv.className = 'message error';
-                messageDiv.style.display = 'block';
+                if (res.ok) {
+                    const p = await res.json();
+                    document.getElementById('paciente_id').value = p.id;
+                    document.getElementById('nombre').value = p.nombre;
+                    document.getElementById('apellido').value = p.apellido;
+                    document.getElementById('fecha_nacimiento').value = p.fecha_nacimiento;
+                    document.getElementById('sexo').value = p.sexo;
+                    document.getElementById('telefono').value = p.telefono;
+                    // FIX: Cargar celular
+                    document.getElementById('celular').value = p.celular || '';
+
+                    if (p.obra_social) {
+                        document.getElementById('obra_social_input').value = p.obra_social.nombre;
+                    }
+                    calcularEdad();
+                } else {
+                    // Si no encuentra, asumimos nuevo sin preguntar (evitar confirm bloqueante)
+                    // alert('Paciente no encontrado. Ingrese los datos para crearlo.');
+                    document.getElementById('paciente_id').value = '';
+                    document.getElementById('nombre').value = '';
+                    document.getElementById('apellido').value = '';
+                    document.getElementById('fecha_nacimiento').value = '';
+                    document.getElementById('edad').value = '';
+                    document.getElementById('sexo').value = '';
+                    document.getElementById('telefono').value = '';
+                    // FIX: Limpiar celular
+                    document.getElementById('celular').value = '';
+                    document.getElementById('obra_social_input').value = '';
+
+                    document.getElementById('nombre').focus();
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error al buscar paciente');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function calcularEdad() {
+            const dob = document.getElementById('fecha_nacimiento').value;
+            if (!dob) return;
+            const today = new Date();
+            const birthDate = new Date(dob);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            document.getElementById('edad').value = age + ' años';
+        }
+
+        function filtrarPracticas() {
+            const agendaSelect = document.getElementById('agenda_id');
+            const selectedOption = agendaSelect.options[agendaSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.dataset) return;
+
+            const tipoAgenda = selectedOption.dataset.tipo;
+            const container = document.getElementById('practicas_container');
+            container.innerHTML = '';
+
+            if (!tipoAgenda) return;
+
+            let filtered = [];
+            if (tipoAgenda === 'TOMOGRAFIA') {
+                filtered = allPracticas.filter(p => p.categoria === 'TOMOGRAFIA' || p.categoria === 'RADIOGRAFIA');
+            } else if (tipoAgenda === 'CONSULTA_MEDICA') {
+                filtered = allPracticas.filter(p => p.categoria === 'CONSULTA_MEDICA');
+            } else {
+                filtered = allPracticas.filter(p => p.categoria === tipoAgenda);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="padding:0.5rem; color: #718096;">No hay prácticas disponibles para esta agenda</div>';
                 return;
             }
 
-            try {
-                const response = await fetch('/turnos/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(data)
-                });
+            filtered.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                div.innerHTML = `<input type="checkbox" name="practicas_ids" value="${p.id}" id="p_${p.id}"> <label for="p_${p.id}">${p.nombre}</label>`;
+                container.appendChild(div);
+            });
+        }
 
-                const result = await response.json();
+        function toggleSpecialFields() {
+            const agendaSelect = document.getElementById('agenda_id');
+            const selectedOption = agendaSelect.options[agendaSelect.selectedIndex];
+            if (!selectedOption) return;
 
-                if (response.ok) {
-                    messageDiv.textContent = '✅ Turno creado exitosamente!';
-                    messageDiv.className = 'message success';
-                    messageDiv.style.display = 'block';
-                    e.target.reset();
-                    // Desmarcar todos los checkboxes
-                    document.querySelectorAll('input[name="practicas_ids"]').forEach(cb => cb.checked = false);
-                } else {
-                    messageDiv.textContent = 'Error: ' + (result.detail || 'Error desconocido');
-                    messageDiv.className = 'message error';
-                    messageDiv.style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                messageDiv.textContent = 'Error de conexión';
-                messageDiv.className = 'message error';
-                messageDiv.style.display = 'block';
+            const tipo = selectedOption.dataset.tipo;
+            const patologiaContainer = document.getElementById('patologia_container');
+            const multiDayContainer = document.getElementById('multi_day_container');
+            const singleDateContainer = document.getElementById('single_date_container');
+
+            // Toggle Pathology
+            if (tipo === 'QUIMIOTERAPIA' || tipo === 'RADIOTERAPIA') {
+                patologiaContainer.style.display = 'block';
+            } else {
+                patologiaContainer.style.display = 'none';
+                document.getElementById('patologia').value = '';
             }
-        });
+
+            // Toggle Multi-day
+            if (tipo === 'RADIOTERAPIA') {
+                multiDayContainer.style.display = 'block';
+                singleDateContainer.style.display = 'none';
+                generateNextDays();
+            } else {
+                multiDayContainer.style.display = 'none';
+                singleDateContainer.style.display = 'block';
+            }
+        }
+
+        function generateNextDays() {
+            const container = document.getElementById('fechas_multi');
+            container.innerHTML = '';
+            const today = new Date();
+            let count = 0;
+            let i = 0;
+
+            while (count < 50) {
+                const d = new Date(today);
+                d.setDate(today.getDate() + i);
+                i++;
+                if (d.getDay() === 0 || d.getDay() === 6) continue;
+
+                const dateStr = d.toISOString().split('T')[0];
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                const displayDate = d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0');
+
+                div.innerHTML = `<input type="checkbox" name="fechas_multi" value="${dateStr}" id="d_${dateStr}"> <label for="d_${dateStr}">${displayDate}</label>`;
+                container.appendChild(div);
+                count++;
+            }
+        }
+
+        async function checkAvailability() {
+            const agendaSelect = document.getElementById('agenda_id');
+            const selectedOption = agendaSelect.options[agendaSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.value) return alert('Seleccione una agenda primero');
+
+            const tipo = selectedOption.dataset.tipo;
+            let fecha = document.getElementById('fecha').value;
+
+            if (tipo === 'RADIOTERAPIA') {
+                const checkedDates = Array.from(document.querySelectorAll('input[name="fechas_multi"]:checked')).map(cb => cb.value);
+                if (checkedDates.length > 0) {
+                    checkedDates.sort();
+                    fecha = checkedDates[0];
+                } else {
+                    return alert('Seleccione al menos una fecha de inicio.');
+                }
+            } else {
+                if (!fecha) return alert('Seleccione una fecha.');
+            }
+
+            const btn = document.querySelector('.search-group button[onclick="checkAvailability()"]');
+            const originalText = btn.textContent;
+            btn.textContent = '...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/agendas/${selectedOption.value}/slots?fecha=${fecha}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const slots = await res.json();
+
+                const modal = document.getElementById('slotsModal');
+                const list = document.getElementById('slotsList');
+                const info = document.getElementById('slotsInfo');
+
+                list.innerHTML = '';
+                info.textContent = `Horarios libres para el ${fecha}:`;
+
+                const availableSlots = slots.filter(s => !s.turno);
+
+                if (availableSlots.length === 0) {
+                    list.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #e53e3e;">No hay horarios disponibles</div>';
+                } else {
+                    availableSlots.forEach(slot => {
+                        const div = document.createElement('div');
+                        div.className = 'slot-item';
+                        div.textContent = slot.hora;
+                        div.style.cursor = 'pointer';
+                        div.onclick = () => {
+                            document.getElementById('hora').value = slot.hora;
+                            modal.style.display = 'none';
+                        };
+                        list.appendChild(div);
+                    });
+                }
+
+                modal.style.display = 'flex';
+
+            } catch (error) {
+                console.error(error);
+                alert('Error al verificar disponibilidad');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function submitForm() {
+            // Validation
+            const dni = document.getElementById('dni').value;
+            const nombre = document.getElementById('nombre').value.toUpperCase();
+            const apellido = document.getElementById('apellido').value.toUpperCase();
+            const agendaId = document.getElementById('agenda_id').value;
+            const hora = document.getElementById('hora').value;
+            const medicoDerivante = document.getElementById('medico_derivante').value.toUpperCase();
+            const obraSocial = document.getElementById('obra_social_input').value.toUpperCase();
+            const celular = document.getElementById('celular').value; // Nueva validación
+
+            if (!dni || !nombre || !apellido || !agendaId || !hora || !medicoDerivante || !obraSocial || !celular) {
+                return alert('Por favor complete todos los campos obligatorios (*). Incluyendo Celular y Obra Social.');
+            }
+
+            const practicasIds = Array.from(document.querySelectorAll('input[name="practicas_ids"]:checked')).map(cb => parseInt(cb.value));
+            if (practicasIds.length === 0) return alert('Seleccione al menos una práctica');
+
+            // Dates
+            const selectedDates = [];
+            if (document.getElementById('multi_day_container').style.display !== 'none') {
+                const checkboxes = document.querySelectorAll('input[name="fechas_multi"]:checked');
+                checkboxes.forEach(cb => selectedDates.push(cb.value));
+            } else {
+                const singleDate = document.getElementById('fecha').value;
+                if (singleDate) selectedDates.push(singleDate);
+            }
+            if (selectedDates.length === 0) return alert('Seleccione al menos una fecha');
+
+            // UI Feedback
+            const btn = document.querySelector('.submit-btn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Procesando...';
+            btn.disabled = true;
+
+            try {
+                // 1. Create/Update Patient
+                let pacienteId = document.getElementById('paciente_id').value;
+                const pacienteData = {
+                    dni, nombre, apellido,
+                    fecha_nacimiento: document.getElementById('fecha_nacimiento').value || null,
+                    sexo: document.getElementById('sexo').value || null,
+                    telefono: document.getElementById('telefono').value || null,
+                    celular: celular, // Nuevo campo
+                    obra_social_nombre: obraSocial
+                };
+
+                let pRes;
+                if (pacienteId) {
+                    pRes = await fetch(`/pacientes/${pacienteId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify(pacienteData)
+                    });
+                } else {
+                    // Check existence by DNI one last time
+                    const checkRes = await fetch(`/pacientes/dni/${dni}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (checkRes.ok) {
+                        const p = await checkRes.json();
+                        pacienteId = p.id;
+                        pRes = await fetch(`/pacientes/${pacienteId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(pacienteData)
+                        });
+                    } else {
+                        pRes = await fetch('/pacientes/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(pacienteData)
+                        });
+                    }
+                }
+
+                if (!pRes.ok) {
+                    const errTxt = await pRes.text();
+                    throw new Error('Error al guardar datos del paciente: ' + errTxt);
+                }
+                const p = await pRes.json();
+                pacienteId = p.id;
+
+                // 2. Create Turnos
+                let successCount = 0;
+                let errorCount = 0;
+                const patologia = document.getElementById('patologia').value || null;
+                const agendaSelect = document.getElementById('agenda_id');
+                const tipoAgenda = agendaSelect.options[agendaSelect.selectedIndex].dataset.tipo;
+
+                for (const fecha of selectedDates) {
+                    const turnoData = {
+                        paciente_id: parseInt(pacienteId),
+                        agenda_id: parseInt(agendaId),
+                        fecha: fecha,
+                        hora: hora + ":00",
+                        practicas_ids: practicasIds,
+                        medico_derivante_nombre: medicoDerivante,
+                        patologia: patologia
+                    };
+
+                    if (tipoAgenda === 'RADIOTERAPIA') turnoData.duracion_custom = 10;
+
+                    const tRes = await fetch('/turnos/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify(turnoData)
+                    });
+
+                    if (tRes.ok) successCount++;
+                    else {
+                        const tErr = await tRes.text();
+                        console.error('Error creando turno:', tErr);
+                        errorCount++;
+                    }
+                }
+
+                if (successCount > 0) {
+                    alert(`✅ Turno(s) creado(s) con éxito!`);
+                    window.location.href = '/static/dashboard.html';
+                } else {
+                    alert('Error al crear el turno. Verifique la disponibilidad.');
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert('Error: ' + error.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
 
         function logout() {
             localStorage.removeItem('token');
             window.location.href = '/static/login.html';
         }
 
+        // Init
+        document.getElementById('agenda_id').addEventListener('change', () => {
+            filtrarPracticas();
+            toggleSpecialFields();
+        });
         loadData();
     </script>
 </body>

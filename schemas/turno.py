@@ -3,7 +3,9 @@
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
-from schemas.practica import PracticaOut  # asegurate que exista este schema
+from schemas.practica import PracticaOut
+from schemas.paciente import PacienteOut
+from schemas.agenda import AgendaOut
 
 class TurnoBase(BaseModel):
     fecha: datetime          # Podés mandar: "2025-11-14T09:00:00"
@@ -17,6 +19,7 @@ class TurnoBase(BaseModel):
     # Médico Derivante: puede venir ID o Nombre (para crear)
     medico_derivante_id: Optional[int] = None
     medico_derivante_nombre: Optional[str] = None 
+    patologia: Optional[str] = None 
 
 class TurnoCreate(TurnoBase):
     pass
@@ -27,6 +30,7 @@ class TurnoUpdate(BaseModel):
     estado: Optional[str] = None # completado, ausente, pendiente, cancelado
     duracion: Optional[int] = None
     medico_derivante_id: Optional[int] = None
+    patologia: Optional[str] = None
 
 class TurnoOut(BaseModel):
     id: int
@@ -37,7 +41,11 @@ class TurnoOut(BaseModel):
     paciente_id: int
     agenda_id: int
     medico_derivante_id: Optional[int]
+    patologia: Optional[str]
     practicas: List[PracticaOut]
+    
+    paciente: Optional[PacienteOut] = None
+    agenda: Optional[AgendaOut] = None
 
     class Config:
         from_attributes = True

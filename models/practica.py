@@ -22,4 +22,5 @@ class Practica(Base):
     categoria = Column(Enum(CategoriaPractica), nullable=False)
 
     turnos = relationship("Turno", back_populates="practica")
+    turnos_mult = relationship("Turno", secondary="turnos_practicas", back_populates="practicas")
 

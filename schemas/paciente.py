@@ -16,10 +16,10 @@ class PacienteBase(BaseModel):
     obra_social_id: Optional[int] = None  # se elige desde el combo
 
 class PacienteCreate(PacienteBase):
-    pass
+    obra_social_nombre: Optional[str] = None
 
 class PacienteUpdate(PacienteBase):
-    pass
+    obra_social_nombre: Optional[str] = None
 
 class PacienteOut(PacienteBase):
     id: int

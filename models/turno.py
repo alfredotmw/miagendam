@@ -18,7 +18,9 @@ class Turno(Base):
     paciente = relationship("Paciente", back_populates="turnos")
     agenda = relationship("Agenda", back_populates="turnos")
     practica = relationship("Practica", back_populates="turnos")
+    practicas = relationship("Practica", secondary="turnos_practicas", back_populates="turnos_mult")
     medico_derivante = relationship("MedicoDerivante", back_populates="turnos")
 
     estado = Column(String, default="pendiente")
+    patologia = Column(String, nullable=True)
 

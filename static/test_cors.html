@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test CORS</title>
+</head>
+
+<body>
+    <h1>Test CORS & PATCH</h1>
+    <button onclick="testPatch()">Test PATCH</button>
+    <div id="log"></div>
+    <script>
+        const token = localStorage.getItem('token');
+        function log(msg) {
+            document.getElementById('log').innerHTML += msg + '<br>';
+        }
+
+        async function testPatch() {
+            log('Starting PATCH request...');
+            if (!token) {
+                log('No token found in localStorage');
+                return;
+            }
+
+            // Hardcoded ID from previous successful script test
+            const id = 53;
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/turnos/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: "COMPLETADO" })
+                });
+
+                log(`Response status: ${response.status}`);
+                const text = await response.text();
+                log(`Response body: ${text}`);
+            } catch (e) {
+                log(`Error: ${e.message}`);
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+
+</html>

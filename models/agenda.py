@@ -15,3 +15,11 @@ class Agenda(Base):
     # Relación de agenda → turnos (correcta)
     turnos = relationship("Turno", back_populates="agenda")
 
+    @property
+    def slot_minutos(self):
+        return 20
+
+    @property
+    def activo(self):
+        return True
+

@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User, UserRole
 import bcrypt
-from auth.jwt import create_access_token
+from typing import List
+from auth.jwt import create_access_token, get_current_user, require_roles
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -31,9 +32,13 @@ class UserResponse(BaseModel):
         from_attributes = True  # ✅ Compatible con Pydantic v2
 
 
-# 🧩 Registrar nuevo usuario
+# 🧩 Registrar nuevo usuario (Protegido: Solo ADMIN puede crear usuarios)
 @router.post("/register", response_model=UserResponse)
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
+def register_user(
+    user: UserCreate, 
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles(["ADMIN"])) # 🔒 Solo admins crean usuarios
+):
     existing_user = db.query(User).filter(User.username == user.username).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="El usuario ya existe")
@@ -60,3 +65,24 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     access_token = create_access_token(token_data)
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+# 👤 Obtener usuario actual
+@router.get("/me", response_model=UserResponse)
+def read_users_me(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == current_user["username"]).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return user
+
+
+# 📋 Listar usuarios (Solo ADMIN)
+@router.get("/", response_model=List[UserResponse])
+def read_users(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(require_roles(["ADMIN"]))
+):
+    users = db.query(User).offset(skip).limit(limit).all()
+    return users

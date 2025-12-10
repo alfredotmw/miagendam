@@ -97,3 +97,13 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
             status_code=400, 
             detail=f"No hay disponibilidad en este horario. Capacidad máxima: {capacidad_maxima}, Turnos actuales: {count_solapados}"
         )
+
+def check_availability_boolean(db: Session, agenda_id: int, fecha_hora_inicio: datetime, duracion_minutos: int, agenda_tipo: str) -> bool:
+    """
+    Versión booleana de check_availability. Retorna True si hay lugar, False si no.
+    """
+    try:
+        check_availability(db, agenda_id, fecha_hora_inicio, duracion_minutos, agenda_tipo)
+        return True
+    except HTTPException:
+        return False

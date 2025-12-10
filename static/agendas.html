@@ -4,193 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendas - Agenda Médica</title>
+    <title>Agendas - Centro Oncológico Corrientes</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-        }
-
-        .sidebar {
-            width: 250px;
-            background: #2d3748;
-            color: white;
-            padding: 2rem 0;
-            position: fixed;
-            height: 100vh;
-            left: 0;
-            top: 0;
-        }
-
-        .sidebar-header {
-            padding: 0 1.5rem 2rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .sidebar-header p {
-            font-size: 0.875rem;
-            color: #a0aec0;
-        }
-
-        .sidebar-nav {
-            margin-top: 2rem;
-        }
-
-        .nav-item {
-            padding: 0.75rem 1.5rem;
-            color: #e2e8f0;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .nav-item:hover,
-        .nav-item.active {
-            background: rgba(255, 255, 255, 0.1);
-            border-left: 4px solid #667eea;
-        }
-
-        .nav-item svg {
-            width: 20px;
-            height: 20px;
-            margin-right: 0.75rem;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            flex: 1;
-            padding: 2rem;
-        }
-
-        .top-bar {
-            background: white;
-            padding: 1.5rem 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .top-bar h1 {
-            font-size: 1.75rem;
-            color: #2d3748;
-        }
-
-        .logout-btn {
-            background: #f56565;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: #e53e3e;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(245, 101, 101, 0.3);
-        }
-
-        .content-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .content-card h2 {
-            font-size: 1.5rem;
-            color: #2d3748;
-            margin-bottom: 1.5rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background: #f7fafc;
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: #4a5568;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        td {
-            padding: 1rem;
-            border-bottom: 1px solid #e2e8f0;
-            color: #2d3748;
-        }
-
-        tr:hover {
-            background: #f7fafc;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .badge-active {
-            background: #c6f6d5;
-            color: #22543d;
-        }
-
-        .badge-inactive {
-            background: #fed7d7;
-            color: #742a2a;
-        }
-
-        .loading,
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #718096;
-        }
-
-        .empty-state svg {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 1rem;
-            opacity: 0.5;
-        }
+        /* Styles moved to styles.css */
     </style>
 </head>
 
 <body>
+    <!-- Left Sidebar: Navigation -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>📅 Agenda Médica</h2>
-            <p>Sistema de Gestión</p>
+            <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
+            <h3>Agenda Médica</h3>
         </div>
         <nav class="sidebar-nav">
             <a href="/static/dashboard.html" class="nav-item">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2z">
                     </path>
                 </svg>
                 Dashboard
@@ -209,35 +42,123 @@
                 </svg>
                 Nuevo Turno
             </a>
+            <a href="/static/historial_turnos.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Historial Paciente
+            </a>
         </nav>
+
+        <button class="logout-btn" onclick="logout()">
+            <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                </path>
+            </svg>
+            Cerrar Sesión
+        </button>
     </div>
 
+    <!-- Main Content: Slots -->
     <div class="main-content">
-        <div class="top-bar">
-            <h1>Agendas Disponibles</h1>
-            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+        <header class="top-header">
+            <div class="user-profile" style="margin-left: auto; display: flex; align-items: center; gap: 1rem;">
+                <div class="avatar">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z">
+                        </path>
+                    </svg>
+                </div>
+                <div class="user-info">
+                    <p style="font-size: 0.8rem; color: #718096;">Secretaria:</p>
+                    <h4 style="font-size: 0.95rem; color: #2d3748;">María López</h4>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-header">
+            <h1 class="page-title" id="currentAgendaTitle">Seleccione una Agenda</h1>
+            <div class="filters" id="filtersBar" style="display: none;">
+                <input type="date" id="dateFilter" class="form-input" onchange="loadSlots()">
+                <select id="practicaFilter" class="form-input" onchange="loadSlots()">
+                    <option value="">Todas las prácticas</option>
+                </select>
+            </div>
         </div>
 
-        <div class="content-card">
-            <h2>Listado de Agendas</h2>
-            <div id="content">
-                <div class="loading">Cargando agendas...</div>
+        <div class="turnos-container" id="turnosContainer">
+            <div style="text-align: center; padding: 4rem; color: #a0aec0;">
+                <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    style="margin: 0 auto 1rem; display: block; opacity: 0.5;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                <p>Seleccione una agenda del menú lateral derecho para ver los turnos</p>
             </div>
         </div>
     </div>
 
+    <!-- Right Sidebar: Agenda List -->
+    <div class="right-sidebar">
+        <div class="right-sidebar-title">Agendas Disponibles</div>
+        <div class="agenda-list" id="agendaList">
+            <div style="text-align: center; padding: 1rem; color: #718096; font-size: 0.9rem;">Cargando...</div>
+        </div>
+    </div>
+
+    <!-- Reschedule Modal -->
+    <div class="modal" id="rescheduleModal">
+        <div class="modal-content">
+            <div class="modal-header">Reprogramar Turno</div>
+            <div class="form-group">
+                <label class="form-label">Nueva Fecha</label>
+                <input type="date" class="form-input" id="newDate">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nueva Hora</label>
+                <input type="time" class="form-input" id="newTime">
+            </div>
+        </div>
+    </div>
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content" style="max-width: 350px;">
+            <div class="modal-header">Confirmar Acción</div>
+            <p id="confirmationMessage" style="margin-bottom: 2rem; color: #4a5568;">¿Está seguro?</p>
+            <div class="modal-actions">
+                <button class="action-btn btn-cancel" onclick="closeConfirmation()">Cancelar</button>
+                <button class="action-btn btn-confirm" id="btnConfirmAction" onclick="executeAction()">Sí,
+                    Confirmar</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
     <script>
         const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/static/login.html';
-        }
+        if (!token) window.location.href = '/static/login.html';
+
+        let currentAgendaId = null;
+        let currentAgendaType = null;
+        let currentTurnoId = null;
+
+        // Variables for confirmation modal
+        let pendingAction = null;
+        let pendingId = null;
+        let pendingStatus = null;
+
+        // Set default date to today
+        document.getElementById('dateFilter').valueAsDate = new Date();
 
         async function loadAgendas() {
             try {
-                const response = await fetch('/agendas/', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                const response = await fetch(`/agendas/?_=${new Date().getTime()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (response.status === 401) {
@@ -246,58 +167,306 @@
                 }
 
                 const agendas = await response.json();
-                renderAgendas(agendas);
+                renderAgendaList(agendas);
             } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('content').innerHTML = '<p style="color:red">Error al cargar agendas</p>';
+                console.error('Error loading agendas:', error);
+                document.getElementById('agendaList').innerHTML = '<div style="text-align: center; padding: 1rem; color: #f56565;">Error al cargar agendas</div>';
             }
         }
 
-        function renderAgendas(agendas) {
-            if (agendas.length === 0) {
-                document.getElementById('content').innerHTML = `
-                    <div class="empty-state">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                        <p>No hay agendas registradas</p>
+        function renderAgendaList(agendas) {
+            const container = document.getElementById('agendaList');
+            container.innerHTML = agendas.map(agenda => `
+                <div class="agenda-item" 
+                     data-id="${agenda.id}" 
+                     data-name="${agenda.nombre.replace(/"/g, '&quot;')}" 
+                     data-type="${agenda.tipo}"
+                     onclick="selectAgendaFromClick(this)">
+                    <div class="dot"></div>
+                    <div>
+                        <div style="font-weight: 500;">${agenda.nombre}</div>
+                        <div style="font-size: 0.75rem; color: #718096; text-transform: uppercase;">${agenda.tipo}</div>
                     </div>
-                `;
+                </div>
+            `).join('');
+        }
+
+        function selectAgendaFromClick(element) {
+            const id = element.dataset.id;
+            const name = element.dataset.name;
+            const type = element.dataset.type;
+
+            document.querySelectorAll('.agenda-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+
+            document.getElementById('currentAgendaTitle').textContent = name;
+            document.getElementById('filtersBar').style.display = 'flex';
+
+            currentAgendaId = id;
+            currentAgendaType = type;
+
+            loadPracticas(type);
+            loadSlots();
+        }
+
+        async function loadPracticas(tipo) {
+            const select = document.getElementById('practicaFilter');
+            select.innerHTML = '<option value="">Cargando...</option>';
+
+            try {
+                const response = await fetch(`/practicas/?categoria=${tipo}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const practicas = await response.json();
+                select.innerHTML = '<option value="">Todas las prácticas</option>' +
+                    practicas.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+            } catch (error) {
+                console.error('Error loading practicas:', error);
+                select.innerHTML = '<option value="">Error al cargar</option>';
+            }
+        }
+
+        async function loadSlots() {
+            if (!currentAgendaId) return;
+
+            const container = document.getElementById('turnosContainer');
+            container.innerHTML = '<div style="text-align: center; padding: 4rem; color: #718096;">Cargando disponibilidad...</div>';
+
+            const date = document.getElementById('dateFilter').value;
+            const practicaId = document.getElementById('practicaFilter').value;
+
+            try {
+                let url = `/agendas/${currentAgendaId}/slots?fecha=${date}&_=${new Date().getTime()}`;
+                if (practicaId) url += `&practica_id=${practicaId}`;
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const slots = await response.json();
+                renderSlots(slots);
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '<p style="color: #f56565; text-align: center; padding: 2rem;">Error al cargar disponibilidad</p>';
+            }
+        }
+
+        function renderSlots(slots) {
+            const container = document.getElementById('turnosContainer');
+
+            if (slots.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 4rem; color: #a0aec0;">No hay horarios disponibles para esta fecha</div>';
                 return;
             }
 
             let html = `
-                <table>
+                <table class="turnos-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Tipo</th>
-                            <th>Profesional</th>
+                            <th>Hora</th>
+                            <th>Paciente</th>
                             <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
 
-            agendas.forEach(agenda => {
-                const activeBadge = agenda.activo
-                    ? '<span class="badge badge-active">Activo</span>'
-                    : '<span class="badge badge-inactive">Inactivo</span>';
+            const dateFilter = document.getElementById('dateFilter');
+            const selectedDate = dateFilter && dateFilter.value ? dateFilter.value : new Date().toISOString().split('T')[0];
 
-                html += `
-                    <tr>
-                        <td>${agenda.id}</td>
-                        <td><strong>${agenda.nombre}</strong></td>
-                        <td>${agenda.tipo}</td>
-                        <td>${agenda.profesional || '-'}</td>
-                        <td>${activeBadge}</td>
-                    </tr>
-                `;
+            slots.forEach(slot => {
+                const turno = slot.turno;
+                const isOccupied = !!turno;
+
+                html += `<tr>
+                    <td><span style="font-weight: 500; color: #2d3748;">${slot.hora}</span></td>
+                    <td>`;
+
+                if (isOccupied) {
+                    const p = turno.paciente;
+                    const nombre = p ? `${p.nombre} ${p.apellido}` : 'ID: ' + turno.paciente_id;
+                    html += `<strong>${nombre}</strong>`;
+                    if (turno.patologia) html += `<br><small style="color: #718096;">${turno.patologia}</small>`;
+                } else {
+                    html += `<span style="color: #a0aec0;">Disponible</span>`;
+                }
+
+                html += `</td>
+                    <td>`;
+
+                if (isOccupied) {
+                    const estado = turno.estado ? turno.estado.toUpperCase() : 'DESCONOCIDO';
+                    const estadoClass = turno.estado ? turno.estado.toLowerCase() : 'unknown';
+                    html += `<span class="status-badge status-${estadoClass}">${estado}</span>`;
+                } else {
+                    html += `-`;
+                }
+
+                html += `</td>
+                    <td>`;
+
+                if (isOccupied) {
+                    const estado = turno.estado ? turno.estado.toUpperCase().trim() : '';
+                    if (estado !== 'COMPLETADO' && estado !== 'AUSENTE') {
+                        html += `
+                            <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar">✅</button>
+                            <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar">📅</button>
+                            <button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>
+                        `;
+                    }
+                } else {
+                    html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
+                }
+
+                html += `</td></tr>`;
             });
 
-            html += '</tbody></table>';
-            document.getElementById('content').innerHTML = html;
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function agendar(fechaIso, hora) {
+            if (!currentAgendaId) return;
+            const dateStr = fechaIso.split('T')[0];
+
+            const params = new URLSearchParams({
+                agenda_id: currentAgendaId,
+                fecha: dateStr,
+                hora: hora
+            });
+            window.location.href = `/static/nuevo_turno.html?${params.toString()}`;
+        }
+
+        function openReschedule(id) {
+            currentTurnoId = id;
+            document.getElementById('rescheduleModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('rescheduleModal').classList.remove('active');
+            currentTurnoId = null;
+        }
+
+        async function confirmReschedule() {
+            if (!currentTurnoId) return;
+
+            const newDate = document.getElementById('newDate').value;
+            const newTime = document.getElementById('newTime').value;
+
+            if (!newDate || !newTime) {
+                alert('Ingrese fecha y hora');
+                return;
+            }
+
+            const btn = document.querySelector('#rescheduleModal .btn-confirm');
+            const originalText = btn.textContent;
+            btn.textContent = 'Guardando...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`/turnos/${currentTurnoId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fecha: newDate,
+                        hora: newTime
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Turno reprogramado exitosamente');
+                    closeModal();
+                    loadSlots();
+                } else {
+                    const err = await response.text();
+                    alert('Error al reprogramar: ' + err);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error de conexión');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // --- Logic for Status Update with Custom Modal ---
+
+        function requestUpdateStatus(id, status) {
+            pendingId = id;
+            pendingStatus = status;
+            pendingAction = 'UPDATE_STATUS';
+
+            const msg = status === 'COMPLETADO'
+                ? '¿Desea marcar este turno como COMPLETADO?'
+                : '¿Desea marcar este turno como AUSENTE?';
+
+            document.getElementById('confirmationMessage').textContent = msg;
+            document.getElementById('confirmationModal').classList.add('active');
+        }
+
+        function closeConfirmation() {
+            document.getElementById('confirmationModal').classList.remove('active');
+            pendingId = null;
+            pendingStatus = null;
+            pendingAction = null;
+        }
+
+        async function executeAction() {
+            if (!pendingAction) return;
+
+            const btn = document.getElementById('btnConfirmAction');
+            const originalText = btn.textContent;
+            btn.textContent = '...';
+            btn.disabled = true;
+
+            try {
+                if (pendingAction === 'UPDATE_STATUS') {
+                    await performUpdateStatus(pendingId, pendingStatus);
+                }
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                closeConfirmation();
+            }
+        }
+
+        async function performUpdateStatus(id, status) {
+            if (!token) {
+                alert('Sesión expirada');
+                logout();
+                return;
+            }
+
+            try {
+                const response = await fetch(`/turnos/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: status })
+                });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                if (response.ok) {
+                    loadSlots();
+                } else {
+                    const txt = await response.text();
+                    alert('Error al actualizar estado: ' + txt);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error de conexión');
+            }
         }
 
         function logout() {

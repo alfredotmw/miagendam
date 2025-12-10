@@ -53,7 +53,7 @@ def get_live_data(db: Session = Depends(get_db)):
             "Hora": hora_fmt,
             "DNI": turno.paciente.dni,
             "Paciente": f"{turno.paciente.apellido}, {turno.paciente.nombre}",
-            "Celular": turno.paciente.celular if turno.paciente.celular else "N/A",
+            "Celular": turno.paciente.celular if (turno.paciente and turno.paciente.celular) else (turno.paciente.telefono if (turno.paciente and turno.paciente.telefono) else "N/A"),
             "Obra Social": turno.paciente.obra_social.nombre if turno.paciente.obra_social else "N/A",
             "Sexo": turno.paciente.sexo,
             "Edad": edad,

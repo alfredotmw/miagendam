@@ -25,9 +25,9 @@ def export_turnos(
 
     turnos = (
         db.query(Turno)
-        .join(Paciente, Paciente.dni == Turno.dni)
+        .join(Paciente, Paciente.id == Turno.paciente_id)
         .join(Agenda, Agenda.id == Turno.agenda_id)
-        .filter(Turno.fecha.between(desde, hasta))
+        .filter(Turno.fecha >= desde, Turno.fecha <= hasta) # Usar comparación directa o between
         .all()
     )
 
@@ -37,15 +37,22 @@ def export_turnos(
     # 🧩 Transformar datos a lista de diccionarios
     data = []
     for t in turnos:
+        paciente_nombre = f"{t.paciente.apellido}, {t.paciente.nombre}" if t.paciente else "Desconocido"
+        
+        # Priorizar celular, sino telefono
+        contacto = t.paciente.celular if t.paciente and t.paciente.celular else (t.paciente.telefono if t.paciente else "")
+
         data.append({
-            "dni": t.dni,
-            "paciente": t.paciente.apellido_nombre if t.paciente else None,
-            "fecha": t.fecha.isoformat(),
-            "hora": str(t.hora),
-            "duracion_minutos": t.duracion_minutos,
-            "realizado": t.realizado,
-            "agenda": t.agenda.nombre if t.agenda else None,
-            "tipo_agenda": t.agenda.tipo if t.agenda else None
+            "Fecha": t.fecha.strftime("%Y-%m-%d"),
+            "Hora": t.hora,
+            "Paciente": paciente_nombre,
+            "DNI": t.paciente.dni if t.paciente else "",
+            "Celular": contacto, # Columna solicitada
+            "Agenda": t.agenda.nombre if t.agenda else "",
+            "Tipo": t.agenda.tipo if t.agenda else "",
+            "Estado": t.estado,
+            "Duracion": t.duracion,
+            "Practicas": ", ".join([p.nombre for p in t.practicas]) if t.practicas else ""
         })
 
     # 📤 Exportar como JSON

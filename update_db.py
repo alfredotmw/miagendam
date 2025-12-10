@@ -1,16 +1,26 @@
-from database import Base, engine
-from models.user import User
-from models.agenda import Agenda
-from models.turno import Turno
-from models.paciente import Paciente
+import sqlite3
 
-print("🧱 Creando tablas en la base de datos...")
+def add_patologia_column():
+    db_path = 'agendas.db'
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Check if column exists
+        cursor.execute("PRAGMA table_info(turnos)")
+        columns = [info[1] for info in cursor.fetchall()]
+        
+        if 'patologia' not in columns:
+            print("Adding 'patologia' column to 'turnos' table...")
+            cursor.execute("ALTER TABLE turnos ADD COLUMN patologia VARCHAR")
+            conn.commit()
+            print("Column added successfully.")
+        else:
+            print("'patologia' column already exists.")
+            
+        conn.close()
+    except Exception as e:
+        print(f"Error: {e}")
 
-# Crea todas las tablas definidas en los modelos
-Base.metadata.create_all(bind=engine)
-
-print("✅ Tablas creadas correctamente:")
-print(" - usuarios")
-print(" - agendas")
-print(" - pacientes")
-print(" - turnos")
+if __name__ == "__main__":
+    add_patologia_column()

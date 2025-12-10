@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Turnos - Centro Oncológico Corrientes</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Keep page-specific overrides */
+        .btn-primary {
+            width: auto !important;
+            /* Force auto width for this page */
+            padding: 0 1.5rem;
+        }
+
+        .search-group input {
+            height: 3.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
+            <h3>Agenda Médica</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/static/dashboard.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2z">
+                    </path>
+                </svg>
+                Dashboard
+            </a>
+            <a href="/static/agendas.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Agendas
+            </a>
+            <a href="/static/nuevo_turno.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Nuevo Turno
+            </a>
+            <a href="/static/historial_turnos.html" class="nav-item active">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Historial Paciente
+            </a>
+        </nav>
+        <button class="logout-btn" onclick="logout()">
+            <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                </path>
+            </svg>
+            Cerrar Sesión
+        </button>
+    </div>
+
+    <div class="main-content">
+        <header class="top-header">
+            <h1 class="page-title">Historial de Turnos</h1>
+            <div class="user-profile">
+                <div class="avatar">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z">
+                        </path>
+                    </svg>
+                </div>
+                <div class="user-info">
+                    <p>Secretaria:</p>
+                    <h4>María López</h4>
+                </div>
+            </div>
+        </header>
+
+        <div class="search-container">
+            <div class="search-group">
+                <label for="search-dni">DNI del Paciente</label>
+                <input type="text" id="search-dni" placeholder="Ingrese DNI..." onkeypress="handleEnter(event)">
+            </div>
+            <button class="btn-primary" onclick="searchTurnos()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                Buscar
+            </button>
+        </div>
+
+        <div class="results-container">
+            <div id="patient-info"
+                style="margin-bottom: 1rem; font-weight: 600; font-size: 1.1rem; color: var(--primary-color);"></div>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Prácticas</th>
+                        <th>Médico Derivante</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #a0aec0; padding: 3rem;">
+                            Ingrese un DNI para buscar turnos
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/static/login.html';
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/static/login.html';
+        }
+
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                searchTurnos();
+            }
+        }
+
+        async function searchTurnos() {
+            const dni = document.getElementById('search-dni').value.trim();
+            if (!dni) {
+                alert('Por favor ingrese un DNI');
+                return;
+            }
+
+            const tbody = document.getElementById('results-body');
+            const patientInfo = document.getElementById('patient-info');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">Buscando...</td></tr>';
+            patientInfo.textContent = '';
+
+            try {
+                // Fetch turnos filtering by DNI
+                const response = await fetch(`/turnos/?paciente_dni=${dni}&limit=50`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Error buscando turnos');
+
+                const turnos = await response.json();
+
+                if (turnos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No se encontraron turnos para este DNI</td></tr>';
+                    return;
+                }
+
+                // Display patient info from the first result
+                const p = turnos[0].paciente;
+                if (p) {
+                    patientInfo.textContent = `Paciente: ${p.nombre} ${p.apellido} (DNI: ${p.dni})`;
+                }
+
+                tbody.innerHTML = turnos.map(t => {
+                    const fecha = t.fecha.split('T')[0];
+                    const practicas = t.practicas.map(p => p.nombre).join(', ');
+                    const medico = t.medico_derivante ? t.medico_derivante.nombre : '-';
+                    const estadoClass = `status-${t.estado.toLowerCase()}`;
+
+                    return `
+                        <tr>
+                            <td>${fecha}</td>
+                            <td>${t.hora}</td>
+                            <td>${practicas}</td>
+                            <td>${medico}</td>
+                            <td><span class="status-badge ${estadoClass}">${t.estado}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red; padding: 2rem;">Error al realizar la búsqueda</td></tr>';
+            }
+        }
+    </script>
+</body>
+
+</html>
