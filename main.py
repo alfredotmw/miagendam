@@ -46,9 +46,11 @@ app.include_router(whatsapp.router)
 from routers import medicos
 app.include_router(medicos.router)
 
+from fastapi.responses import RedirectResponse
+
 @app.get("/")
 def home():
-    return {"mensaje": "Sistema Agenda Médica CMCNE funcionando correctamente 🚀"}
+    return RedirectResponse(url="/static/login.html")
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
