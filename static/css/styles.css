@@ -783,3 +783,104 @@ body {
 .checkbox-item:hover {
     background: #e2e8f0;
 }
+
+/* Practice Selection Enhancements */
+.practice-container {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+.practice-search-input {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.practice-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+/* Scrollbar styling for practice grid */
+.practice-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.practice-grid::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.practice-grid::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+.practice-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    user-select: none;
+}
+
+.practice-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e0;
+}
+
+.practice-card.selected {
+    background-color: #eff6ff;
+    border-color: var(--blue-500);
+    color: var(--blue-600);
+    font-weight: 500;
+}
+
+.practice-card .check-icon {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: white;
+    flex-shrink: 0;
+}
+
+.practice-card.selected .check-icon {
+    background-color: var(--blue-500);
+    border-color: var(--blue-500);
+}
+
+.practice-card .check-icon svg {
+    display: none;
+    color: white;
+    width: 12px;
+    height: 12px;
+}
+
+.practice-card.selected .check-icon svg {
+    display: block;
+}
+
+.practice-name {
+    font-size: 0.9rem;
+    line-height: 1.3;
+}

@@ -179,9 +179,13 @@
                     <!-- Prácticas -->
                     <div class="form-group" style="margin-top: 1rem;">
                         <label>Prácticas *</label>
-                        <div id="practicas_container" class="checkbox-container">
-                            <div style="color: #a0aec0; text-align: center; padding: 1rem;">Seleccione una agenda
-                                primero
+                        <div class="practice-container">
+                            <input type="text" id="practiceSearch" class="practice-search-input"
+                                placeholder="🔍 Buscar práctica..." onkeyup="filterPracticesByName()">
+                            <div id="practicas_container" class="practice-grid">
+                                <div style="grid-column: 1/-1; color: #a0aec0; text-align: center; padding: 1rem;">
+                                    Seleccione una agenda primero
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -386,6 +390,38 @@
             document.getElementById('edad').value = age + ' años';
         }
 
+        function togglePractice(id) {
+            const card = document.getElementById(`card_p_${id}`);
+            const checkbox = document.getElementById(`p_${id}`);
+
+            checkbox.checked = !checkbox.checked;
+
+            if (checkbox.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        }
+
+        function filterPracticesByName() {
+            const input = document.getElementById('practiceSearch');
+            const filter = input.value.toUpperCase();
+            const container = document.getElementById('practicas_container');
+            const cards = container.getElementsByClassName('practice-card');
+
+            for (let i = 0; i < cards.length; i++) {
+                const nameDiv = cards[i].getElementsByClassName('practice-name')[0];
+                if (nameDiv) {
+                    const txtValue = nameDiv.textContent || nameDiv.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        cards[i].style.display = 'flex';
+                    } else {
+                        cards[i].style.display = 'none';
+                    }
+                }
+            }
+        }
+
         function filtrarPracticas() {
             const agendaSelect = document.getElementById('agenda_id');
             const selectedOption = agendaSelect.options[agendaSelect.selectedIndex];
@@ -394,6 +430,9 @@
             const tipoAgenda = selectedOption.dataset.tipo;
             const container = document.getElementById('practicas_container');
             container.innerHTML = '';
+
+            // Clear search
+            document.getElementById('practiceSearch').value = '';
 
             if (!tipoAgenda) return;
 
@@ -407,15 +446,39 @@
             }
 
             if (filtered.length === 0) {
-                container.innerHTML = '<div style="padding:0.5rem; color: #718096;">No hay prácticas disponibles para esta agenda</div>';
+                container.innerHTML = '<div style="grid-column: 1/-1; padding:0.5rem; color: #718096; text-align:center;">No hay prácticas disponibles para esta agenda</div>';
                 return;
             }
 
             filtered.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'checkbox-item';
-                div.innerHTML = `<input type="checkbox" name="practicas_ids" value="${p.id}" id="p_${p.id}"> <label for="p_${p.id}">${p.nombre}</label>`;
-                container.appendChild(div);
+                // Create Card Structure
+                const card = document.createElement('div');
+                card.className = 'practice-card';
+                card.id = `card_p_${p.id}`;
+                card.onclick = () => togglePractice(p.id);
+
+                // Hidden checkbox for logic compatibility
+                const check = document.createElement('input');
+                check.type = 'checkbox';
+                check.name = 'practicas_ids';
+                check.value = p.id;
+                check.id = `p_${p.id}`;
+                check.style.display = 'none';
+
+                // Check Icon
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'check-icon';
+                iconDiv.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+
+                // Name
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'practice-name';
+                nameDiv.textContent = p.nombre;
+
+                card.appendChild(check);
+                card.appendChild(iconDiv);
+                card.appendChild(nameDiv);
+                container.appendChild(card);
             });
         }
 
