@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from database import Base, engine
 from routers import user, agendas, turnos, pacientes, exports, practicas, obras_sociales
 from init_data import init_data  # 👉 AGREGADO
+from migration_utils import check_and_migrate_db # 👉 MIGRACIÓN
 import models  # 👉 AGREGADO para registrar tablas
 
 # Crear tablas en la base de datos
@@ -29,6 +30,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 👉 SE EJECUTA AUTOMÁTICAMENTE AL ARRANCAR FastAPI
 @app.on_event("startup")
 def startup_event():
+    check_and_migrate_db(engine) # 🔄 Verificar Schema antes de iniciar
     init_data()
 
 # Registrar routers

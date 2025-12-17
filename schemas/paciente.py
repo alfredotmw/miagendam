@@ -27,6 +27,6 @@ class PacienteOut(PacienteBase):
     obra_social: Optional[ObraSocialOut] = None  # 👈 devuelve datos de la obra social
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
