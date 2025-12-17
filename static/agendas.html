@@ -74,8 +74,8 @@
                     </svg>
                 </div>
                 <div class="user-info">
-                    <p style="font-size: 0.8rem; color: #718096;">Secretaria:</p>
-                    <h4 style="font-size: 0.95rem; color: #2d3748;">María López</h4>
+                    <p style="font-size: 0.8rem; color: #718096;">Usuario:</p>
+                    <h4 id="user-name-display" style="font-size: 0.95rem; color: #2d3748;">Cargando...</h4>
                 </div>
             </div>
         </header>
@@ -154,6 +154,28 @@
 
         // Set default date to today
         document.getElementById('dateFilter').valueAsDate = new Date();
+
+        async function loadUser() {
+            if (!token) return;
+            try {
+                const res = await fetch('/users/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Error ${res.status}`);
+                }
+
+                const user = await res.json();
+                document.getElementById('user-name-display').textContent = `${user.username} (${user.role})`;
+
+            } catch (e) {
+                console.error("Auth Error:", e);
+                // Optionally redirect to login if 401
+            }
+        }
+
+        loadUser();
 
         async function loadAgendas() {
             try {
