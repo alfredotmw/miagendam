@@ -72,19 +72,19 @@ def export_turnos(
                 p_nombre = practica.nombre.upper()
                 servicio_item = t.agenda.nombre # Default
                 
-                if "TOMOGRAFIA" in p_nombre or "TC " in p_nombre:
+                if any(k in p_nombre for k in ["TOMOGRAFIA", "TC ", " TC", "TAC", "TOMO", "ANGIO", "URO"]):
                     servicio_item = "TOMOGRAFIA"
-                elif "RADIOGRAFIA" in p_nombre or "RX " in p_nombre or "PLACA" in p_nombre:
+                elif any(k in p_nombre for k in ["RADIOGRAFIA", "RX", "PLACA", "ESPINOGRAMA", "INCIDENCIA", "MAMOGRAFIA", "DENSITOMETRIA"]):
                     servicio_item = "RADIOGRAFIA"
                 else: 
-                     # Si no es ni Tomo ni RX, pero estamos en la agenda combinada, intentamos deducir o dejar vacío
+                     # Si no es ni Tomo ni RX, pero estamos en la agenda combinada, intentamos deducir
                      if "TOMOGRAFIA" in t.agenda.nombre.upper() and "RX" in t.agenda.nombre.upper():
-                         # Si es la agenda combinada y no identificamos la práctica, mejor ponemos "OTROS" o lo dejamos vacío para no ensuciar
-                         # Pero el usuario pidió "solo tomografia" o "solo radiografia".
-                         # Asumiremos que si no matchea, sigue siendo el nombre de la agenda, SALVO que sea la combinada.
+                         # ESTRATEGIA: Si no matchea nada obvio, pero la agenda es MIXTA,
+                         # vamos a intentar ser más laxos o simplemente marcarlo
                          servicio_item = "OTROS/SIN-CLASIFICAR"
                      else:
                         servicio_item = t.agenda.nombre
+
 
                 items_a_exportar.append({
                     "practica_nombre": practica.nombre,
