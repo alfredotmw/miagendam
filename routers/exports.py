@@ -60,9 +60,7 @@ def export_turnos(
         dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
         dia_str = dias_semana[t.fecha.weekday()]
 
-        # Día en letras (Español)
-        dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-        dia_str = dias_semana[t.fecha.weekday()]
+
 
         # 🧠 Lógica para separar Tomografía de Radiografía
         # Iteramos sobre las prácticas para generar una fila por CADA estudio
