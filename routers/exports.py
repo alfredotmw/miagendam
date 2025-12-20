@@ -60,6 +60,19 @@ def export_turnos(
         dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
         dia_str = dias_semana[t.fecha.weekday()]
 
+        # 🧠 Lógica para separar Tomografía de Radiografía
+        # Si la agenda es combinada o si el usuario quiere distinguir por práctica
+        servicio_real = t.agenda.nombre if t.agenda else ""
+        
+        # Si la agenda sugiere mezcla (o para todas), intentamos ser más específicos según la práctica
+        if t.practicas:
+            practicas_str = " ".join([p.nombre.upper() for p in t.practicas])
+            if "TOMOGRAFIA" in practicas_str or "TC " in practicas_str:
+                servicio_real = "TOMOGRAFIA"
+            elif "RADIOGRAFIA" in practicas_str or "RX " in practicas_str or "PLACA" in practicas_str:
+                servicio_real = "RADIOGRAFIA"
+            # Si no coincide, mantenemos el nombre de la agenda original (ej: ECOGRAFIAS)
+
         data.append({
             "Fecha": t.fecha.strftime("%Y-%m-%d"),
             "Día": dia_str,                  # ✅ Nueva Columna
@@ -68,7 +81,10 @@ def export_turnos(
             "DNI": t.paciente.dni if t.paciente else "",
             "Edad": edad_paciente,           
             "Celular": contacto,
-            "Agenda": t.agenda.nombre if t.agenda else "",
+            "Edad": edad_paciente,           
+            "Celular": contacto,
+            "Agenda": servicio_real,         # ✅ Usamos el nombre calculado
+            "Tipo": t.agenda.tipo if t.agenda else "",
             "Tipo": t.agenda.tipo if t.agenda else "",
             "Medico Derivante": medico_derivante, 
             "Patologia": patologia_val,           
