@@ -60,38 +60,53 @@ def export_turnos(
         dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
         dia_str = dias_semana[t.fecha.weekday()]
 
-        # 🧠 Lógica para separar Tomografía de Radiografía
-        # Si la agenda es combinada o si el usuario quiere distinguir por práctica
-        servicio_real = t.agenda.nombre if t.agenda else ""
-        
-        # Si la agenda sugiere mezcla (o para todas), intentamos ser más específicos según la práctica
-        if t.practicas:
-            practicas_str = " ".join([p.nombre.upper() for p in t.practicas])
-            if "TOMOGRAFIA" in practicas_str or "TC " in practicas_str:
-                servicio_real = "TOMOGRAFIA"
-            elif "RADIOGRAFIA" in practicas_str or "RX " in practicas_str or "PLACA" in practicas_str:
-                servicio_real = "RADIOGRAFIA"
-            # Si no coincide, mantenemos el nombre de la agenda original (ej: ECOGRAFIAS)
+        # Día en letras (Español)
+        dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+        dia_str = dias_semana[t.fecha.weekday()]
 
-        data.append({
-            "Fecha": t.fecha.strftime("%Y-%m-%d"),
-            "Día": dia_str,                  # ✅ Nueva Columna
-            "Hora": t.hora,
-            "Paciente": paciente_nombre,
-            "DNI": t.paciente.dni if t.paciente else "",
-            "Edad": edad_paciente,           
-            "Celular": contacto,
-            "Edad": edad_paciente,           
-            "Celular": contacto,
-            "Agenda": servicio_real,         # ✅ Usamos el nombre calculado
-            "Tipo": t.agenda.tipo if t.agenda else "",
-            "Tipo": t.agenda.tipo if t.agenda else "",
-            "Medico Derivante": medico_derivante, 
-            "Patologia": patologia_val,           
-            "Estado": t.estado,
-            "Duracion": t.duracion,
-            "Practicas": ", ".join([p.nombre for p in t.practicas]) if t.practicas else ""
-        })
+        # 🧠 Lógica para separar Tomografía de Radiografía
+        # Iteramos sobre las prácticas para generar una fila por CADA estudio
+        items_a_exportar = []
+        
+        if t.practicas:
+            for practica in t.practicas:
+                # Determinar servicio específico para esta práctica
+                p_nombre = practica.nombre.upper()
+                servicio_item = t.agenda.nombre # Default
+                
+                if "TOMOGRAFIA" in p_nombre or "TC " in p_nombre:
+                    servicio_item = "TOMOGRAFIA"
+                elif "RADIOGRAFIA" in p_nombre or "RX " in p_nombre or "PLACA" in p_nombre:
+                    servicio_item = "RADIOGRAFIA"
+                
+                items_a_exportar.append({
+                    "practica_nombre": practica.nombre,
+                    "servicio": servicio_item
+                })
+        else:
+            # Si no tiene prácticas, mostramos una fila genérica
+            items_a_exportar.append({
+                "practica_nombre": "",
+                "servicio": t.agenda.nombre if t.agenda else ""
+            })
+
+        for item in items_a_exportar:
+            data.append({
+                "Fecha": t.fecha.strftime("%Y-%m-%d"),
+                "Día": dia_str,
+                "Hora": t.hora,
+                "Paciente": paciente_nombre,
+                "DNI": t.paciente.dni if t.paciente else "",
+                "Edad": edad_paciente,           
+                "Celular": contacto,
+                "Agenda": item["servicio"],     # ✅ Agenda específica por práctica
+                "Tipo": t.agenda.tipo if t.agenda else "",
+                "Medico Derivante": medico_derivante, 
+                "Patologia": patologia_val,           
+                "Estado": t.estado,
+                "Duracion": t.duracion,
+                "Práctica": item["practica_nombre"] # ✅ Una sola práctica por fila
+            })
 
     # 📤 Exportar como JSON
     if formato.lower() == "json":
