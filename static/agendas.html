@@ -123,6 +123,10 @@
                 <label class="form-label">Nueva Hora</label>
                 <input type="time" class="form-input" id="newTime">
             </div>
+            <div class="modal-actions">
+                <button class="action-btn btn-cancel" onclick="closeModal()">Cancelar</button>
+                <button class="action-btn btn-confirm" onclick="confirmReschedule()">Confirmar</button>
+            </div>
         </div>
     </div>
     <!-- Confirmation Modal -->
@@ -333,7 +337,6 @@
                     if (estado !== 'COMPLETADO' && estado !== 'AUSENTE') {
                         html += `
                             <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar">✅</button>
-                            <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar">📅</button>
                             <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar">📅</button>
                         `;
 
