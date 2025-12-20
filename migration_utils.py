@@ -32,3 +32,38 @@ def check_and_migrate_db(engine: Engine):
                 conn.execute(text("ALTER TABLE turnos ADD COLUMN duracion INTEGER"))
                 conn.commit()
             logger.info("✅ Columna 'duracion' agregada exitosamente.")
+
+        # --- NOTIFICACIONES WHATSAPP ---
+        if "recordatorio_enviado" not in columns:
+            logger.info("⚠️ Columna 'recordatorio_enviado' faltante. Agregando...")
+            with engine.connect() as conn:
+                # Determinar si es Postgres o SQLite para la sintaxis (aunque SQL estándar suele funcionar)
+                dialect = engine.dialect.name
+                default_false = "FALSE" if dialect == "postgresql" else "0"
+                conn.execute(text(f"ALTER TABLE turnos ADD COLUMN recordatorio_enviado BOOLEAN DEFAULT {default_false}"))
+                conn.commit()
+            logger.info("✅ Columna 'recordatorio_enviado' agregada.")
+
+        if "recordatorio_fecha" not in columns:
+            logger.info("⚠️ Columna 'recordatorio_fecha' faltante. Agregando...")
+            with engine.connect() as conn:
+                # TIMESTAMP works in PG. DATETIME in SQLite.
+                # SQLAlchemy TEXT type handles dialect diffs usually but raw SQL needs care.
+                # Try generic TIMESTAMP first.
+                try:
+                    conn.execute(text("ALTER TABLE turnos ADD COLUMN recordatorio_fecha TIMESTAMP"))
+                except:
+                     conn.execute(text("ALTER TABLE turnos ADD COLUMN recordatorio_fecha DATETIME"))
+                conn.commit()
+            logger.info("✅ Columna 'recordatorio_fecha' agregada.")
+            
+        if "recordatorio_usuario_id" not in columns:
+            logger.info("⚠️ Columna 'recordatorio_usuario_id' faltante. Agregando...")
+            with engine.connect() as conn:
+                # FK reference syntax varies. Safer to add Int column first.
+                conn.execute(text("ALTER TABLE turnos ADD COLUMN recordatorio_usuario_id INTEGER")) 
+                # Adding constraints via raw SQL is risky across dialects without names. 
+                # We skip FK constraint enforcement on DB level for this hotfix to avoid errors, 
+                # logic is handled in app.
+                conn.commit()
+            logger.info("✅ Columna 'recordatorio_usuario_id' agregada.")

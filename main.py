@@ -31,14 +31,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.on_event("startup")
 def startup_event():
     check_and_migrate_db(engine) # 🔄 Verificar Schema antes de iniciar
-    
-    # 🩹 HOTFIX: Ejecutar migración de notificaciones (Render no corre scripts manuales)
-    try:
-        from add_notification_columns import run_migration
-        print("🔧 Ejecutando migración de columnas de notificaciones...")
-        run_migration()
-    except Exception as e:
-        print(f"⚠️ Error ejecutando migración de notificaciones: {e}")
 
     init_data()
 
