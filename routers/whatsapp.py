@@ -38,8 +38,27 @@ def generar_link_whatsapp(turno_id: int, db: Session = Depends(get_db), current_
     hora_str = turno.hora
     
     servicio = turno.agenda.nombre if turno.agenda else "el servicio"
+    servicio_upper = servicio.upper()
 
-    mensaje = f"Hola {paciente.nombre}, le recordamos su turno para {servicio} en Centro Oncológico Corrientes el día {fecha_str} a las {hora_str}."
+    # Lógica de direcciones
+    agendas_san_martin = [
+        "QUIMIOTERAPIA SAN MARTIN",
+        "ECOGRAFIAS",
+        "TOMOGRAFIAS Y RX",
+        "CAMARA GAMMA",
+        "ELECTRO Y MAPEOS",
+        "RADIOTERAPIA SAN MARTIN",
+        "CONSULTORIO DR. RUIZ FRANCHESCUTTI",
+        "CONSULTORIO DR. FERNANDEZ CESPEDES",
+        "CONSULTORIO DR. LANARI",
+        "CONSULTORIO DR. ALINEZ"
+    ]
+
+    direccion = "Calle Colombia 1249"
+    if servicio_upper in agendas_san_martin:
+        direccion = "Calle San Martín Nº 2473"
+
+    mensaje = f"Hola {paciente.nombre}, le recordamos su turno para {servicio} en Centro Oncológico Corrientes ({direccion}) el día {fecha_str} a las {hora_str}."
     mensaje_encoded = urllib.parse.quote(mensaje)
     
     link = f"https://wa.me/{numero}?text={mensaje_encoded}"
