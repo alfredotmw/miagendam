@@ -48,6 +48,10 @@ def run_migration():
             except Exception as ex:
                 print(f"⚠️  Columna 'recordatorio_usuario_id' ya existe o error: {ex}")
 
+        # 🩹 IMPORTANT: Commit transaction explicitly for Postgres/SQLAlchemy 2.0+
+        conn.commit()
+        print("💾 Transacción confirmada (commit).")
+
         print("🚀 Migración finalizada.")
 
 if __name__ == "__main__":
