@@ -334,6 +334,7 @@
                         html += `
                             <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar">✅</button>
                             <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar">📅</button>
+                            <button class="action-btn btn-whatsapp" onclick="sendWhatsapp(${turno.id})" title="Enviar WhatsApp">💬</button>
                             <button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>
                         `;
                     }
@@ -413,6 +414,25 @@
             } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;
+            }
+        }
+
+        async function sendWhatsapp(turnoId) {
+            try {
+                const response = await fetch(`/whatsapp/link/${turnoId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    window.open(data.link, '_blank');
+                } else {
+                    const err = await response.json();
+                    alert('Error: ' + err.detail);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error al generar enlace de WhatsApp');
             }
         }
 

@@ -884,3 +884,13 @@ body {
     font-size: 0.9rem;
     line-height: 1.3;
 }
+
+/* WhatsApp Button */
+.btn-whatsapp {
+    background-color: #25D366;
+    color: white;
+}
+
+.btn-whatsapp:hover {
+    background-color: #128C7E;
+}
