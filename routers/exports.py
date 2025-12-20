@@ -56,17 +56,22 @@ def export_turnos(
         # Patología: ya existe columna t.patologia
         patologia_val = t.patologia if t.patologia else ""
 
+        # Día en letras (Español)
+        dias_semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+        dia_str = dias_semana[t.fecha.weekday()]
+
         data.append({
             "Fecha": t.fecha.strftime("%Y-%m-%d"),
+            "Día": dia_str,                  # ✅ Nueva Columna
             "Hora": t.hora,
             "Paciente": paciente_nombre,
             "DNI": t.paciente.dni if t.paciente else "",
-            "Edad": edad_paciente,           # ✅ Nueva Columna
+            "Edad": edad_paciente,           
             "Celular": contacto,
             "Agenda": t.agenda.nombre if t.agenda else "",
             "Tipo": t.agenda.tipo if t.agenda else "",
-            "Medico Derivante": medico_derivante, # ✅ Nueva Columna
-            "Patologia": patologia_val,           # ✅ Nueva Columna
+            "Medico Derivante": medico_derivante, 
+            "Patologia": patologia_val,           
             "Estado": t.estado,
             "Duracion": t.duracion,
             "Practicas": ", ".join([p.nombre for p in t.practicas]) if t.practicas else ""
