@@ -96,9 +96,10 @@ def export_turnos(
                 "Paciente": paciente_nombre,
                 "DNI": t.paciente.dni if t.paciente else "",
                 "Edad": edad_paciente,           
+                "Edad": edad_paciente,           
                 "Celular": contacto,
-                "Agenda": item["servicio"],     # ✅ Agenda específica por práctica
-                "Tipo": t.agenda.tipo if t.agenda else "",
+                "Agenda": t.agenda.nombre if t.agenda else "", # ✅ Volvemos al nombre original de la Agenda
+                "Tipo": item["servicio"],       # ✅ Aquí ponemos si es TOMOGRAFIA o RADIOGRAFIA
                 "Medico Derivante": medico_derivante, 
                 "Patologia": patologia_val,           
                 "Estado": t.estado,
