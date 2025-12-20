@@ -37,7 +37,9 @@ def generar_link_whatsapp(turno_id: int, db: Session = Depends(get_db), current_
     # hora ya es un string en la base de datos (ej: "09:30")
     hora_str = turno.hora
     
-    mensaje = f"Hola {paciente.nombre}, le recordamos su turno en Centro Oncológico Corrientes para el día {fecha_str} a las {hora_str}."
+    servicio = turno.agenda.nombre if turno.agenda else "el servicio"
+
+    mensaje = f"Hola {paciente.nombre}, le recordamos su turno para {servicio} en Centro Oncológico Corrientes el día {fecha_str} a las {hora_str}."
     mensaje_encoded = urllib.parse.quote(mensaje)
     
     link = f"https://wa.me/{numero}?text={mensaje_encoded}"
