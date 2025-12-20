@@ -72,10 +72,14 @@ def export_turnos(
                 p_nombre = practica.nombre.upper()
                 servicio_item = t.agenda.nombre # Default
                 
-                if any(k in p_nombre for k in ["TOMOGRAFIA", "TC ", " TC", "TAC", "TOMO", "ANGIO", "URO"]):
-                    servicio_item = "TOMOGRAFIA"
-                elif any(k in p_nombre for k in ["RADIOGRAFIA", "RX", "PLACA", "ESPINOGRAMA", "INCIDENCIA", "MAMOGRAFIA", "DENSITOMETRIA"]):
+                # PRIORIDAD: Primero chequear RX/Radiografía para evitar falsos positivos de "TAC" en palabras como "CONTACTO" o "TORACICA" (si aplicara)
+                # y "URO" en "UROGRAMA".
+                if any(k in p_nombre for k in ["RADIOGRAFIA", "RX", "PLACA", "ESPINOGRAMA", "INCIDENCIA", "MAMOGRAFIA", "DENSITOMETRIA", "UROGRAMA", "TELEGONO"]):
                     servicio_item = "RADIOGRAFIA"
+                elif any(k in p_nombre for k in ["TOMOGRAFIA", "TC ", " TC", "TAC ", " TAC", "UROTAC", "ANGIOTC", "SCORE DE CALCIO"]):
+                    # Quitamos "TAC" (suelto) para evitar substrings peligrosos, usamos "TAC " o " TAC"
+                    # Quitamos "URO" solo -> "UROTAC"
+                    servicio_item = "TOMOGRAFIA"
                 else: 
                      # Si no es ni Tomo ni RX, pero estamos en la agenda combinada, intentamos deducir
                      if "TOMOGRAFIA" in t.agenda.nombre.upper() and "RX" in t.agenda.nombre.upper():
