@@ -44,6 +44,10 @@ class TurnoOut(BaseModel):
     patologia: Optional[str]
     practicas: List[PracticaOut]
     
+    # Notificaciones
+    recordatorio_enviado: bool = False
+    recordatorio_fecha: Optional[datetime] = None
+    
     paciente: Optional[PacienteOut] = None
     agenda: Optional[AgendaOut] = None
 

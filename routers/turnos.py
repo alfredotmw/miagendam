@@ -267,3 +267,27 @@ def get_available_slots(
         current_time += timedelta(minutes=interval)
 
     return available_slots
+
+@router.get("/report", response_model=List[TurnoOut])
+def get_daily_report(
+    date: str, # YYYY-MM-DD
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        start_of_day = datetime.strptime(date, "%Y-%m-%d")
+        # En Postgres/SQLAlchemy, para comparar fecha exacta a veces es mejor rango
+        # Pero intentaremos filtro simple primero. Si fecha tiene hora, usar >= y <
+        
+        # Filtrar todos los turnos de ese día
+        end_of_day = start_of_day.replace(hour=23, minute=59, second=59)
+        
+        turnos = db.query(Turno).filter(
+            Turno.fecha >= start_of_day,
+            Turno.fecha <= end_of_day
+        ).order_by(Turno.hora).all()
+        
+        return turnos
+        
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Fecha inválida")

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Notificaciones - Centro Oncológico Corrientes</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=3">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
+            <h3>Agenda Médica</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/static/dashboard.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2z">
+                    </path>
+                </svg>
+                Dashboard
+            </a>
+            <a href="/static/agendas.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Agendas
+            </a>
+            <a href="/static/reporte_notificaciones.html" class="nav-item active">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                    </path>
+                </svg>
+                Notificaciones Center
+            </a>
+        </nav>
+        <button class="logout-btn" onclick="logout()">
+            Cerrar Sesión
+        </button>
+    </div>
+
+    <div class="main-content">
+        <header class="top-header">
+            <h1 class="page-title">Centro de Notificaciones</h1>
+        </header>
+
+        <div class="form-container" style="max-width: 100%;">
+            <div class="filters">
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="dateFilter" class="form-input">
+                </div>
+                <!-- Future: Filter by User or Status -->
+                <button onclick="loadReport()" class="btn-primary"
+                    style="align-self: flex-end; margin-bottom: 1rem;">Filtrar</button>
+            </div>
+
+            <div id="statsSummary" style="display: flex; gap: 2rem; margin-bottom: 2rem; font-weight: 500;">
+                <div style="color: var(--blue-500)">Total Turnos: <span id="totalCount">0</span></div>
+                <div style="color: var(--green-500)">Enviados: <span id="sentCount">0</span></div>
+                <div style="color: var(--red-500)">Pendientes: <span id="pendingCount">0</span></div>
+            </div>
+
+            <table class="turnos-table">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Paciente</th>
+                        <th>Servicio / Agenda</th>
+                        <th>Celular</th>
+                        <th>Estado Notificación</th>
+                        <th>Enviado Por</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center;">Cargando...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/static/login.html';
+
+        document.getElementById('dateFilter').valueAsDate = new Date();
+
+        async function loadReport() {
+            const date = document.getElementById('dateFilter').value;
+            const container = document.getElementById('reportTableBody');
+
+            try {
+                const response = await fetch(`/turnos/report?date=${date}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error("Error fetching report");
+
+                const data = await response.json();
+                renderReport(data);
+
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<tr><td colspan="6" style="color: red; text-align: center;">Error al cargar reporte: ${error.message}</td></tr>`;
+            }
+        }
+
+        function renderReport(turnos) {
+            const container = document.getElementById('reportTableBody');
+            container.innerHTML = '';
+
+            if (turnos.length === 0) {
+                container.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay turnos para esta fecha</td></tr>';
+                return;
+            }
+
+            let sent = 0;
+            turnos.forEach(t => {
+                const tr = document.createElement('tr');
+                const isSent = t.recordatorio_enviado;
+                if (isSent) sent++;
+
+                tr.innerHTML = `
+                    <td>${t.hora}</td>
+                    <td>${t.paciente ? t.paciente.nombre + ' ' + t.paciente.apellido : 'N/A'}</td>
+                    <td>${t.agenda ? t.agenda.nombre : 'N/A'}</td>
+                    <td>${t.paciente ? (t.paciente.celular || t.paciente.telefono || '-') : '-'}</td>
+                    <td>
+                        ${isSent
+                        ? '<span class="status-badge status-completado">Enviado ✅</span>'
+                        : '<span class="status-badge status-ausente">Pendiente ⏳</span>'}
+                        ${isSent ? `<br><small style="color: #718096">${new Date(t.recordatorio_fecha).toLocaleTimeString()}</small>` : ''}
+                    </td>
+                     <td>${t.usuario_envio || '-'}</td>
+                `;
+                container.appendChild(tr);
+            });
+
+            document.getElementById('totalCount').textContent = turnos.length;
+            document.getElementById('sentCount').textContent = sent;
+            document.getElementById('pendingCount').textContent = turnos.length - sent;
+        }
+
+        loadReport();
+    </script>
+</body>
+
+</html>

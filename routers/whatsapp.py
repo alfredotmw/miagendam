@@ -64,3 +64,24 @@ def generar_link_whatsapp(turno_id: int, db: Session = Depends(get_db), current_
     link = f"https://wa.me/{numero}?text={mensaje_encoded}"
     
     return {"link": link, "mensaje": mensaje, "numero": numero}
+
+@router.post("/mark-sent/{turno_id}")
+def marcar_como_enviado(turno_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    turno = db.query(Turno).filter(Turno.id == turno_id).first()
+    if not turno:
+        raise HTTPException(status_code=404, detail="Turno no encontrado")
+    
+    from datetime import datetime
+    import pytz
+    
+    # Hora actual en Argentina
+    tz = pytz.timezone('America/Argentina/Buenos_Aires')
+    now = datetime.now(tz)
+    
+    turno.recordatorio_enviado = True
+    turno.recordatorio_fecha = now
+    turno.recordatorio_usuario_id = current_user.get("id") # Asumiendo que get_current_user devuelve dict con id
+    
+    db.commit()
+    
+    return {"status": "success", "message": "Recordatorio marcado como enviado"}

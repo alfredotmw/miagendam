@@ -334,7 +334,15 @@
                         html += `
                             <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar">✅</button>
                             <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar">📅</button>
-                            <button class="action-btn btn-whatsapp" onclick="sendWhatsapp(${turno.id})" title="Enviar WhatsApp">💬</button>
+                            <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar">📅</button>
+                        `;
+
+                        const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
+                        const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar WhatsApp';
+
+                        html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}">💬</button>`;
+
+                        html += `
                             <button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>
                         `;
                     }
@@ -417,15 +425,22 @@
             }
         }
 
-        async function sendWhatsapp(turnoId) {
+        async function sendWhatsapp(turnoId, btnInfo) {
             try {
+                // 1. Obtener enlace
                 const response = await fetch(`/whatsapp/link/${turnoId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (response.ok) {
                     const data = await response.json();
+
+                    // 2. Abrir WhatsApp
                     window.open(data.link, '_blank');
+
+                    // 3. Marcar como enviado en backend
+                    await markAsSent(turnoId, btnInfo);
+
                 } else {
                     const err = await response.json();
                     alert('Error: ' + err.detail);
@@ -433,6 +448,28 @@
             } catch (error) {
                 console.error(error);
                 alert('Error al generar enlace de WhatsApp');
+            }
+        }
+
+        async function markAsSent(turnoId, btnElement) {
+            try {
+                await fetch(`/whatsapp/mark-sent/${turnoId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                // Actualizar UI
+                if (btnElement) {
+                    btnElement.classList.remove('btn-whatsapp');
+                    btnElement.classList.add('btn-whatsapp-sent');
+                    btnElement.title = "Re-enviar WhatsApp (Ya enviado)";
+                    btnElement.innerHTML = "✅ Mensaje"; // O mantener icono pero cambiar color
+                }
+
+                // Opcional: recargar slots para estar seguros, o actualizar variable local
+                // loadSlots(); 
+            } catch (e) {
+                console.error("Error marcando como enviado", e);
             }
         }
 

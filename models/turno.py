@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, String
 from sqlalchemy.orm import relationship
 from database import Base
+from models.user import User # Importamos User para la relación de recordatorio
 
 class Turno(Base):
     __tablename__ = "turnos"
@@ -23,4 +24,12 @@ class Turno(Base):
 
     estado = Column(String, default="pendiente")
     patologia = Column(String, nullable=True)
+
+    # Campos para recordatorios de WhatsApp
+    recordatorio_enviado = Column(Boolean, default=False)
+    recordatorio_fecha = Column(DateTime, nullable=True)
+    recordatorio_usuario_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    # Relación opcional con usuario que envió
+    recordatorio_usuario = relationship("User", foreign_keys=[recordatorio_usuario_id])
 

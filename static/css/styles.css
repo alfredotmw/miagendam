@@ -894,3 +894,15 @@ body {
 .btn-whatsapp:hover {
     background-color: #128C7E;
 }
+
+/* WhatsApp Button Sent */
+.btn-whatsapp-sent {
+    background-color: #cbd5e0;
+    /* Gray-ish */
+    color: #4a5568;
+    cursor: default;
+}
+
+.btn-whatsapp-sent:hover {
+    background-color: #a0aec0;
+}
