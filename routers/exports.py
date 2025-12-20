@@ -76,7 +76,16 @@ def export_turnos(
                     servicio_item = "TOMOGRAFIA"
                 elif "RADIOGRAFIA" in p_nombre or "RX " in p_nombre or "PLACA" in p_nombre:
                     servicio_item = "RADIOGRAFIA"
-                
+                else: 
+                     # Si no es ni Tomo ni RX, pero estamos en la agenda combinada, intentamos deducir o dejar vacío
+                     if "TOMOGRAFIA" in t.agenda.nombre.upper() and "RX" in t.agenda.nombre.upper():
+                         # Si es la agenda combinada y no identificamos la práctica, mejor ponemos "OTROS" o lo dejamos vacío para no ensuciar
+                         # Pero el usuario pidió "solo tomografia" o "solo radiografia".
+                         # Asumiremos que si no matchea, sigue siendo el nombre de la agenda, SALVO que sea la combinada.
+                         servicio_item = "OTROS/SIN-CLASIFICAR"
+                     else:
+                        servicio_item = t.agenda.nombre
+
                 items_a_exportar.append({
                     "practica_nombre": practica.nombre,
                     "servicio": servicio_item
@@ -85,7 +94,7 @@ def export_turnos(
             # Si no tiene prácticas, mostramos una fila genérica
             items_a_exportar.append({
                 "practica_nombre": "",
-                "servicio": t.agenda.nombre if t.agenda else ""
+                "servicio": t.agenda.tipo # Usamos el TIPO de agenda como fallback seguro
             })
 
         for item in items_a_exportar:
@@ -96,10 +105,9 @@ def export_turnos(
                 "Paciente": paciente_nombre,
                 "DNI": t.paciente.dni if t.paciente else "",
                 "Edad": edad_paciente,           
-                "Edad": edad_paciente,           
                 "Celular": contacto,
                 "Agenda": t.agenda.nombre if t.agenda else "", # ✅ Volvemos al nombre original de la Agenda
-                "Tipo": item["servicio"],       # ✅ Aquí ponemos si es TOMOGRAFIA o RADIOGRAFIA
+                "Tipo": item["servicio"],       # ✅ TIPO DE ESTUDIO (Tomografía, Radiografía, etc)
                 "Medico Derivante": medico_derivante, 
                 "Patologia": patologia_val,           
                 "Estado": t.estado,
