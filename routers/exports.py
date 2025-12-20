@@ -42,14 +42,31 @@ def export_turnos(
         # Priorizar celular, sino telefono
         contacto = t.paciente.celular if t.paciente and t.paciente.celular else (t.paciente.telefono if t.paciente else "")
 
+        # Calcular edad si hay fecha_nacimiento
+        edad_paciente = ""
+        if t.paciente and t.paciente.fecha_nacimiento:
+            hoy = date.today()
+            nac = t.paciente.fecha_nacimiento
+            # Cálculo simple de edad
+            edad_paciente = hoy.year - nac.year - ((hoy.month, hoy.day) < (nac.month, nac.day))
+
+        # Obtener médico derivante
+        medico_derivante = t.medico_derivante.nombre if t.medico_derivante else ""
+
+        # Patología: ya existe columna t.patologia
+        patologia_val = t.patologia if t.patologia else ""
+
         data.append({
             "Fecha": t.fecha.strftime("%Y-%m-%d"),
             "Hora": t.hora,
             "Paciente": paciente_nombre,
             "DNI": t.paciente.dni if t.paciente else "",
-            "Celular": contacto, # Columna solicitada
+            "Edad": edad_paciente,           # ✅ Nueva Columna
+            "Celular": contacto,
             "Agenda": t.agenda.nombre if t.agenda else "",
             "Tipo": t.agenda.tipo if t.agenda else "",
+            "Medico Derivante": medico_derivante, # ✅ Nueva Columna
+            "Patologia": patologia_val,           # ✅ Nueva Columna
             "Estado": t.estado,
             "Duracion": t.duracion,
             "Practicas": ", ".join([p.nombre for p in t.practicas]) if t.practicas else ""
