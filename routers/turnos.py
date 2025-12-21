@@ -282,10 +282,17 @@ def get_daily_report(
         # Filtrar todos los turnos de ese día
         end_of_day = start_of_day.replace(hour=23, minute=59, second=59)
         
-        turnos = db.query(Turno).filter(
+        query = db.query(Turno).filter(
             Turno.fecha >= start_of_day,
             Turno.fecha <= end_of_day
-        ).order_by(Turno.hora).all()
+        )
+
+        # 🟢 Optional: allow filtering by pending status if requested (not used by default yet but useful logic)
+        # But for now, user just asked for a better view. The frontend filters by date.
+        # Let's keep date filter but maybe we need a new param 'pending_only' later.
+        # For now, let's just ensure we return the notification columns so frontend can filter.
+        
+        turnos = query.order_by(Turno.hora).all()
         
         return turnos
         
