@@ -104,7 +104,9 @@ def seed_practicas(db: Session):
             "CONSULTA",
             "CONTROL",
             "RECETA",
-            "CERTIFICADO"
+            "CERTIFICADO",
+            "CONSULTA DE 1RA VEZ",
+            "CONSULTA DE CONTROL"
         ]
     }
 
@@ -184,7 +186,26 @@ def init_data():
     seed_practicas(db)
     seed_agendas(db)
     print("✅ Datos iniciales cargados correctamente.")
+    db.close()
 
+def sync_new_practicas():
+    """Función para agregar prácticas nuevas en DB existentes (patch)"""
+    db = SessionLocal()
+    # Mismas categorías definidas arriba, pero solo las nuevas
+    nuevas = {
+        "CONSULTA_MEDICA": ["CONSULTA DE 1RA VEZ", "CONSULTA DE CONTROL"]
+    }
+    
+    cambios = False
+    for categoria, lista in nuevas.items():
+        for nombre in lista:
+            if not db.query(Practica).filter_by(nombre=nombre).first():
+                print(f"➕ Patching práctica: {nombre}")
+                db.add(Practica(nombre=nombre, categoria=CategoriaPractica[categoria]))
+                cambios = True
+    
+    if cambios:
+        db.commit()
     db.close()
 
 
