@@ -6,7 +6,8 @@ from models.turno import Turno
 from models.paciente import Paciente
 from schemas.historia_clinica import HistoriaClinicaCreate, HistoriaClinicaOut, TimelineResponse, TimelineEvent
 from auth.jwt import get_current_user
-from typing import List
+from typing import List, Optional
+from datetime import date, datetime
 from sqlalchemy import desc
 
 router = APIRouter(
@@ -37,13 +38,35 @@ def crear_nota(
     return nueva_nota
 
 @router.get("/paciente/{paciente_id}/timeline", response_model=TimelineResponse)
-def get_timeline(paciente_id: int, db: Session = Depends(get_db)):
+def get_timeline(
+    paciente_id: int, 
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    db: Session = Depends(get_db)
+):
+    # 0. Fetch Paciente
+    paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()
+    if not paciente:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado")
+
     # 1. Fetch Notes
-    notas = db.query(HistoriaClinica).filter(HistoriaClinica.paciente_id == paciente_id).all()
+    query_notas = db.query(HistoriaClinica).filter(HistoriaClinica.paciente_id == paciente_id)
+    if start_date:
+        query_notas = query_notas.filter(HistoriaClinica.fecha >= start_date)
+    if end_date:
+         # Include the whole end day
+        query_notas = query_notas.filter(HistoriaClinica.fecha <= datetime.combine(end_date, datetime.max.time()))
     
-    # 2. Fetch Turnos (Past and Future or just all? User implied history so maybe all, but sorted)
-    # Including 'Agenda' and 'Practicas' to be useful
-    turnos = db.query(Turno).filter(Turno.paciente_id == paciente_id).all()
+    notas = query_notas.all()
+    
+    # 2. Fetch Turnos
+    query_turnos = db.query(Turno).filter(Turno.paciente_id == paciente_id)
+    if start_date:
+        query_turnos = query_turnos.filter(Turno.fecha >= start_date)
+    if end_date:
+        query_turnos = query_turnos.filter(Turno.fecha <= datetime.combine(end_date, datetime.max.time()))
+
+    turnos = query_turnos.all()
 
     timeline_events = []
 
@@ -78,28 +101,40 @@ def get_timeline(paciente_id: int, db: Session = Depends(get_db)):
         
         descripcion = f"Turno: {agenda_nombre}"
         detalle = f"Prácticas: {practica_str if practica_str else 'Consulta/Sin práctica asoc.'}"
+        
+        # Asignar icono/servicio para frontend
+        servicio_normalizado = "CONSULTORIO"
+        if "QUIMIO" in agenda_nombre.upper(): servicio_normalizado = "QUIMIOTERAPIA"
+        if "TOMO" in agenda_nombre.upper(): servicio_normalizado = "TOMOGRAFIA"
 
         timeline_events.append(TimelineEvent(
             tipo="TURNO",
-            fecha=turno.fecha, # This is a date usually, need to combine with hora if possible or just use date
+            fecha=turno.fecha, 
             descripcion=descripcion,
             detalle=detalle,
             id_referencia=turno.id,
-            servicio=agenda_nombre,
+            servicio=servicio_normalizado,
             estado=turno.estado
         ))
     
     # Sort by Date DESC
     timeline_events.sort(key=lambda x: x.fecha, reverse=True)
 
-    return TimelineResponse(paciente_id=paciente_id, timeline=timeline_events)
+    return TimelineResponse(
+        paciente_id=paciente_id,
+        paciente=paciente, # Pydantic will serialize this to PacienteOut
+        timeline=timeline_events
+    )
 
 @router.get("/dni/{dni}/timeline", response_model=TimelineResponse)
-def get_timeline_by_dni(dni: str, db: Session = Depends(get_db)):
+def get_timeline_by_dni(
+    dni: str, 
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    db: Session = Depends(get_db)
+):
     paciente = db.query(Paciente).filter(Paciente.dni == dni).first()
     if not paciente:
-        # Return empty timeline if patient not found, or error? 
-        # Better 404
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
     
-    return get_timeline(paciente.id, db)
+    return get_timeline(paciente.id, start_date, end_date, db)

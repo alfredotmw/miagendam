@@ -29,6 +29,9 @@ class TimelineEvent(BaseModel):
     estado: Optional[str] = None # For turnos: "Asistido", "Ausente", etc.
     servicio: Optional[str] = None
 
+from schemas.paciente import PacienteOut
+
 class TimelineResponse(BaseModel):
     paciente_id: int
+    paciente: Optional[PacienteOut] = None
     timeline: List[TimelineEvent]

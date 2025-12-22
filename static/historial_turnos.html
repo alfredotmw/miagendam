@@ -4,24 +4,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial de Turnos - Centro Oncológico Corrientes</title>
-    <link rel="stylesheet" href="/static/css/styles.css?v=2">
+    <title>Historia Clínica Integral - Centro Oncológico</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=3">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Keep page-specific overrides */
-        .btn-primary {
-            width: auto !important;
-            /* Force auto width for this page */
-            padding: 0 1.5rem;
+        /* Page Specific Styles */
+        .history-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            align-items: start;
         }
 
-        .search-group input {
-            height: 3.5rem;
+        @media (max-width: 1024px) {
+            .history-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .patient-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 2rem;
+            position: sticky;
+            top: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .patient-avatar-large {
+            width: 100px;
+            height: 100px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            color: #a0aec0;
+        }
+
+        .patient-name-large {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .patient-info-grid {
+            margin-top: 2rem;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #f7fafc;
+        }
+
+        .info-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .filters-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            border: 1px solid #e2e8f0;
+        }
+
+        .timeline-section {
+            background: #f8fafc;
+            /* Distinct from white cards */
+            min-height: 500px;
+            border-radius: 1rem;
+            padding: 1rem;
+        }
+
+        /* Print Override */
+        @media print {
+
+            .sidebar,
+            .logout-btn,
+            .search-header-container,
+            .filters-card {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+                padding: 0 !important;
+            }
+
+            .history-grid {
+                display: block !important;
+            }
+
+            .patient-card {
+                box-shadow: none;
+                border: none;
+                position: static;
+                margin-bottom: 2rem;
+                padding: 0;
+            }
+
+            .timeline-container-premium {
+                border-left: 2px solid #ccc !important;
+            }
         }
     </style>
 </head>
 
 <body>
+    <!-- Sidebar (Same as others) -->
     <div class="sidebar">
         <div class="sidebar-header">
             <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
@@ -29,7 +137,7 @@
         </div>
         <nav class="sidebar-nav">
             <a href="/static/dashboard.html" class="nav-item">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg fill="none" class="w-6 h-6" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2z">
                     </path>
@@ -37,7 +145,7 @@
                 Dashboard
             </a>
             <a href="/static/agendas.html" class="nav-item">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg fill="none" class="w-6 h-6" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
                     </path>
@@ -53,9 +161,10 @@
             <a href="/static/historial_turnos.html" class="nav-item active">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                    </path>
                 </svg>
-                Historial Paciente
+                Historia Clínica
             </a>
             <a href="/static/reporte_notificaciones.html" class="nav-item">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,91 +175,82 @@
                 Notificaciones
             </a>
         </nav>
-        <button class="logout-btn" onclick="logout()">
-            <svg style="width: 16px; height: 16px; margin-right: 8px;" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                </path>
-            </svg>
-            Cerrar Sesión
-        </button>
+        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
     </div>
 
     <div class="main-content">
-        <header class="top-header">
-            <h1 class="page-title">Historial de Turnos</h1>
+        <header class="top-header search-header-container">
+            <h1 class="page-title">Historia Clínica Integral</h1>
+            <div class="search-container" style="flex: 1; max-width: 500px; margin-left: 2rem;">
+                <div class="search-group" style="width: 100%;">
+                    <input type="text" id="search-dni" placeholder="🔍 Ingrese DNI del paciente..."
+                        onkeypress="handleEnter(event)" style="height: 3rem; font-size: 1.1rem;">
+                </div>
+                <button class="btn-primary" onclick="searchHistory()">Buscar</button>
+            </div>
             <div class="user-profile">
-                <div class="avatar">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z">
-                        </path>
-                    </svg>
-                </div>
-                <div class="user-info">
-                    <p>Usuario:</p>
-                    <h4 id="user-name-display">Cargando...</h4>
-                </div>
+                <!-- User profile info -->
             </div>
         </header>
 
-        <div class="search-container">
-            <div class="search-group">
-                <label for="search-dni">DNI del Paciente</label>
-                <input type="text" id="search-dni" placeholder="Ingrese DNI..." onkeypress="handleEnter(event)">
-            </div>
-            <button class="btn-primary" onclick="searchTurnos()">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-                Buscar
-            </button>
+        <div id="welcome-state" style="text-align: center; padding: 4rem; color: #a0aec0;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">👨‍⚕️</div>
+            <h2>Ingrese el DNI del paciente para ver su historia clínica.</h2>
         </div>
 
-        <script>
-            // Function to load the current user
-            async function loadUser() {
-                const token = localStorage.getItem('token');
-                if (!token) return;
-                try {
-                    const res = await fetch('/users/me', {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+        <div id="history-content" class="history-grid" style="display: none;">
 
-                    if (res.ok) {
-                        const user = await res.json();
-                        document.getElementById('user-name-display').textContent = `${user.username} (${user.role})`;
-                    }
-                } catch (e) {
-                    console.error("Auth Error:", e);
-                }
-            }
-            loadUser();
-        </script>
+            <!-- Left: Patient Card -->
+            <div class="patient-card">
+                <div class="patient-avatar-large">
+                    <svg fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                </div>
+                <h2 class="patient-name-large" id="p-nombre">Nombre Paciente</h2>
 
-        <div class="results-container">
-            <div id="patient-info"
-                style="margin-bottom: 1rem; font-weight: 600; font-size: 1.1rem; color: var(--primary-color);"></div>
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                        <th>Prácticas</th>
-                        <th>Médico Derivante</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody id="results-body">
-                    <tr>
-                        <td colspan="5" style="text-align: center; color: #a0aec0; padding: 3rem;">
-                            Ingrese un DNI para buscar turnos
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                <div class="patient-info-grid">
+                    <div class="info-item">
+                        <span class="info-label">DNI</span>
+                        <span class="info-value" id="p-dni">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Edad</span>
+                        <span class="info-value" id="p-edad">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Obra Social</span>
+                        <span class="info-value" id="p-obra-social">-</span>
+                    </div>
+                </div>
+
+                <button onclick="window.print()" class="btn-primary" style="width: 100%; margin-top: 2rem;">
+                    🖨️ Imprimir Historia
+                </button>
+            </div>
+
+            <!-- Right: Filters & Timeline -->
+            <div class="history-main">
+                <div class="filters-card">
+                    <div class="form-group" style="margin: 0; flex: 1;">
+                        <label>Desde</label>
+                        <input type="date" id="filter-start" class="form-input">
+                    </div>
+                    <div class="form-group" style="margin: 0; flex: 1;">
+                        <label>Hasta</label>
+                        <input type="date" id="filter-end" class="form-input">
+                    </div>
+                    <button class="btn-secondary" onclick="applyFilters()">Filtrar</button>
+                </div>
+
+                <div class="timeline-section">
+                    <h3 style="margin-bottom: 1.5rem; color: #4a5568;">Línea de Tiempo</h3>
+                    <div id="timeline-container" class="timeline-container-premium">
+                        <!-- Loaded JS -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -158,71 +258,132 @@
         const token = localStorage.getItem('token');
         if (!token) window.location.href = '/static/login.html';
 
+        let currentDni = null;
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') searchHistory();
+        }
+
         function logout() {
             localStorage.removeItem('token');
             window.location.href = '/static/login.html';
         }
 
-        function handleEnter(event) {
-            if (event.key === 'Enter') {
-                searchTurnos();
-            }
+        async function searchHistory() {
+            const dni = document.getElementById('search-dni').value.trim();
+            if (!dni) { alert("Ingrese un DNI"); return; }
+            currentDni = dni;
+
+            // Clear filters? Maybe keep them if user wants
+            document.getElementById('filter-start').value = '';
+            document.getElementById('filter-end').value = '';
+
+            await fetchAndRender(dni);
         }
 
-        async function searchTurnos() {
-            const dni = document.getElementById('search-dni').value.trim();
-            if (!dni) {
-                alert('Por favor ingrese un DNI');
-                return;
-            }
+        async function applyFilters() {
+            if (!currentDni) return;
+            const start = document.getElementById('filter-start').value;
+            const end = document.getElementById('filter-end').value;
+            await fetchAndRender(currentDni, start, end);
+        }
 
-            const tbody = document.getElementById('results-body');
-            const patientInfo = document.getElementById('patient-info');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">Buscando...</td></tr>';
-            patientInfo.textContent = '';
+        async function fetchAndRender(dni, start = null, end = null) {
+            // Show loading...
+
+            let url = `/historia-clinica/dni/${dni}/timeline`;
+            const params = new URLSearchParams();
+            if (start) params.append('start_date', start);
+            if (end) params.append('end_date', end);
+
+            if (params.toString()) url += `?${params.toString()}`;
 
             try {
-                // Fetch turnos filtering by DNI
-                const response = await fetch(`/turnos/?paciente_dni=${dni}&limit=50`, {
+                const res = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!response.ok) throw new Error('Error buscando turnos');
-
-                const turnos = await response.json();
-
-                if (turnos.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 2rem;">No se encontraron turnos para este DNI</td></tr>';
+                if (res.status === 404) {
+                    alert("Paciente no encontrado");
                     return;
                 }
+                if (!res.ok) throw new Error("Error loading history");
 
-                // Display patient info from the first result
-                const p = turnos[0].paciente;
-                if (p) {
-                    patientInfo.textContent = `Paciente: ${p.nombre} ${p.apellido} (DNI: ${p.dni})`;
+                const data = await res.json();
+                renderPage(data);
+
+            } catch (e) {
+                console.error(e);
+                alert("Error al cargar la historia");
+            }
+        }
+
+        function renderPage(data) {
+            document.getElementById('welcome-state').style.display = 'none';
+            document.getElementById('history-content').style.display = 'grid';
+
+            // 1. Render Patient Card
+            const p = data.paciente;
+            document.getElementById('p-nombre').textContent = `${p.apellido}, ${p.nombre}`;
+            document.getElementById('p-dni').textContent = p.dni;
+            document.getElementById('p-edad').textContent = p.edad ? `${p.edad} años` : '-';
+            document.getElementById('p-obra-social').textContent = p.obra_social ? p.obra_social.nombre : 'Particular/Sin OS';
+
+            // 2. Render Timeline
+            renderTimeline(data.timeline);
+        }
+
+        function renderTimeline(events) {
+            const container = document.getElementById('timeline-container');
+            if (!events || events.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #a0aec0;">No hay registros para este periodo.</div>';
+                return;
+            }
+
+            container.innerHTML = events.map(ev => {
+                const isNota = ev.tipo === 'NOTA';
+                let icon = '📝';
+                let typeClass = 'type-nota';
+                let title = isNota ? 'Nota de Evolución' : ev.descripcion;
+
+                if (!isNota) {
+                    const descUpper = ev.descripcion.toUpperCase();
+                    if (descUpper.includes('QUIMIO')) { icon = '💧'; typeClass = 'type-quimio'; }
+                    else if (descUpper.includes('TOMO') || descUpper.includes('RADIO')) { icon = '☢️'; typeClass = 'type-tomo'; }
+                    else { icon = '🏥'; typeClass = 'type-consult'; }
+                } else {
+                    const srv = (ev.servicio || '').toUpperCase();
+                    if (srv === 'QUIMIOTERAPIA') { typeClass = 'type-quimio'; }
+                    if (srv === 'TOMOGRAFIA') { typeClass = 'type-tomo'; }
                 }
 
-                tbody.innerHTML = turnos.map(t => {
-                    const fecha = t.fecha.split('T')[0];
-                    const practicas = t.practicas.map(p => p.nombre).join(', ');
-                    const medico = t.medico_derivante ? t.medico_derivante.nombre : '-';
-                    const estadoClass = `status-${t.estado.toLowerCase()}`;
+                const dateObj = new Date(ev.fecha);
+                const dateStr = dateObj.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+                const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
-                    return `
-                        <tr>
-                            <td>${fecha}</td>
-                            <td>${t.hora}</td>
-                            <td>${practicas}</td>
-                            <td>${medico}</td>
-                            <td><span class="status-badge ${estadoClass}">${t.estado}</span></td>
-                        </tr>
-                    `;
-                }).join('');
+                return `
+                    <div class="timeline-card">
+                        <div class="timeline-icon ${typeClass}">${icon}</div>
+                        <div class="timeline-header-row">
+                            <div class="timeline-title">${title}</div>
+                            <div class="timeline-date">${dateStr} • ${timeStr}</div>
+                        </div>
+                        <div class="timeline-body">${ev.detalle}</div>
+                         ${ev.servicio && ev.servicio !== 'GENERAL' ?
+                        `<span class="timeline-badge" style="background: #edf2f7; color: #718096; margin-top: 0.75rem;">${ev.servicio}</span>` : ''}
+                        ${ev.estado ?
+                        `<span class="timeline-badge" style="background: ${getStatusColor(ev.estado)}; color: white; margin-left: 0.5rem;">${ev.estado}</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
 
-            } catch (error) {
-                console.error(error);
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red; padding: 2rem;">Error al realizar la búsqueda</td></tr>';
-            }
+        function getStatusColor(status) {
+            const s = status.toUpperCase();
+            if (s === 'COMPLETADO' || s === 'ASISTIÓ') return '#48bb78';
+            if (s === 'AUSENTE' || s === 'CANCELADO') return '#f56565';
+            if (s === 'PENDIENTE') return '#4299e1';
+            return '#a0aec0';
         }
     </script>
 </body>
