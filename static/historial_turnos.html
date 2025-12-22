@@ -89,8 +89,8 @@
                     </svg>
                 </div>
                 <div class="user-info">
-                    <p>Secretaria:</p>
-                    <h4>María López</h4>
+                    <p>Usuario:</p>
+                    <h4 id="user-name-display">Cargando...</h4>
                 </div>
             </div>
         </header>
@@ -108,6 +108,27 @@
                 Buscar
             </button>
         </div>
+
+        <script>
+            // Function to load the current user
+            async function loadUser() {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                try {
+                    const res = await fetch('/users/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (res.ok) {
+                        const user = await res.json();
+                        document.getElementById('user-name-display').textContent = `${user.username} (${user.role})`;
+                    }
+                } catch (e) {
+                    console.error("Auth Error:", e);
+                }
+            }
+            loadUser();
+        </script>
 
         <div class="results-container">
             <div id="patient-info"
