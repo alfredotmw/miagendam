@@ -107,6 +107,7 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
             agenda_id=turno_in.agenda_id,
             medico_derivante_id=medico_id, # Asignamos el médico
             estado=turno_in.estado.upper() if turno_in.estado else "PENDIENTE",
+            patologia=turno_in.patologia.strip().upper() if turno_in.patologia else None # ✅ Normalización a mayúsculas
         )
         db.add(nuevo_turno)
         db.flush()  # para obtener nuevo_turno.id sin hacer commit todavía
@@ -194,7 +195,7 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
     if turno_in.medico_derivante_id is not None:
         turno.medico_derivante_id = turno_in.medico_derivante_id
     if turno_in.patologia is not None:
-        turno.patologia = turno_in.patologia
+        turno.patologia = turno_in.patologia.strip().upper() if turno_in.patologia else None
 
     db.commit()
     db.refresh(turno)
