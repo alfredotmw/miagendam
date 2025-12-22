@@ -150,39 +150,49 @@
         </div>
     </div>
 
-    <!-- Historia Clinica Modal -->
+    <!-- Historia Clinica Modal Premium -->
     <div class="modal" id="historiaModal">
-        <div class="modal-content" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
-            <div class="modal-header">
-                <div>Historia Clínica <span id="historiaPacienteInfo"
-                        style="font-weight: 400; font-size: 0.9em; color: #718096;"></span></div>
+        <div class="modal-content premium-modal" style="max-width: 800px; max-height: 90vh;">
+            <div class="modal-header" style="border-bottom: 1px solid #edf2f7; padding-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="font-size: 1.25rem; font-weight: 700; color: #1a202c;"> Historia Clínica</span>
+                    <span id="historiaPacienteBadge" class="patient-header-badge"></span>
+                </div>
                 <div class="no-print" style="display: flex; gap: 0.5rem;">
-                    <button class="action-btn" onclick="printHistoria()">🖨️ Imprimir</button>
-                    <button class="close-modal" onclick="closeHistoria()">×</button>
+                    <button class="action-btn" onclick="printHistoria()" title="Imprimir"
+                        style="background: transparent; border: 1px solid #e2e8f0;">🖨️</button>
+                    <button class="close-modal" onclick="closeHistoria()"
+                        style="font-size: 2rem; line-height: 0.5;">×</button>
                 </div>
             </div>
 
-            <div class="historia-body" style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
+            <div class="historia-body" style="flex: 1; overflow-y: auto; padding-right: 0.5rem; background: #f8fafc;">
                 <!-- Timeline -->
-                <div id="historiaTimeline" class="historia-timeline">
+                <div id="historiaTimeline" class="timeline-container-premium">
                     <!-- Loaded via JS -->
                 </div>
             </div>
 
             <div class="historia-input-section no-print"
-                style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
-                <h4 style="margin-bottom: 0.5rem;">Nueva Nota</h4>
-                <textarea id="nuevaNotaTexto" class="form-input" rows="3"
-                    placeholder="Escriba la evolución o nota clínica..."></textarea>
-                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                    <select id="nuevaNotaServicio" class="form-input" style="width: auto;">
-                        <option value="CONSULTORIO">Consultorio</option>
-                        <option value="QUIMIOTERAPIA">Quimioterapia</option>
-                        <option value="TOMOGRAFIA">Tomografía</option>
-                        <option value="RADIOGRAFIA">Radiografía</option>
-                        <option value="GENERAL">General</option>
-                    </select>
-                    <button class="btn-primary" style="width: auto;" onclick="saveHistoria()">Guardar Nota</button>
+                style="background: white; padding: 1.5rem; border-top: 1px solid #edf2f7; border-radius: 0 0 1rem 1rem;">
+                <h4 style="margin-bottom: 1rem; font-size: 0.95rem; color: #4a5568;">Agregar Nueva Evolución</h4>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <textarea id="nuevaNotaTexto" class="form-input" rows="3"
+                        placeholder="Escriba la evolución clínica del paciente..."
+                        style="resize: vertical; min-height: 80px;"></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <select id="nuevaNotaServicio" class="form-input" style="width: auto; padding-right: 2rem;">
+                            <option value="CONSULTORIO">Consultorio</option>
+                            <option value="QUIMIOTERAPIA">Quimioterapia</option>
+                            <option value="TOMOGRAFIA">Tomografía</option>
+                            <option value="RADIOGRAFIA">Radiografía</option>
+                            <option value="GENERAL">General</option>
+                        </select>
+                        <button class="btn-primary" style="width: auto; padding: 0.5rem 1.5rem;"
+                            onclick="saveHistoria()">
+                            Guardar Nota
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -608,9 +618,11 @@
 
         async function openHistoria(pacienteId, dni, nombre) {
             currentHistoriaPacienteId = pacienteId;
-            document.getElementById('historiaPacienteInfo').textContent = `- ${nombre} (DNI: ${dni})`;
-            document.getElementById('historiaModal').classList.add('active');
+            // Update Badge
+            const badge = document.getElementById('historiaPacienteBadge');
+            badge.innerHTML = `<strong>${nombre}</strong> <span style="opacity: 0.7;">|</span> DNI: ${dni}`;
 
+            document.getElementById('historiaModal').classList.add('active');
             await loadHistoriaTimeline(pacienteId);
         }
 
@@ -621,7 +633,7 @@
 
         async function loadHistoriaTimeline(pacienteId) {
             const container = document.getElementById('historiaTimeline');
-            container.innerHTML = '<div style="text-align: center; padding: 2rem;">Cargando historia...</div>';
+            container.innerHTML = '<div style="text-align: center; padding: 3rem; color: #a0aec0;">Cargando historia...</div>';
 
             try {
                 const res = await fetch(`/historia-clinica/paciente/${pacienteId}/timeline`, {
@@ -633,37 +645,72 @@
                 renderTimeline(data.timeline);
             } catch (e) {
                 console.error(e);
-                container.innerHTML = '<div style="color: red; text-align: center;">Error al cargar historia.</div>';
+                container.innerHTML = '<div style="color: #e53e3e; text-align: center; padding: 2rem;">Error al cargar historia clínica.</div>';
             }
         }
 
         function renderTimeline(events) {
             const container = document.getElementById('historiaTimeline');
             if (!events || events.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #a0aec0;">No hay registros previos.</div>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 4rem; color: #a0aec0;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                        <p>No hay registros en la historia clínica.</p>
+                    </div>
+                `;
                 return;
             }
 
             container.innerHTML = events.map(ev => {
                 const isNota = ev.tipo === 'NOTA';
-                const icon = isNota ? '📝' : (ev.descripcion.toLowerCase().includes('tomogra') ? '☢️' : '🏥');
+                let icon = '📝';
+                let typeClass = 'type-nota';
+                let title = isNota ? 'Nota de Evolución' : ev.descripcion;
+
+                // Determine Icon and Color based on content
+                if (!isNota) {
+                    const descUpper = ev.descripcion.toUpperCase();
+                    if (descUpper.includes('QUIMIO')) { icon = '💧'; typeClass = 'type-quimio'; }
+                    else if (descUpper.includes('TOMO') || descUpper.includes('RADIO')) { icon = '☢️'; typeClass = 'type-tomo'; }
+                    else { icon = '🏥'; typeClass = 'type-consult'; }
+                } else {
+                    // Check service for manual notes
+                    const srv = (ev.servicio || '').toUpperCase();
+                    if (srv === 'QUIMIOTERAPIA') { typeClass = 'type-quimio'; }
+                    if (srv === 'TOMOGRAFIA') { typeClass = 'type-tomo'; }
+                }
+
                 const dateObj = new Date(ev.fecha);
-                const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = dateObj.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+                const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
                 return `
-                    <div class="timeline-item" style="display: flex; gap: 1rem; padding: 1rem; border-bottom: 1px solid #f1f5f9; align-items: flex-start;">
-                        <div style="font-size: 1.5rem; line-height: 1;">${icon}</div>
-                        <div style="flex: 1;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                                <strong style="color: #2d3748;">${ev.descripcion} <span style="font-weight: normal; font-size: 0.8em; color: #718096;">| ${ev.servicio || 'General'}</span></strong>
-                                <span style="font-size: 0.85rem; color: #718096;">${dateStr}</span>
-                            </div>
-                            <div style="color: #4a5568; white-space: pre-wrap;">${ev.detalle}</div>
-                            ${ev.estado ? `<div style="margin-top: 0.5rem;"><span class="status-badge status-${ev.estado.toLowerCase()}">${ev.estado}</span></div>` : ''}
+                    <div class="timeline-card">
+                        <div class="timeline-icon ${typeClass}">${icon}</div>
+                        
+                        <div class="timeline-header-row">
+                            <div class="timeline-title">${title}</div>
+                            <div class="timeline-date">${dateStr} • ${timeStr}</div>
                         </div>
+
+                        <div class="timeline-body">${ev.detalle}</div>
+                        
+                        ${ev.servicio && ev.servicio !== 'GENERAL' ?
+                        `<span class="timeline-badge" style="background: #edf2f7; color: #718096; margin-top: 0.75rem;">${ev.servicio}</span>` : ''}
+                        
+                        ${ev.estado ?
+                        `<span class="timeline-badge" style="background: ${getStatusColor(ev.estado)}; color: white; margin-left: 0.5rem;">${ev.estado}</span>` : ''}
                     </div>
                 `;
             }).join('');
+        }
+
+        function getStatusColor(status) {
+            const s = status.toUpperCase();
+            if (s === 'COMPLETADO' || s === 'ASISTIÓ') return '#48bb78'; // Green
+            if (s === 'AUSENTE' || s === 'CANCELADO') return '#f56565'; // Red
+            if (s === 'PENDIENTE') return '#4299e1'; // Blue
+            return '#a0aec0'; // Gray
         }
 
         async function saveHistoria() {

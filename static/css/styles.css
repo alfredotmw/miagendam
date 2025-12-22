@@ -907,6 +907,141 @@ body {
     background-color: #a0aec0;
 }
 
+/* --- PREMIUM HISTORY MODAL STYLES --- */
+.modal-content.premium-modal {
+    border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.timeline-container-premium {
+    padding: 1rem 0.5rem;
+    position: relative;
+    /* Connector Line */
+    border-left: 2px solid #e2e8f0;
+    margin-left: 1rem;
+}
+
+.timeline-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    margin-left: 1.5rem;
+    position: relative;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #f1f5f9;
+}
+
+.timeline-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Icons on the timeline */
+.timeline-icon {
+    position: absolute;
+    left: -2.35rem;
+    /* Adjust based on margin-left of card */
+    top: 1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    border: 3px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.type-nota {
+    background-color: #ebf8ff;
+    color: #3182ce;
+}
+
+/* Blue */
+.type-quimio {
+    background-color: #faf5ff;
+    color: #805ad5;
+}
+
+/* Purple */
+.type-tomo {
+    background-color: #fffaf0;
+    color: #dd6b20;
+}
+
+/* Orange */
+.type-consult {
+    background-color: #f0fff4;
+    color: #38a169;
+}
+
+/* Green */
+.type-general {
+    background-color: #f7fafc;
+    color: #718096;
+}
+
+/* Gray */
+
+.timeline-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-title {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+.timeline-date {
+    font-size: 0.75rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+.timeline-body {
+    color: #4a5568;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.timeline-badge {
+    display: inline-block;
+    padding: 0.1rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Patient Badge in Header */
+.patient-header-badge {
+    background: #e2e8f0;
+    color: #4a5568;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 /* --- PRINT STYLES --- */
 @media print {
 
