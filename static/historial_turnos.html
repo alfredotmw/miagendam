@@ -96,33 +96,68 @@
 
         /* Print Override */
         @media print {
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+
+            body {
+                background: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
 
             .sidebar,
             .logout-btn,
             .search-header-container,
-            .filters-card {
+            .filters-card,
+            #welcome-state {
                 display: none !important;
             }
 
             .main-content {
-                margin-left: 0 !important;
+                margin: 0 !important;
                 padding: 0 !important;
+                width: 100% !important;
+                display: block !important;
             }
 
+            #history-content,
             .history-grid {
                 display: block !important;
+                grid-template-columns: 1fr !important;
             }
 
             .patient-card {
                 box-shadow: none;
-                border: none;
+                border: 1px solid #e2e8f0;
                 position: static;
                 margin-bottom: 2rem;
+                padding: 1rem;
+                page-break-inside: avoid;
+            }
+
+            .timeline-section {
                 padding: 0;
+                background: transparent !important;
+            }
+
+            .timeline-card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                border: 1px solid #ddd;
+                box-shadow: none;
+                margin-left: 0;
             }
 
             .timeline-container-premium {
-                border-left: 2px solid #ccc !important;
+                border-left: 1px solid #ccc !important;
+                margin-left: 1rem;
+            }
+
+            /* Hide print button itself */
+            button {
+                display: none !important;
             }
         }
     </style>

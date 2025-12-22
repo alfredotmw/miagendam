@@ -24,3 +24,11 @@ class Paciente(Base):
     # Nueva relación para Historia Clínica
     historia_clinica = relationship("HistoriaClinica", back_populates="paciente", cascade="all, delete-orphan")
     turnos = relationship("Turno", back_populates="paciente")
+
+    @property
+    def edad(self):
+        if not self.fecha_nacimiento:
+            return None
+        from datetime import date
+        today = date.today()
+        return today.year - self.fecha_nacimiento.year - ((today.month, today.day) < (self.fecha_nacimiento.month, self.fecha_nacimiento.day))
