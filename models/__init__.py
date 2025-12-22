@@ -8,5 +8,6 @@ from .obra_social import ObraSocial
 from .practica import Practica
 from .medico import MedicoDerivante
 from .turno_practica import TurnoPractica  # 👈 NUEVO
+from .historia_clinica import HistoriaClinica # 👈 NUEVO HISTORIA CLINICA
 
 

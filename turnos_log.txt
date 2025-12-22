@@ -1,0 +1,76 @@
+Total turnos: 75
+ID: 75 | Fecha: 2025-12-22 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: MARIA ELENA | Agenda: CAMARA GAMMA
+ID: 74 | Fecha: 2025-12-17 19:00:00 | Hora: 19:00:00 | Estado: COMPLETADO | Paciente: ALFREDO RAUL | Agenda: TOMOGRAFIAS Y RX
+ID: 73 | Fecha: 2025-12-17 18:00:00 | Hora: 18:00:00 | Estado: COMPLETADO | Paciente: ALFREDO RAUL | Agenda: TOMOGRAFIAS Y RX
+ID: 72 | Fecha: 2025-12-10 18:00:00 | Hora: 18:00:00 | Estado: COMPLETADO | Paciente: GUILLERMINA | Agenda: ELECTRO Y MAPEOS
+ID: 71 | Fecha: 2025-12-10 18:00:00 | Hora: 18:00:00 | Estado: COMPLETADO | Paciente: MARIA ELENA | Agenda: CAMARA GAMMA
+ID: 70 | Fecha: 2025-12-09 10:00:00 | Hora: 10:00:00 | Estado: PENDIENTE | Paciente: TESTTEST_FINAL | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 69 | Fecha: 2025-12-09 17:00:00 | Hora: 17:00:00 | Estado: COMPLETADO | Paciente: MARIA ELENA | Agenda: ECOGRAFIAS
+ID: 68 | Fecha: 2025-12-09 08:00:00 | Hora: 08:00:00 | Estado: AUSENTE | Paciente: TESTTEST | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 67 | Fecha: 2025-12-08 08:00:00 | Hora: 08:00:00 | Estado: COMPLETADO | Paciente: MARIA ELENA | Agenda: ECOGRAFIAS
+ID: 66 | Fecha: 2025-12-02 19:30:00 | Hora: 19:30:00 | Estado: PENDIENTE | Paciente: MARIA ELENA | Agenda: ECOGRAFIAS
+ID: 65 | Fecha: 2025-12-02 19:00:00 | Hora: 19:00:00 | Estado: COMPLETADO | Paciente: ALFREDO RAUL | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 64 | Fecha: 2025-12-02 17:30:00 | Hora: 17:30:00 | Estado: COMPLETADO | Paciente: ALFREDO RAUL | Agenda: QUIMIOTERAPIA COLOMBIA
+ID: 63 | Fecha: 2025-12-12 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: MARIA ELENA | Agenda: RADIOTERAPIA COLOMBIA
+ID: 62 | Fecha: 2025-12-11 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: MARIA ELENA | Agenda: RADIOTERAPIA COLOMBIA
+ID: 61 | Fecha: 2025-12-10 08:00:00 | Hora: 08:00:00 | Estado: COMPLETADO | Paciente: MARIA ELENA | Agenda: RADIOTERAPIA COLOMBIA
+ID: 60 | Fecha: 2025-12-09 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: MARIA ELENA | Agenda: RADIOTERAPIA COLOMBIA
+ID: 59 | Fecha: 2025-12-05 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: MARIA ELENA | Agenda: RADIOTERAPIA COLOMBIA
+ID: 58 | Fecha: 2025-12-04 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: MARIA ELENA | Agenda: RADIOTERAPIA COLOMBIA
+ID: 57 | Fecha: 2025-12-03 08:00:00 | Hora: 08:00:00 | Estado: COMPLETADO | Paciente: MARIA ELENA | Agenda: RADIOTERAPIA COLOMBIA
+ID: 56 | Fecha: 2025-12-02 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: MARIA ELENA | Agenda: RADIOTERAPIA COLOMBIA
+ID: 55 | Fecha: 2025-12-05 09:00:00 | Hora: 09:00 | Estado: COMPLETADO | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 54 | Fecha: 2025-12-02 17:20:00 | Hora: 17:20:00 | Estado: COMPLETADO | Paciente: MARIA ELENA | Agenda: CAMARA GAMMA
+ID: 53 | Fecha: 2025-11-30 08:00:00 | Hora: 08:00:00 | Estado: COMPLETADO | Paciente: ALFREDO RAUL | Agenda: PET
+ID: 52 | Fecha: 2025-12-01 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: ALFREDO RAUL | Agenda: PET
+ID: 51 | Fecha: 2025-12-01 09:00:00 | Hora: 09:00 | Estado: PENDIENTE | Paciente: ALFREDO RAUL | Agenda: PET
+ID: 50 | Fecha: 2025-11-29 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: ALFREDO RAUL | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 49 | Fecha: 2025-11-29 13:00:00 | Hora: 13:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 48 | Fecha: 2025-11-29 12:00:00 | Hora: 12:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 47 | Fecha: 2025-11-29 12:00:00 | Hora: 12:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 46 | Fecha: 2025-11-29 12:00:00 | Hora: 12:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 45 | Fecha: 2025-11-29 12:00:00 | Hora: 12:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 44 | Fecha: 2025-11-29 10:00:00 | Hora: 10:00 | Estado: COMPLETADO | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 43 | Fecha: 2025-11-29 12:00:00 | Hora: 12:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 42 | Fecha: 2025-11-30 11:00:00 | Hora: 11:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 41 | Fecha: 2025-11-29 10:00:00 | Hora: 10:00 | Estado: COMPLETADO | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 40 | Fecha: 2025-11-29 12:00:00 | Hora: 12:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 39 | Fecha: 2025-11-30 11:00:00 | Hora: 11:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 38 | Fecha: 2025-11-29 10:00:00 | Hora: 10:00 | Estado: COMPLETADO | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 37 | Fecha: 2025-11-30 11:00:00 | Hora: 11:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 36 | Fecha: 2025-11-29 10:00:00 | Hora: 10:00 | Estado: COMPLETADO | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 35 | Fecha: 2025-11-30 11:00:00 | Hora: 11:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 34 | Fecha: 2025-11-29 10:00:00 | Hora: 10:00 | Estado: COMPLETADO | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 33 | Fecha: 2025-11-30 11:00:00 | Hora: 11:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 32 | Fecha: 2025-11-29 10:00:00 | Hora: 10:00 | Estado: COMPLETADO | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 31 | Fecha: 2025-11-30 11:00:00 | Hora: 11:00 | Estado: COMPLETADO | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 30 | Fecha: 2025-11-29 10:00:00 | Hora: 10:00 | Estado: COMPLETADO | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 29 | Fecha: 2025-11-28 19:30:00 | Hora: 19:30:00 | Estado: PENDIENTE | Paciente: ALFREDO RAUL | Agenda: ECOGRAFIAS
+ID: 28 | Fecha: 2025-12-11 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: ALFREDO RAUL | Agenda: RADIOTERAPIA SAN MARTIN
+ID: 27 | Fecha: 2025-12-10 08:00:00 | Hora: 08:00:00 | Estado: COMPLETADO | Paciente: ALFREDO RAUL | Agenda: RADIOTERAPIA SAN MARTIN
+ID: 26 | Fecha: 2025-12-09 08:00:00 | Hora: 08:00:00 | Estado: COMPLETADO | Paciente: ALFREDO RAUL | Agenda: RADIOTERAPIA SAN MARTIN
+ID: 25 | Fecha: 2025-12-08 08:00:00 | Hora: 08:00:00 | Estado: COMPLETADO | Paciente: ALFREDO RAUL | Agenda: RADIOTERAPIA SAN MARTIN
+ID: 24 | Fecha: 2025-12-05 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: ALFREDO RAUL | Agenda: RADIOTERAPIA SAN MARTIN
+ID: 23 | Fecha: 2025-12-04 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: ALFREDO RAUL | Agenda: RADIOTERAPIA SAN MARTIN
+ID: 22 | Fecha: 2025-12-03 08:00:00 | Hora: 08:00:00 | Estado: COMPLETADO | Paciente: ALFREDO RAUL | Agenda: RADIOTERAPIA SAN MARTIN
+ID: 21 | Fecha: 2025-12-02 08:00:00 | Hora: 08:00:00 | Estado: COMPLETADO | Paciente: ALFREDO RAUL | Agenda: RADIOTERAPIA SAN MARTIN
+ID: 20 | Fecha: 2025-12-01 08:00:00 | Hora: 08:00:00 | Estado: PENDIENTE | Paciente: ALFREDO RAUL | Agenda: RADIOTERAPIA SAN MARTIN
+ID: 19 | Fecha: 2025-11-28 12:00:00 | Hora: 12:00:00 | Estado: PENDIENTE | Paciente: TESTTEST_FINAL | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 18 | Fecha: 2025-11-27 10:00:00 | Hora: 10:00:00 | Estado: pendiente | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 17 | Fecha: 2025-11-27 08:20:00 | Hora: 08:20:00 | Estado: COMPLETADO | Paciente: MARIA ELENA | Agenda: ECOGRAFIAS
+ID: 16 | Fecha: 2025-11-28 08:30:00 | Hora: 08:30 | Estado: pendiente | Paciente: ALFREDO RAUL | Agenda: ECOGRAFIAS
+ID: 15 | Fecha: 2025-11-28 08:00:00 | Hora: 08:00:00 | Estado: completado | Paciente: ALFREDO RAUL | Agenda: TOMOGRAFIAS Y RX
+ID: 14 | Fecha: 2025-11-29 08:00:00 | Hora: 08:00 | Estado: pendiente | Paciente: MANUEL ROBERTO | Agenda: TOMOGRAFIAS Y RX
+ID: 13 | Fecha: 2025-11-29 08:00:00 | Hora: 08:00 | Estado: pendiente | Paciente: MARIA ELENA | Agenda: ECOGRAFIAS
+ID: 12 | Fecha: 2025-11-27 07:00:00 | Hora: 07:00 | Estado: pendiente | Paciente: MARIA ELENA | Agenda: ECOGRAFIAS
+ID: 11 | Fecha: 2025-11-26 00:00:00 | Hora: 18:00 | Estado: pendiente | Paciente: ALFREDO RAUL | Agenda: TOMOGRAFIAS Y RX
+ID: 10 | Fecha: 2025-11-26 00:00:00 | Hora: 08:00:00 | Estado: pendiente | Paciente: ALFREDO RAUL | Agenda: ECOGRAFIAS
+ID: 9 | Fecha: 2025-11-26 00:00:00 | Hora: 10:00:00 | Estado: pendiente | Paciente: ALFREDO RAUL | Agenda: PET
+ID: 8 | Fecha: 2025-11-25 00:00:00 | Hora: 10:00:00 | Estado: pendiente | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 7 | Fecha: 2025-11-25 00:00:00 | Hora: 10:00:00 | Estado: pendiente | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 6 | Fecha: 2025-11-25 00:00:00 | Hora: 10:00:00 | Estado: pendiente | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 5 | Fecha: 2025-11-25 00:00:00 | Hora: 10:00:00 | Estado: pendiente | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 4 | Fecha: 2025-11-25 00:00:00 | Hora: 10:00:00 | Estado: pendiente | Paciente: PEDRO | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 3 | Fecha: 2025-11-24 00:00:00 | Hora: 10:00:00 | Estado: pendiente | Paciente: TESTTEST | Agenda: QUIMIOTERAPIA SAN MARTIN
+ID: 2 | Fecha: 2025-11-25 00:00:00 | Hora: 08:00:00 | Estado: pendiente | Paciente: ALFREDO RAUL | Agenda: TOMOGRAFIAS Y RX
+ID: 1 | Fecha: 2025-11-22 10:00:00 | Hora: 10:00 | Estado: PENDIENTE | Paciente: PEDRO | Agenda: TOMOGRAFIAS Y RX

@@ -19,5 +19,8 @@ class Paciente(Base):
 
     # Relaciones
     obra_social = relationship("ObraSocial", back_populates="pacientes")
-    turnos = relationship("Turno", back_populates="paciente")
 
+    
+    # Nueva relación para Historia Clínica
+    historia_clinica = relationship("HistoriaClinica", back_populates="paciente", cascade="all, delete-orphan")
+    turnos = relationship("Turno", back_populates="paciente")

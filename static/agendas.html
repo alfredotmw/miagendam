@@ -149,6 +149,44 @@
             </div>
         </div>
     </div>
+
+    <!-- Historia Clinica Modal -->
+    <div class="modal" id="historiaModal">
+        <div class="modal-content" style="max-width: 800px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header">
+                <div>Historia Clínica <span id="historiaPacienteInfo"
+                        style="font-weight: 400; font-size: 0.9em; color: #718096;"></span></div>
+                <div class="no-print" style="display: flex; gap: 0.5rem;">
+                    <button class="action-btn" onclick="printHistoria()">🖨️ Imprimir</button>
+                    <button class="close-modal" onclick="closeHistoria()">×</button>
+                </div>
+            </div>
+
+            <div class="historia-body" style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
+                <!-- Timeline -->
+                <div id="historiaTimeline" class="historia-timeline">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+
+            <div class="historia-input-section no-print"
+                style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                <h4 style="margin-bottom: 0.5rem;">Nueva Nota</h4>
+                <textarea id="nuevaNotaTexto" class="form-input" rows="3"
+                    placeholder="Escriba la evolución o nota clínica..."></textarea>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <select id="nuevaNotaServicio" class="form-input" style="width: auto;">
+                        <option value="CONSULTORIO">Consultorio</option>
+                        <option value="QUIMIOTERAPIA">Quimioterapia</option>
+                        <option value="TOMOGRAFIA">Tomografía</option>
+                        <option value="RADIOGRAFIA">Radiografía</option>
+                        <option value="GENERAL">General</option>
+                    </select>
+                    <button class="btn-primary" style="width: auto;" onclick="saveHistoria()">Guardar Nota</button>
+                </div>
+            </div>
+        </div>
+    </div>
     </div>
 
     <script>
@@ -355,6 +393,7 @@
 
                         html += `
                             <button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>
+                            <button class="action-btn" onclick="openHistoria(${turno.paciente_id}, '${turno.paciente ? turno.paciente.dni : ''}', '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}')" title="Historia Clínica" style="background: #e2e8f0;">📋</button>
                         `;
                     }
                 } else {
@@ -562,6 +601,113 @@
         function logout() {
             localStorage.removeItem('token');
             window.location.href = '/static/login.html';
+        }
+
+        // --- Historia Clinica Logic ---
+        let currentHistoriaPacienteId = null;
+
+        async function openHistoria(pacienteId, dni, nombre) {
+            currentHistoriaPacienteId = pacienteId;
+            document.getElementById('historiaPacienteInfo').textContent = `- ${nombre} (DNI: ${dni})`;
+            document.getElementById('historiaModal').classList.add('active');
+
+            await loadHistoriaTimeline(pacienteId);
+        }
+
+        function closeHistoria() {
+            document.getElementById('historiaModal').classList.remove('active');
+            currentHistoriaPacienteId = null;
+        }
+
+        async function loadHistoriaTimeline(pacienteId) {
+            const container = document.getElementById('historiaTimeline');
+            container.innerHTML = '<div style="text-align: center; padding: 2rem;">Cargando historia...</div>';
+
+            try {
+                const res = await fetch(`/historia-clinica/paciente/${pacienteId}/timeline`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Error al cargar');
+
+                const data = await res.json();
+                renderTimeline(data.timeline);
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="color: red; text-align: center;">Error al cargar historia.</div>';
+            }
+        }
+
+        function renderTimeline(events) {
+            const container = document.getElementById('historiaTimeline');
+            if (!events || events.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #a0aec0;">No hay registros previos.</div>';
+                return;
+            }
+
+            container.innerHTML = events.map(ev => {
+                const isNota = ev.tipo === 'NOTA';
+                const icon = isNota ? '📝' : (ev.descripcion.toLowerCase().includes('tomogra') ? '☢️' : '🏥');
+                const dateObj = new Date(ev.fecha);
+                const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                return `
+                    <div class="timeline-item" style="display: flex; gap: 1rem; padding: 1rem; border-bottom: 1px solid #f1f5f9; align-items: flex-start;">
+                        <div style="font-size: 1.5rem; line-height: 1;">${icon}</div>
+                        <div style="flex: 1;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                <strong style="color: #2d3748;">${ev.descripcion} <span style="font-weight: normal; font-size: 0.8em; color: #718096;">| ${ev.servicio || 'General'}</span></strong>
+                                <span style="font-size: 0.85rem; color: #718096;">${dateStr}</span>
+                            </div>
+                            <div style="color: #4a5568; white-space: pre-wrap;">${ev.detalle}</div>
+                            ${ev.estado ? `<div style="margin-top: 0.5rem;"><span class="status-badge status-${ev.estado.toLowerCase()}">${ev.estado}</span></div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function saveHistoria() {
+            if (!currentHistoriaPacienteId) return;
+            const texto = document.getElementById('nuevaNotaTexto').value;
+            const servicio = document.getElementById('nuevaNotaServicio').value;
+
+            if (!texto) return alert("Escriba una nota");
+
+            const btn = document.querySelector('#historiaModal .btn-primary');
+            const originalText = btn.textContent;
+            btn.textContent = 'Guardando...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/historia-clinica/', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        paciente_id: currentHistoriaPacienteId,
+                        texto: texto,
+                        servicio: servicio
+                    })
+                });
+
+                if (res.ok) {
+                    document.getElementById('nuevaNotaTexto').value = '';
+                    await loadHistoriaTimeline(currentHistoriaPacienteId);
+                } else {
+                    alert('Error al guardar nota');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error de conexión');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function printHistoria() {
+            document.body.classList.add('printing-historia');
+            window.print();
+            document.body.classList.remove('printing-historia');
         }
 
         loadAgendas();

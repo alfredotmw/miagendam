@@ -50,6 +50,8 @@ from routers import whatsapp
 app.include_router(whatsapp.router)
 from routers import medicos
 app.include_router(medicos.router)
+from routers import historia_clinica # 👈 NUEVO
+app.include_router(historia_clinica.router)
 
 from fastapi.responses import RedirectResponse
 

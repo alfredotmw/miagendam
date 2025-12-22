@@ -906,3 +906,56 @@ body {
 .btn-whatsapp-sent:hover {
     background-color: #a0aec0;
 }
+
+/* --- PRINT STYLES --- */
+@media print {
+
+    /* Hide everything by default */
+    body>* {
+        display: none !important;
+    }
+
+    /* Only show the modal and its contents if active, OR redesign entire page for print */
+    /* Strategy: Hide sidebar, header, etc. Show only the Modal Content if it's open, or a specific print area */
+
+    body.printing-historia .modal.active {
+        display: block !important;
+        position: static !important;
+        background: white !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+
+    body.printing-historia .modal-content {
+        width: 100% !important;
+        max-width: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    body.printing-historia .modal-header,
+    body.printing-historia .historia-body {
+        display: block !important;
+    }
+
+    /* Hide actions in print */
+    .close-modal,
+    .modal-actions,
+    .historia-input-section,
+    .no-print {
+        display: none !important;
+    }
+
+    /* Format Timeline for Print */
+    .historia-timeline {
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    .timeline-item {
+        break-inside: avoid;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+    }
+}
