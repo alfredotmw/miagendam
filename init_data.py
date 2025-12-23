@@ -101,12 +101,9 @@ def seed_practicas(db: Session):
             "BARRIDO CORPORAL TOTAL"
         ],
         "CONSULTA_MEDICA": [
-            "CONSULTA",
-            "CONTROL",
-            "RECETA",
-            "CERTIFICADO",
             "CONSULTA DE 1RA VEZ",
-            "CONSULTA DE CONTROL"
+            "CONSULTA DE CONTROL",
+            "RECETA/CERTIFICADO"
         ]
     }
 
@@ -193,7 +190,7 @@ def sync_new_practicas():
     db = SessionLocal()
     # Mismas categorías definidas arriba, pero solo las nuevas
     nuevas = {
-        "CONSULTA_MEDICA": ["CONSULTA DE 1RA VEZ", "CONSULTA DE CONTROL"]
+        "CONSULTA_MEDICA": ["CONSULTA DE 1RA VEZ", "CONSULTA DE CONTROL", "RECETA/CERTIFICADO"]
     }
     
     cambios = False
