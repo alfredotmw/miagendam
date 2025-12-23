@@ -216,12 +216,14 @@
     <div class="main-content">
         <header class="top-header search-header-container">
             <h1 class="page-title">Historia Clínica Integral</h1>
-            <div class="search-container" style="flex: 1; max-width: 500px; margin-left: 2rem;">
-                <div class="search-group" style="width: 100%;">
-                    <input type="text" id="search-dni" placeholder="🔍 Ingrese DNI del paciente..."
-                        onkeypress="handleEnter(event)" style="height: 3rem; font-size: 1.1rem;">
+            <div class="search-container"
+                style="flex: 1; max-width: 600px; margin-left: 2rem; display: flex; gap: 0.5rem;">
+                <div class="search-group" style="flex: 1;">
+                    <input type="text" id="search-dni" placeholder="🔍 Buscar por DNI o Apellido..."
+                        onkeypress="handleEnter(event)" style="height: 3rem; font-size: 1.1rem; width: 100%;">
                 </div>
-                <button class="btn-primary" onclick="searchHistory()">Buscar</button>
+                <button class="btn-primary" onclick="searchHistory()"
+                    style="width: auto; padding: 0 1.5rem; height: 3rem;">Buscar</button>
             </div>
             <div class="user-profile">
                 <!-- User profile info -->
@@ -230,7 +232,7 @@
 
         <div id="welcome-state" style="text-align: center; padding: 4rem; color: #a0aec0;">
             <div style="font-size: 4rem; margin-bottom: 1rem;">👨‍⚕️</div>
-            <h2>Ingrese el DNI del paciente para ver su historia clínica.</h2>
+            <h2>Ingrese el DNI o Apellido del paciente para ver su historia clínica.</h2>
         </div>
 
         <div id="history-content" class="history-grid" style="display: none;">
@@ -288,6 +290,24 @@
             </div>
         </div>
     </div>
+    </div>
+
+    <!-- Patient Selection Modal -->
+    <div id="patientModal" class="modal"
+        style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); align-items: center; justify-content: center;">
+        <div class="modal-content"
+            style="background-color: #fefefe; margin: auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 600px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+            <div class="modal-header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
+                <h3 style="margin: 0; color: #2d3748;">Seleccionar Paciente</h3>
+                <span onclick="closeModal()"
+                    style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+            </div>
+            <div id="patientList" style="max-height: 400px; overflow-y: auto;">
+                <!-- List items will be injected here -->
+            </div>
+        </div>
+    </div>
 
     <script>
         const token = localStorage.getItem('token');
@@ -305,15 +325,96 @@
         }
 
         async function searchHistory() {
-            const dni = document.getElementById('search-dni').value.trim();
-            if (!dni) { alert("Ingrese un DNI"); return; }
-            currentDni = dni;
+            const input = document.getElementById('search-dni').value.trim();
+            if (!input) { alert("Ingrese un DNI o Apellido"); return; }
 
-            // Clear filters? Maybe keep them if user wants
-            document.getElementById('filter-start').value = '';
-            document.getElementById('filter-end').value = '';
+            // UI Feedback
+            const btn = document.querySelector('.search-container button');
+            const originalText = btn.textContent;
+            btn.textContent = '...';
+            btn.disabled = true;
 
-            await fetchAndRender(dni);
+            try {
+                // Determine if input resembles a DNI (digits only, at least 6)
+                const isDni = /^\d+$/.test(input) && input.length > 5;
+
+                if (isDni) {
+                    currentDni = input;
+                    await fetchAndRender(input);
+                } else {
+                    // It's likely a name/surname
+                    const res = await fetch(`/pacientes/?q=${encodeURIComponent(input)}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (!res.ok) throw new Error("Error searching patients");
+
+                    const patients = await res.json();
+
+                    if (patients.length === 0) {
+                        alert("No se encontraron pacientes con ese nombre/apellido.");
+                    } else if (patients.length === 1) {
+                        currentDni = patients[0].dni;
+                        await fetchAndRender(patients[0].dni);
+                    } else {
+                        showPatientModal(patients);
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error al buscar paciente');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function showPatientModal(patients) {
+            const list = document.getElementById('patientList');
+            list.innerHTML = '';
+
+            patients.forEach(p => {
+                const div = document.createElement('div');
+                div.style.padding = '1rem';
+                div.style.borderBottom = '1px solid #eee';
+                div.style.cursor = 'pointer';
+                div.style.display = 'flex';
+                div.style.justifyContent = 'space-between';
+                div.style.alignItems = 'center';
+                div.onmouseover = () => div.style.background = '#f7fafc';
+                div.onmouseout = () => div.style.background = 'transparent';
+
+                div.innerHTML = `
+                    <div>
+                        <div style="font-weight: 600; color: #2d3748;">${p.apellido}, ${p.nombre}</div>
+                        <div style="font-size: 0.85rem; color: #718096;">DNI: ${p.dni} | OS: ${p.obra_social ? p.obra_social.nombre : '-'}</div>
+                    </div>
+                    <button class="btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">Ver</button>
+                `;
+
+                div.onclick = () => {
+                    currentDni = p.dni;
+                    fetchAndRender(p.dni);
+                    closeModal();
+                };
+
+                list.appendChild(div);
+            });
+
+            const modal = document.getElementById('patientModal');
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('patientModal').style.display = 'none';
+        }
+
+        // Close modal if clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('patientModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
         }
 
         async function applyFilters() {
