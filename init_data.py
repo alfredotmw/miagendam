@@ -193,13 +193,36 @@ def sync_new_practicas():
         "CONSULTA_MEDICA": ["CONSULTA DE 1RA VEZ", "CONSULTA DE CONTROL", "RECETA/CERTIFICADO"]
     }
     
+    # Prácticas viejas a eliminar
+    obsoletas = [
+        "CONSULTA", 
+        "CONSULTA GENERAL", 
+        "CONSULTA ONCOLOGICA", 
+        "CONSULTA PALIATIVOS", 
+        "RECETA", 
+        "CERTIFICADO", 
+        "CONTROL"
+    ]
+
     cambios = False
+
+    # 1. Agregar nuevas
     for categoria, lista in nuevas.items():
         for nombre in lista:
             if not db.query(Practica).filter_by(nombre=nombre).first():
                 print(f"➕ Patching práctica: {nombre}")
                 db.add(Practica(nombre=nombre, categoria=CategoriaPractica[categoria]))
                 cambios = True
+
+    # 2. Eliminar viejas (si existen y no tienen uso, o forzar si se desea)
+    # Nota: db.delete lo hará. Si hay foreign keys, podría fallar si hay datos, 
+    # pero asumimos que no hay turnos con esto en producción o que se desea limpiar.
+    for nombre in obsoletas:
+        p = db.query(Practica).filter_by(nombre=nombre).first()
+        if p:
+            print(f"🗑️ Eliminando práctica obsoleta: {nombre}")
+            db.delete(p)
+            cambios = True
     
     if cambios:
         db.commit()
