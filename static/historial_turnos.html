@@ -98,13 +98,16 @@
         @media print {
             @page {
                 size: A4;
-                margin: 1cm;
+                margin: 0;
+                /* Removes browser default headers/footers */
             }
 
             body {
                 background: white !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
             .sidebar,
@@ -117,7 +120,8 @@
 
             .main-content {
                 margin: 0 !important;
-                padding: 0 !important;
+                /* Add padding to simulate page margins and clear header/footer */
+                padding: 120px 1cm 80px 1cm !important;
                 width: 100% !important;
                 display: block !important;
             }
@@ -172,8 +176,12 @@
                 left: 0;
                 width: 100%;
                 height: 100px;
-                /* Adjust based on logo size */
+                /* Ensure background is white to cover anything behind if needed */
+                background: white;
                 z-index: 2000;
+                padding: 1rem 1cm;
+                /* Align with content padding */
+                box-sizing: border-box;
             }
 
             #print-footer {
@@ -186,15 +194,12 @@
                 justify-content: space-between;
                 align-items: center;
                 border-top: 1px solid #ccc;
-                padding-top: 10px;
+                padding: 10px 1cm;
+                /* Align with content padding */
                 font-size: 10px;
                 color: #555;
-            }
-
-            /* Adjust main content margins to not clip with header/footer */
-            .main-content {
-                margin-top: 110px !important;
-                margin-bottom: 70px !important;
+                background: white;
+                box-sizing: border-box;
             }
         }
 
