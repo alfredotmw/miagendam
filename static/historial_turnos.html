@@ -94,119 +94,123 @@
             padding: 1rem;
         }
 
-        /* Print Override */
+        /* Table Print Layout Styles */
+        #print-layout {
+            display: none;
+        }
+
         @media print {
             @page {
                 size: A4;
                 margin: 0;
-                /* Removes browser default headers/footers */
             }
 
             body {
                 background: white !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
                 margin: 0 !important;
                 padding: 0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            /* Hide everything that isn't the print table */
+            body>*:not(#print-layout) {
+                display: none !important;
             }
 
             .sidebar,
             .logout-btn,
             .search-header-container,
             .filters-card,
-            #welcome-state {
-                display: none !important;
-            }
-
-            .main-content {
-                margin: 0 !important;
-                /* Add padding to simulate page margins and clear header/footer */
-                padding: 120px 1cm 80px 1cm !important;
-                width: 100% !important;
-                display: block !important;
-            }
-
-            #history-content,
-            .history-grid {
-                display: block !important;
-                grid-template-columns: 1fr !important;
-            }
-
-            .patient-card {
-                box-shadow: none;
-                border: 1px solid #e2e8f0;
-                position: static;
-                margin-bottom: 2rem;
-                padding: 1rem;
-                page-break-inside: avoid;
-            }
-
-            .timeline-section {
-                padding: 0;
-                background: transparent !important;
-            }
-
-            .timeline-card {
-                break-inside: avoid;
-                page-break-inside: avoid;
-                border: 1px solid #ddd;
-                box-shadow: none;
-                margin-left: 0;
-            }
-
-            .timeline-container-premium {
-                border-left: 1px solid #ccc !important;
-                margin-left: 1rem;
-            }
-
-            /* Hide print button itself */
+            #welcome-state,
             button {
                 display: none !important;
             }
 
-            /* Show Print Header/Footer */
-            #print-header,
-            #print-footer {
-                display: block !important;
+            /* Show Print Table */
+            #print-layout {
+                display: table !important;
+                width: 100%;
+                border-collapse: collapse;
             }
 
-            #print-header {
+            /* Table Setup */
+            #print-layout thead {
+                display: table-header-group;
+            }
+
+            #print-layout tfoot {
+                display: table-footer-group;
+            }
+
+            #print-layout tbody {
+                display: table-row-group;
+            }
+
+            /* Spacers for fixed elements */
+            .header-space {
+                height: 100px;
+                /* Same height as fixed header */
+            }
+
+            .footer-space {
+                height: 60px;
+                /* Same height as fixed footer */
+            }
+
+            /* Fixed Header/Footer Positioning */
+            .print-header-content {
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100px;
-                /* Ensure background is white to cover anything behind if needed */
                 background: white;
-                z-index: 2000;
-                padding: 1rem 1cm;
-                /* Align with content padding */
+                padding: 10px 1cm;
                 box-sizing: border-box;
+                border-bottom: 2px solid #eee;
             }
 
-            #print-footer {
+            .print-footer-content {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 width: 100%;
                 height: 60px;
+                background: white;
+                border-top: 1px solid #ccc;
                 display: flex !important;
                 justify-content: space-between;
                 align-items: center;
-                border-top: 1px solid #ccc;
                 padding: 10px 1cm;
-                /* Align with content padding */
+                box-sizing: border-box;
                 font-size: 10px;
                 color: #555;
-                background: white;
-                box-sizing: border-box;
+            }
+
+            /* Content Styling within Table */
+            .content-container {
+                padding: 1cm;
+            }
+
+            /* Adjust patient card for print context */
+            .patient-card {
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0;
+                padding: 1rem;
+                margin-bottom: 2rem;
+            }
+
+            .timeline-card {
+                border: 1px solid #ddd;
+                box-shadow: none !important;
+                page-break-inside: avoid;
             }
         }
 
-        /* Default hidden */
-        #print-header,
-        #print-footer {
-            display: none;
+        /* Helper for JS to move content */
+        .print-content-ready {
+            display: block !important;
         }
 
         .footer-col {
@@ -221,38 +225,63 @@
 </head>
 
 <body>
-    <!-- Print Header -->
-    <div id="print-header">
-        <img src="/static/logo_ccm_coc.jpg" alt="Logo" style="height: 80px; width: auto;">
-    </div>
-
-    <!-- Print Footer -->
-    <div id="print-footer">
-        <div class="footer-col">
-            <strong>San Martín 2473</strong>
-            <svg fill="#25D366" viewBox="0 0 24 24" width="14" height="14">
-                <path
-                    d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.991.564 1.761.79 2.796.79 3.18 0 5.767-2.587 5.768-5.766.001-3.182-2.585-5.979-5.768-5.977zm0 10.5c-.868 0-1.636-.25-2.261-.532l-.24-.112-1.62.42.417-1.558-.1-.264c-.47-.954-.606-1.583-.606-2.69 0-2.652 2.155-4.809 4.809-4.809 2.651 0 5.165 2.157 5.165 4.809 0 2.65-2.155 4.736-5.564 4.736z" />
-            </svg>
-            <span>3794684336</span>
-        </div>
-        <div class="footer-col" style="border-left: 1px solid #ddd; border-right: 1px solid #ddd;">
-            <strong>Colombia 1249</strong>
-            <svg fill="#25D366" viewBox="0 0 24 24" width="14" height="14">
-                <path
-                    d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.991.564 1.761.79 2.796.79 3.18 0 5.767-2.587 5.768-5.766.001-3.182-2.585-5.979-5.768-5.977zm0 10.5c-.868 0-1.636-.25-2.261-.532l-.24-.112-1.62.42.417-1.558-.1-.264c-.47-.954-.606-1.583-.606-2.69 0-2.652 2.155-4.809 4.809-4.809 2.651 0 5.165 2.157 5.165 4.809 0 2.65-2.155 4.736-5.564 4.736z" />
-            </svg>
-            <span>3794409595</span>
-        </div>
-        <div class="footer-col">
-            <svg fill="#E1306C" viewBox="0 0 24 24" width="14" height="14">
-                <path
-                    d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-            </svg>
-            <span>@oncologicocorrientes</span>
-        </div>
-        <div style="position: absolute; right: 10px; font-size: 8px; color: #ccc;">v2.0</div>
-    </div>
+    <!-- Print Layout (Table-based for recurring headers/footers) -->
+    <table id="print-layout">
+        <thead>
+            <tr>
+                <td>
+                    <div class="header-space">&nbsp;</div>
+                    <div class="print-header-content">
+                        <img src="/static/logo_ccm_coc.jpg" alt="Logo" style="height: 80px; width: auto;">
+                    </div>
+                </td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <div class="content-container">
+                        <!-- Content will be moved here on print -->
+                        <div id="print-content-placeholder"></div>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td>
+                    <div class="footer-space">&nbsp;</div>
+                    <div class="print-footer-content">
+                        <div class="footer-col">
+                            <strong>San Martín 2473</strong>
+                            <svg fill="#25D366" viewBox="0 0 24 24" width="14" height="14">
+                                <path
+                                    d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.991.564 1.761.79 2.796.79 3.18 0 5.767-2.587 5.768-5.766.001-3.182-2.585-5.979-5.768-5.977zm0 10.5c-.868 0-1.636-.25-2.261-.532l-.24-.112-1.62.42.417-1.558-.1-.264c-.47-.954-.606-1.583-.606-2.69 0-2.652 2.155-4.809 4.809-4.809 2.651 0 5.165 2.157 5.165 4.809 0 2.65-2.155 4.736-5.564 4.736z" />
+                            </svg>
+                            <span>3794684336</span>
+                        </div>
+                        <div class="footer-col" style="border-left: 1px solid #ddd; border-right: 1px solid #ddd;">
+                            <strong>Colombia 1249</strong>
+                            <svg fill="#25D366" viewBox="0 0 24 24" width="14" height="14">
+                                <path
+                                    d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.991.564 1.761.79 2.796.79 3.18 0 5.767-2.587 5.768-5.766.001-3.182-2.585-5.979-5.768-5.977zm0 10.5c-.868 0-1.636-.25-2.261-.532l-.24-.112-1.62.42.417-1.558-.1-.264c-.47-.954-.606-1.583-.606-2.69 0-2.652 2.155-4.809 4.809-4.809 2.651 0 5.165 2.157 5.165 4.809 0 2.65-2.155 4.736-5.564 4.736z" />
+                            </svg>
+                            <span>3794409595</span>
+                        </div>
+                        <div class="footer-col">
+                            <svg fill="#E1306C" viewBox="0 0 24 24" width="14" height="14">
+                                <path
+                                    d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                            </svg>
+                            <span>@oncologicocorrientes</span>
+                        </div>
+                        <div style="position: absolute; right: 10px; font-size: 8px; color: #ccc;">v3.0 - Table Layout
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
 
     <!-- Sidebar (Same as others) -->
     <div class="sidebar">
@@ -352,7 +381,7 @@
                     </div>
                 </div>
 
-                <button onclick="window.print()" class="btn-primary" style="width: 100%; margin-top: 2rem;">
+                <button onclick="handlePrint()" class="btn-primary" style="width: 100%; margin-top: 2rem;">
                     🖨️ Imprimir Historia
                 </button>
             </div>
@@ -611,6 +640,28 @@
             if (s === 'PENDIENTE') return '#4299e1';
             return '#a0aec0';
         }
+
+        function handlePrint() {
+            // Clone content to print table
+            const pCard = document.querySelector('.patient-card').cloneNode(true);
+            const timeline = document.querySelector('.timeline-section').cloneNode(true);
+
+            // Remove print button from clone
+            const printBtn = pCard.querySelector('button');
+            if (printBtn) printBtn.remove();
+
+            const placeholder = document.getElementById('print-content-placeholder');
+            placeholder.innerHTML = '';
+            placeholder.appendChild(pCard);
+            placeholder.appendChild(timeline);
+
+            window.print();
+        }
+
+        window.onafterprint = function () {
+            // Cleanup after print to save memory/DOM size
+            document.getElementById('print-content-placeholder').innerHTML = '';
+        };
     </script>
 </body>
 
