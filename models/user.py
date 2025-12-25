@@ -16,3 +16,4 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     role = Column(SqlEnum(UserRole), nullable=False)
+    allowed_agendas = Column(String, nullable=True) # Comma separated IDs: "1,2,5"

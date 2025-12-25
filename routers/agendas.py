@@ -15,10 +15,23 @@ router = APIRouter(prefix="/agendas", tags=["Agendas"])
 def listar_agendas(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     query = db.query(Agenda)
     
-    # 🛡️ Service Selector: Si es MEDICO, solo ver su propia agenda
+    # 🛡️ Service Selector Logic
+    
+    # 1. Check for Explicitly Allowed Agendas (Priority)
+    allowed_ids_str = current_user.get("allowed_agendas")
+    if allowed_ids_str:
+        # "1,2,5" -> [1, 2, 5]
+        try:
+            allowed_ids = [int(x.strip()) for x in allowed_ids_str.split(",") if x.strip()]
+            if allowed_ids:
+                query = query.filter(Agenda.id.in_(allowed_ids))
+                return query.all()
+        except ValueError:
+            pass # Malformed string, ignore and fallback
+
+    # 2. Check for Role-Based Filtering (Fallback)
     if current_user["role"] == "MEDICO":
-        # Búsqueda flexible (Case insensitive y parcial)
-        # Ejemplo: User "Monzon" maching Agenda "Dr. Monzon"
+        # Flexible Name Matching
         search_term = f"%{current_user['username']}%"
         query = query.filter(Agenda.profesional.ilike(search_term))
         

@@ -50,7 +50,11 @@ def get_current_user(payload: Dict[str, Any] = Depends(verify_token)) -> Dict[st
     Devuelve el usuario actual a partir del payload del JWT.
     Estructura: {"username": str, "role": str}
     """
-    return {"username": payload["sub"], "role": payload["role"]}
+    return {
+        "username": payload["sub"], 
+        "role": payload["role"],
+        "allowed_agendas": payload.get("allowed_agendas")
+    }
 
 
 # 🔒 Requerir ciertos roles (ADMIN, RECEPCION, etc.)

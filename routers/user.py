@@ -16,6 +16,7 @@ class UserCreate(BaseModel):
     username: str
     password: str
     role: UserRole
+    allowed_agendas: str = None # IDs separated by comma
 
 
 class UserLogin(BaseModel):
@@ -27,6 +28,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     role: UserRole
+    allowed_agendas: str = None
 
     class Config:
         from_attributes = True  # ✅ Compatible con Pydantic v2
@@ -44,7 +46,12 @@ def register_user(
         raise HTTPException(status_code=400, detail="El usuario ya existe")
 
     hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    db_user = User(username=user.username, password=hashed_password, role=user.role)
+    db_user = User(
+        username=user.username, 
+        password=hashed_password, 
+        role=user.role,
+        allowed_agendas=user.allowed_agendas
+    )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -61,7 +68,11 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
     if not bcrypt.checkpw(user.password.encode('utf-8'), db_user.password.encode('utf-8')):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
 
-    token_data = {"sub": db_user.username, "role": db_user.role}
+    token_data = {
+        "sub": db_user.username, 
+        "role": db_user.role, 
+        "allowed_agendas": db_user.allowed_agendas
+    }
     access_token = create_access_token(token_data)
 
     return {"access_token": access_token, "token_type": "bearer"}
