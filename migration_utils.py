@@ -67,3 +67,14 @@ def check_and_migrate_db(engine: Engine):
                 # logic is handled in app.
                 conn.commit()
             logger.info("✅ Columna 'recordatorio_usuario_id' agregada.")
+
+    # 2. Verificar tabla 'users'
+    if inspector.has_table("users"):
+        user_columns = [col["name"] for col in inspector.get_columns("users")]
+        
+        if "allowed_agendas" not in user_columns:
+            logger.info("⚠️ Columna 'allowed_agendas' faltante en 'users'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN allowed_agendas VARCHAR"))
+                conn.commit()
+            logger.info("✅ Columna 'allowed_agendas' agregada exitosamente.")
