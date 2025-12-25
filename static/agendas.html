@@ -250,6 +250,14 @@
 
                 const agendas = await response.json();
                 renderAgendaList(agendas);
+
+                // ✨ Auto-select logic if only 1 agenda exists (Fix for Doctors)
+                if (agendas.length === 1) {
+                    const firstAgenda = agendas[0];
+                    const item = document.querySelector(`.agenda-item[data-id="${firstAgenda.id}"]`);
+                    if (item) selectAgendaFromClick(item);
+                }
+
             } catch (error) {
                 console.error('Error loading agendas:', error);
                 document.getElementById('agendaList').innerHTML = '<div style="text-align: center; padding: 1rem; color: #f56565;">Error al cargar agendas</div>';
