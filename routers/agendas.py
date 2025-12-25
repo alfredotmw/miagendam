@@ -17,9 +17,10 @@ def listar_agendas(db: Session = Depends(get_db), current_user: dict = Depends(g
     
     # 🛡️ Service Selector: Si es MEDICO, solo ver su propia agenda
     if current_user["role"] == "MEDICO":
-        # Asumimos que 'profesional' en Agenda coincide con 'username' del usuario
-        # O buscar por coincidencia parcial si es necesario
-        query = query.filter(Agenda.profesional == current_user["username"])
+        # Búsqueda flexible (Case insensitive y parcial)
+        # Ejemplo: User "Monzon" maching Agenda "Dr. Monzon"
+        search_term = f"%{current_user['username']}%"
+        query = query.filter(Agenda.profesional.ilike(search_term))
         
     agendas = query.all()
     return agendas
