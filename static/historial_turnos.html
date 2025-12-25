@@ -221,6 +221,12 @@
             justify-content: center;
             gap: 5px;
         }
+
+        /* Plan Treatment Icon Style */
+        .type-plan {
+            background-color: #667eea !important;
+            color: white !important;
+        }
     </style>
 </head>
 
@@ -597,11 +603,17 @@
 
             container.innerHTML = events.map(ev => {
                 const isNota = ev.tipo === 'NOTA';
+                const isPlan = ev.tipo === 'PLAN_TRATAMIENTO';
+
                 let icon = '📝';
                 let typeClass = 'type-nota';
                 let title = isNota ? 'Nota de Evolución' : ev.descripcion;
 
-                if (!isNota) {
+                if (isPlan) {
+                    icon = '📅';
+                    typeClass = 'type-plan';
+                    title = ev.descripcion;
+                } else if (!isNota) {
                     const descUpper = ev.descripcion.toUpperCase();
                     if (descUpper.includes('QUIMIO')) { icon = '💧'; typeClass = 'type-quimio'; }
                     else if (descUpper.includes('TOMO') || descUpper.includes('RADIO')) { icon = '☢️'; typeClass = 'type-tomo'; }
@@ -621,10 +633,10 @@
                         <div class="timeline-icon ${typeClass}">${icon}</div>
                         <div class="timeline-header-row">
                             <div class="timeline-title">${title}</div>
-                            <div class="timeline-date">${dateStr} • ${timeStr}</div>
+                            <div class="timeline-date">${dateStr} ${isPlan ? '' : '• ' + timeStr}</div>
                         </div>
                         <div class="timeline-body">${ev.detalle}</div>
-                         ${ev.servicio && ev.servicio !== 'GENERAL' ?
+                         ${ev.servicio && ev.servicio !== 'GENERAL' && !isPlan ?
                         `<span class="timeline-badge" style="background: #edf2f7; color: #718096; margin-top: 0.75rem;">${ev.servicio}</span>` : ''}
                         ${ev.estado ?
                         `<span class="timeline-badge" style="background: ${getStatusColor(ev.estado)}; color: white; margin-left: 0.5rem;">${ev.estado}</span>` : ''}
@@ -635,9 +647,10 @@
 
         function getStatusColor(status) {
             const s = status.toUpperCase();
-            if (s === 'COMPLETADO' || s === 'ASISTIÓ') return '#48bb78';
-            if (s === 'AUSENTE' || s === 'CANCELADO') return '#f56565';
-            if (s === 'PENDIENTE') return '#4299e1';
+            if (s === 'COMPLETADO' || s === 'ASISTIÓ' || s === 'REALIZADO') return '#48bb78'; // Green
+            if (s === 'AUSENTE' || s === 'CANCELADO') return '#f56565'; // Red
+            if (s === 'PENDIENTE') return '#d69e2e'; // Yellow (Darker for readability)
+            if (s === 'EN_CURSO') return '#4299e1'; // Blue
             return '#a0aec0';
         }
 

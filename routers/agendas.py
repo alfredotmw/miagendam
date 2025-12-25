@@ -13,7 +13,15 @@ router = APIRouter(prefix="/agendas", tags=["Agendas"])
 
 @router.get("/")
 def listar_agendas(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    agendas = db.query(Agenda).all()
+    query = db.query(Agenda)
+    
+    # 🛡️ Service Selector: Si es MEDICO, solo ver su propia agenda
+    if current_user["role"] == "MEDICO":
+        # Asumimos que 'profesional' en Agenda coincide con 'username' del usuario
+        # O buscar por coincidencia parcial si es necesario
+        query = query.filter(Agenda.profesional == current_user["username"])
+        
+    agendas = query.all()
     return agendas
 
 @router.get("/{agenda_id}/slots")
