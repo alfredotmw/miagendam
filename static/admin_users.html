@@ -220,12 +220,15 @@
                         <td style="font-weight: 500;">${u.username}</td>
                         <td><span class="role-badge role-${u.role}">${u.role}</span></td>
                         <td>
-                            <!-- Future: Edit/Delete -->
+                            <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick='editUser(${JSON.stringify(u)})'>✏️ Editar</button>
                         </td>
                     </tr>
                 `).join('');
             }
         }
+
+        let isEditing = false;
+        let editingUserId = null;
 
         document.getElementById('userForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -238,42 +241,79 @@
                 .map(cb => cb.value)
                 .join(',');
 
+            const payload = { role, allowed_agendas: selectedAgendas };
+            // Solo enviar username/pass si es creación o si se escribieron (para edit)
+            if (!isEditing) {
+                payload.username = username;
+                payload.password = password;
+            } else {
+                if (password) payload.password = password; // Optional pass update
+            }
+
+            const url = isEditing ? `/users/${editingUserId}` : '/users/register';
+            const method = isEditing ? 'PUT' : 'POST';
+
             try {
-                const res = await fetch('/users/register', {
-                    method: 'POST',
+                const res = await fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({
-                        username,
-                        password,
-                        role,
-                        allowed_agendas: selectedAgendas
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 if (res.ok) {
                     closeModal();
                     loadUsersList();
-                    e.target.reset();
-                    // Reset checkboxes
-                    document.querySelectorAll('#agenda-options input').forEach(cb => cb.checked = false);
                 } else {
                     const err = await res.json();
                     const errDiv = document.getElementById('form-error');
                     errDiv.style.display = 'block';
-                    errDiv.textContent = err.detail || 'Error al crear usuario';
+                    errDiv.textContent = err.detail || 'Error al guardar';
                 }
             } catch (error) {
                 console.error(error);
-                const errDiv = document.getElementById('form-error');
-                errDiv.style.display = 'block';
-                errDiv.textContent = 'Error de conexión';
+                alert('Error de conexión');
             }
         });
 
-        function openModal() { document.getElementById('new-user-modal').classList.add('active'); }
+        function openModal() {
+            isEditing = false;
+            editingUserId = null;
+            document.querySelector('.modal-title').textContent = 'Nuevo Usuario';
+            document.getElementById('userForm').reset();
+            document.getElementById('new-username').disabled = false;
+            document.getElementById('new-password').required = true;
+            document.querySelectorAll('#agenda-options input').forEach(cb => cb.checked = false);
+
+            document.getElementById('new-user-modal').classList.add('active');
+        }
+
+        function editUser(user) {
+            isEditing = true;
+            editingUserId = user.id;
+
+            document.querySelector('.modal-title').textContent = 'Editar Usuario';
+            document.getElementById('new-username').value = user.username;
+            document.getElementById('new-username').disabled = true; // Username immutable usually
+            document.getElementById('new-password').value = '';
+            document.getElementById('new-password').required = false; // Pass optional on edit
+            document.getElementById('new-role').value = user.role;
+
+            // Pre-select agendas
+            document.querySelectorAll('#agenda-options input').forEach(cb => cb.checked = false);
+            if (user.allowed_agendas) {
+                const ids = user.allowed_agendas.split(',').map(s => s.trim());
+                ids.forEach(id => {
+                    const cb = document.getElementById(`agenda-${id}`);
+                    if (cb) cb.checked = true;
+                });
+            }
+
+            document.getElementById('new-user-modal').classList.add('active');
+        }
+
         function closeModal() { document.getElementById('new-user-modal').classList.remove('active'); document.getElementById('form-error').style.display = 'none'; }
 
         function logout() {

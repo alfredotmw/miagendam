@@ -42,14 +42,30 @@ def get_timeline(
     paciente_id: int, 
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user) # 🔐 Inject User
 ):
     # 0. Fetch Paciente
     paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
+    # 🛑 PERMISSION CHECK
+    # Si el usuario tiene 'allowed_agendas', filtrar lo que ve.
+    allowed_ids_str = current_user.get("allowed_agendas")
+    allowed_ids = []
+    if allowed_ids_str:
+        try:
+            allowed_ids = [int(x.strip()) for x in allowed_ids_str.split(",") if x.strip()]
+        except:
+            pass
+    
+    is_restricted = len(allowed_ids) > 0 and current_user["role"] != "ADMIN"
+
     # 1. Fetch Notes
+    # For now, we show all notes unless strictly needed otherwise. 
+    # Notes are context. But if strict needed, we could filter by service match.
+    # Leaving notes visible for better context unless user specific request for notes specifically.
     query_notas = db.query(HistoriaClinica).filter(HistoriaClinica.paciente_id == paciente_id)
     if start_date:
         query_notas = query_notas.filter(HistoriaClinica.fecha >= start_date)
@@ -58,8 +74,13 @@ def get_timeline(
     
     notas = query_notas.all()
     
-    # 2. Fetch Turnos
+    # 2. Fetch Turnos (Strictly Filtered)
     query_turnos = db.query(Turno).filter(Turno.paciente_id == paciente_id)
+    
+    # 🕵️ APPLY FILTER
+    if is_restricted:
+        query_turnos = query_turnos.filter(Turno.agenda_id.in_(allowed_ids))
+
     if start_date:
         query_turnos = query_turnos.filter(Turno.fecha >= start_date)
     if end_date:
@@ -198,10 +219,11 @@ def get_timeline_by_dni(
     dni: str, 
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user) # Pass user
 ):
     paciente = db.query(Paciente).filter(Paciente.dni == dni).first()
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
     
-    return get_timeline(paciente.id, start_date, end_date, db)
+    return get_timeline(paciente.id, start_date, end_date, db, current_user)

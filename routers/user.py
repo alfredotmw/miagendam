@@ -97,3 +97,36 @@ def read_users(
 ):
     users = db.query(User).offset(skip).limit(limit).all()
     return users
+
+
+# ✏️ Editar Usuario
+class UserUpdate(BaseModel):
+    role: Optional[UserRole] = None
+    allowed_agendas: Optional[str] = None
+    password: Optional[str] = None # Opcional: Permitir reset de password
+
+@router.put("/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: int,
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles(["ADMIN"]))
+):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if user_update.role:
+        db_user.role = user_update.role
+    
+    # Permitir borrar permisos enviando string vacío o cambiarlo explicitamente
+    if user_update.allowed_agendas is not None:
+        db_user.allowed_agendas = user_update.allowed_agendas
+
+    if user_update.password:
+        hashed_password = bcrypt.hashpw(user_update.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        db_user.password = hashed_password
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
