@@ -146,3 +146,19 @@ def check_and_migrate_db(engine: Engine):
                     conn.execute(text(f"ALTER TABLE historia_clinica ADD COLUMN {col_name} {final_type}"))
                     conn.commit()
                 logger.info(f"✅ Columna '{col_name}' agregada.")
+
+        # P1 Columns: Oncology
+        p1_cols = {
+            "ecog": "INTEGER",
+            "tnm": "VARCHAR",
+            "estadio": "VARCHAR",
+            "toxicidad": "TEXT"
+        }
+
+        for col_name, col_type in p1_cols.items():
+             if col_name not in h_columns:
+                logger.info(f"⚠️ Columna '{col_name}' faltante en 'historia_clinica'. Agregando...")
+                with engine.connect() as conn:
+                    conn.execute(text(f"ALTER TABLE historia_clinica ADD COLUMN {col_name} {col_type}"))
+                    conn.commit()
+                logger.info(f"✅ Columna '{col_name}' agregada.")

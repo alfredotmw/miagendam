@@ -37,6 +37,12 @@ class HistoriaClinica(Base):
     
     es_enmienda_de_id = Column(Integer, ForeignKey("historia_clinica.id"), nullable=True)
 
+    # P1: Oncology Fields
+    ecog = Column(Integer, nullable=True) # 0-5
+    tnm = Column(String, nullable=True)
+    estadio = Column(String, nullable=True)
+    toxicidad = Column(Text, nullable=True)
+
     # Relaciones
     paciente = relationship("Paciente", back_populates="historia_clinica")
     medico = relationship("User", foreign_keys=[medico_id], backref="historias_creadas") # Medico principal (compatibilidad)

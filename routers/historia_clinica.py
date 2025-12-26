@@ -53,7 +53,12 @@ def crear_nota(
         plan_estudio=nota.plan_estudio,
         diagnostico_diferencial=nota.diagnostico_diferencial,
         tratamiento=nota.tratamiento,
-        evolucion=nota.evolucion
+        evolucion=nota.evolucion,
+        # P1 Oncology
+        ecog=nota.ecog,
+        tnm=nota.tnm,
+        estadio=nota.estadio,
+        toxicidad=nota.toxicidad
     )
     db.add(nueva_nota)
     db.commit()
@@ -95,6 +100,12 @@ def update_nota(
     db_nota.tratamiento = nota_update.tratamiento
     db_nota.evolucion = nota_update.evolucion
     db_nota.texto = nota_update.texto or db_nota.texto
+    
+    # P1 Update
+    db_nota.ecog = nota_update.ecog
+    db_nota.tnm = nota_update.tnm
+    db_nota.estadio = nota_update.estadio
+    db_nota.toxicidad = nota_update.toxicidad
 
     db.commit()
     db.refresh(db_nota)
@@ -182,7 +193,12 @@ def get_timeline(
                 "plan": nota.plan_estudio,
                 "dx_dif": nota.diagnostico_diferencial,
                 "tratamiento": nota.tratamiento,
-                "evolucion": nota.evolucion
+                "evolucion": nota.evolucion,
+                # P1
+                "ecog": nota.ecog,
+                "tnm": nota.tnm,
+                "estadio": nota.estadio,
+                "toxicidad": nota.toxicidad
             }
         ))
 

@@ -13,6 +13,11 @@ class HistoriaClinicaBase(BaseModel):
     tratamiento: Optional[str] = None
     evolucion: Optional[str] = None
     estado: Optional[str] = "BORRADOR"
+    # P1 Oncology
+    ecog: Optional[int] = None # 0-5
+    tnm: Optional[str] = None
+    estadio: Optional[str] = None
+    toxicidad: Optional[str] = None
 
 class HistoriaClinicaCreate(HistoriaClinicaBase):
     paciente_id: int

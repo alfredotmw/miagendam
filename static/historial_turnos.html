@@ -400,6 +400,50 @@
             </div>
             <form id="noteForm">
                 <div class="form-grid">
+                    <!-- P1: Oncology Section -->
+                    <div
+                        style="grid-column: 1 / -1; background: #ebf8ff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #2b6cb0;">📊 Estado Oncológico (P1)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>ECOG (0-5)</label>
+                                <select id="note-ecog" class="form-input">
+                                    <option value="">-</option>
+                                    <option value="0">0 - Activo</option>
+                                    <option value="1">1 - Restringido</option>
+                                    <option value="2">2 - Incapaz laboral</option>
+                                    <option value="3">3 - Capaz autocuidado</option>
+                                    <option value="4">4 - Incapaz autocuidado</option>
+                                    <option value="5">5 - Fallecido</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>TNM</label>
+                                <input type="text" id="note-tnm" class="form-input" placeholder="ej. T2N0M0">
+                            </div>
+                            <div class="form-group">
+                                <label>Estadio</label>
+                                <select id="note-estadio" class="form-input">
+                                    <option value="">-</option>
+                                    <option value="IA">IA</option>
+                                    <option value="IB">IB</option>
+                                    <option value="IIA">IIA</option>
+                                    <option value="IIB">IIB</option>
+                                    <option value="IIIA">IIIA</option>
+                                    <option value="IIIB">IIIB</option>
+                                    <option value="IIIC">IIIC</option>
+                                    <option value="IV">IV</option>
+                                    <option value="IVA">IVA</option>
+                                    <option value="IVB">IVB</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 0.5rem;">
+                            <label>Toxicidad (CTCAE)</label>
+                            <input type="text" id="note-toxicidad" class="form-input" placeholder="ej. Neutropenia G2">
+                        </div>
+                    </div>
+
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label>Motivo de Consulta</label>
                         <textarea id="note-motivo" class="form-input" rows="2" style="width:100%"></textarea>
@@ -544,7 +588,24 @@
                 let content = ev.detalle;
                 if (ev.structured_content && (ev.structured_content.motivo || ev.structured_content.evolucion)) {
                     const sc = ev.structured_content;
-                    content = `<div style="display:grid;gap:0.5rem;font-size:0.9rem;">
+
+                    // P1: Oncology Box
+                    let oncoBox = '';
+                    if (sc.ecog != null || sc.tnm || sc.estadio || sc.toxicidad) {
+                        oncoBox = `
+                        <div style="background:#ebf8ff; border-left:4px solid #4299e1; padding:0.5rem; margin-bottom:0.75rem; border-radius:4px; font-size:0.85rem; color:#2c5282;">
+                            <div style="font-weight:700; border-bottom:1px solid #bee3f8; padding-bottom:2px; margin-bottom:4px;">📊 Resumen Oncológico</div>
+                            <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                                ${sc.ecog != null ? `<span><b>ECOG:</b> ${sc.ecog}</span>` : ''}
+                                ${sc.tnm ? `<span><b>TNM:</b> ${sc.tnm}</span>` : ''}
+                                ${sc.estadio ? `<span><b>Estadio:</b> ${sc.estadio}</span>` : ''}
+                                ${sc.toxicidad ? `<span style="color:#e53e3e;"><b>Toxicidad:</b> ${sc.toxicidad}</span>` : ''}
+                            </div>
+                        </div>`;
+                    }
+
+                    content = `${oncoBox}
+                    <div style="display:grid;gap:0.5rem;font-size:0.9rem;">
                         ${sc.motivo ? `<div><strong>Motivo:</strong> ${sc.motivo}</div>` : ''}
                         ${sc.antecedentes ? `<div><strong>Ant:</strong> ${sc.antecedentes}</div>` : ''}
                         ${sc.examen ? `<div><strong>Examen:</strong> ${sc.examen}</div>` : ''}
@@ -604,6 +665,11 @@
                 currentNoteId = note.id_referencia;
                 document.querySelector('.modal-title').textContent = "Editar Borrador";
                 const sc = note.structured_content || {};
+                document.getElementById('note-ecog').value = sc.ecog || '';
+                document.getElementById('note-tnm').value = sc.tnm || '';
+                document.getElementById('note-estadio').value = sc.estadio || '';
+                document.getElementById('note-toxicidad').value = sc.toxicidad || '';
+
                 document.getElementById('note-motivo').value = sc.motivo || '';
                 document.getElementById('note-antecedentes').value = sc.antecedentes || '';
                 document.getElementById('note-examen').value = sc.examen || '';
@@ -624,6 +690,10 @@
             const payload = {
                 paciente_id: currentPatientId,
                 servicio: "CONSULTA ONC.",
+                ecog: document.getElementById('note-ecog').value || null,
+                tnm: document.getElementById('note-tnm').value,
+                estadio: document.getElementById('note-estadio').value,
+                toxicidad: document.getElementById('note-toxicidad').value,
                 motivo_consulta: document.getElementById('note-motivo').value,
                 antecedentes: document.getElementById('note-antecedentes').value,
                 examen_clinico: document.getElementById('note-examen').value,
