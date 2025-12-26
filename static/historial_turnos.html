@@ -88,7 +88,6 @@
 
         .timeline-section {
             background: #f8fafc;
-            /* Distinct from white cards */
             min-height: 500px;
             border-radius: 1rem;
             padding: 1rem;
@@ -114,7 +113,7 @@
                 counter-reset: page;
             }
 
-            /* Folio Numbering in Header or Footer */
+            /* Folio Numbering */
             @page {
                 margin: 0;
                 counter-increment: page;
@@ -125,18 +124,6 @@
                     color: #555;
                 }
             }
-
-            /* For browsers not supporting @bottom-right (Chrome/Edge often ignore it), use fixed element hack */
-            .folio-number::after {
-                content: "Folio " counter(page);
-                /* Note: CSS counters don't work reliably across page breaks in DOM elements in Chrome */
-                /* Alternative: JS pagination or simple "Página X" text if simpler */
-                content: "";
-                /* Clean slate, difficult to do pure CSS counter per page in HTML-to-PDF standard engines without PagedJS */
-            }
-
-            /* SIMPLER APPROACH: Just put Folio Placeholder for physical stamping or manual JS calculation */
-            /* Actually, user asked for "Hojas Foliadas". Usually usually implies numbered pages. */
 
             .print-footer-content::after {
                 content: "Hoja Foliada";
@@ -158,7 +145,8 @@
             .search-header-container,
             .filters-card,
             #welcome-state,
-            button {
+            button,
+            .modal {
                 display: none !important;
             }
 
@@ -169,7 +157,6 @@
                 border-collapse: collapse;
             }
 
-            /* Table Setup */
             #print-layout thead {
                 display: table-header-group;
             }
@@ -182,18 +169,14 @@
                 display: table-row-group;
             }
 
-            /* Spacers for fixed elements */
             .header-space {
                 height: 100px;
-                /* Same height as fixed header */
             }
 
             .footer-space {
                 height: 60px;
-                /* Same height as fixed footer */
             }
 
-            /* Fixed Header/Footer Positioning */
             .print-header-content {
                 position: fixed;
                 top: 0;
@@ -223,12 +206,10 @@
                 color: #555;
             }
 
-            /* Content Styling within Table */
             .content-container {
                 padding: 1cm;
             }
 
-            /* Adjust patient card for print context */
             .patient-card {
                 box-shadow: none !important;
                 border: 1px solid #e2e8f0;
@@ -241,11 +222,6 @@
                 box-shadow: none !important;
                 page-break-inside: avoid;
             }
-        }
-
-        /* Helper for JS to move content */
-        .print-content-ready {
-            display: block !important;
         }
 
         .footer-col {
@@ -266,7 +242,7 @@
 </head>
 
 <body>
-    <!-- Print Layout (Table-based for recurring headers/footers) -->
+    <!-- Print Layout -->
     <table id="print-layout">
         <thead>
             <tr>
@@ -282,7 +258,6 @@
             <tr>
                 <td>
                     <div class="content-container">
-                        <!-- Content will be moved here on print -->
                         <div id="print-content-placeholder"></div>
                     </div>
                 </td>
@@ -295,28 +270,14 @@
                     <div class="print-footer-content">
                         <div class="footer-col">
                             <strong>San Martín 2473</strong>
-                            <svg fill="#25D366" viewBox="0 0 24 24" width="14" height="14">
-                                <path
-                                    d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.991.564 1.761.79 2.796.79 3.18 0 5.767-2.587 5.768-5.766.001-3.182-2.585-5.979-5.768-5.977zm0 10.5c-.868 0-1.636-.25-2.261-.532l-.24-.112-1.62.42.417-1.558-.1-.264c-.47-.954-.606-1.583-.606-2.69 0-2.652 2.155-4.809 4.809-4.809 2.651 0 5.165 2.157 5.165 4.809 0 2.65-2.155 4.736-5.564 4.736z" />
-                            </svg>
                             <span>3794684336</span>
                         </div>
                         <div class="footer-col" style="border-left: 1px solid #ddd; border-right: 1px solid #ddd;">
                             <strong>Colombia 1249</strong>
-                            <svg fill="#25D366" viewBox="0 0 24 24" width="14" height="14">
-                                <path
-                                    d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.991.564 1.761.79 2.796.79 3.18 0 5.767-2.587 5.768-5.766.001-3.182-2.585-5.979-5.768-5.977zm0 10.5c-.868 0-1.636-.25-2.261-.532l-.24-.112-1.62.42.417-1.558-.1-.264c-.47-.954-.606-1.583-.606-2.69 0-2.652 2.155-4.809 4.809-4.809 2.651 0 5.165 2.157 5.165 4.809 0 2.65-2.155 4.736-5.564 4.736z" />
-                            </svg>
                             <span>3794409595</span>
                         </div>
                         <div class="footer-col">
-                            <svg fill="#E1306C" viewBox="0 0 24 24" width="14" height="14">
-                                <path
-                                    d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                            </svg>
                             <span>@oncologicocorrientes</span>
-                        </div>
-                        <div style="position: absolute; right: 10px; font-size: 8px; color: #ccc;">v3.0 - Table Layout
                         </div>
                     </div>
                 </td>
@@ -324,51 +285,18 @@
         </tfoot>
     </table>
 
-    <!-- Sidebar (Same as others) -->
+    <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
             <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
             <h3>Agenda Médica</h3>
         </div>
         <nav class="sidebar-nav">
-            <a href="/static/dashboard.html" class="nav-item">
-                <svg fill="none" class="w-6 h-6" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v2z">
-                    </path>
-                </svg>
-                Dashboard
-            </a>
-            <a href="/static/agendas.html" class="nav-item">
-                <svg fill="none" class="w-6 h-6" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                    </path>
-                </svg>
-                Agendas
-            </a>
-            <a href="/static/nuevo_turno.html" class="nav-item">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Nuevo Turno
-            </a>
-            <a href="/static/historial_turnos.html" class="nav-item active">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
-                    </path>
-                </svg>
-                Historia Clínica
-            </a>
-            <a href="/static/reporte_notificaciones.html" class="nav-item">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
-                    </path>
-                </svg>
-                Notificaciones
-            </a>
+            <a href="/static/dashboard.html" class="nav-item">Dashboard</a>
+            <a href="/static/agendas.html" class="nav-item">Agendas</a>
+            <a href="/static/nuevo_turno.html" class="nav-item">Nuevo Turno</a>
+            <a href="/static/historial_turnos.html" class="nav-item active">Historia Clínica</a>
+            <a href="/static/reporte_notificaciones.html" class="nav-item">Notificaciones</a>
         </nav>
         <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
     </div>
@@ -385,9 +313,6 @@
                 <button class="btn-primary" onclick="searchHistory()"
                     style="width: auto; padding: 0 1.5rem; height: 3rem;">Buscar</button>
             </div>
-            <div class="user-profile">
-                <!-- User profile info -->
-            </div>
         </header>
 
         <div id="welcome-state" style="text-align: center; padding: 4rem; color: #a0aec0;">
@@ -396,7 +321,6 @@
         </div>
 
         <div id="history-content" class="history-grid" style="display: none;">
-
             <!-- Left: Patient Card -->
             <div class="patient-card">
                 <div class="patient-avatar-large">
@@ -454,21 +378,15 @@
             </div>
         </div>
     </div>
-    </div>
 
     <!-- Patient Selection Modal -->
-    <div id="patientModal" class="modal"
-        style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); align-items: center; justify-content: center;">
-        <div class="modal-content"
-            style="background-color: #fefefe; margin: auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 600px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-            <div class="modal-header"
-                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">
-                <h3 style="margin: 0; color: #2d3748;">Seleccionar Paciente</h3>
-                <span onclick="closeModal()"
-                    style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+    <div id="patientModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Seleccionar Paciente</h3>
+                <span class="close-modal" onclick="closeModal()">&times;</span>
             </div>
             <div id="patientList" style="max-height: 400px; overflow-y: auto;">
-                <!-- List items will be injected here -->
             </div>
         </div>
     </div>
@@ -484,43 +402,27 @@
                 <div class="form-grid">
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label>Motivo de Consulta</label>
-                        <textarea id="note-motivo" class="form-input" rows="2" style="width:100%" required></textarea>
+                        <textarea id="note-motivo" class="form-input" rows="2" style="width:100%"></textarea>
                     </div>
-
-                    <div class="form-group">
-                        <label>Antecedentes</label>
-                        <textarea id="note-antecedentes" class="form-input" rows="3" style="width:100%"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Examen Físico</label>
-                        <textarea id="note-examen" class="form-input" rows="3" style="width:100%"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Diagnóstico Diferencial</label>
-                        <textarea id="note-diagnostico" class="form-input" rows="3" style="width:100%"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Plan de Estudio</label>
-                        <textarea id="note-plan" class="form-input" rows="3" style="width:100%"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Tratamiento</label>
-                        <textarea id="note-tratamiento" class="form-input" rows="3" style="width:100%"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Evolución</label>
-                        <textarea id="note-evolucion" class="form-input" rows="3" style="width:100%"></textarea>
-                    </div>
+                    <div class="form-group"><label>Antecedentes</label><textarea id="note-antecedentes"
+                            class="form-input" rows="3"></textarea></div>
+                    <div class="form-group"><label>Examen Físico</label><textarea id="note-examen" class="form-input"
+                            rows="3"></textarea></div>
+                    <div class="form-group"><label>Diagnóstico Diferencial</label><textarea id="note-diagnostico"
+                            class="form-input" rows="3"></textarea></div>
+                    <div class="form-group"><label>Plan de Estudio</label><textarea id="note-plan" class="form-input"
+                            rows="3"></textarea></div>
+                    <div class="form-group"><label>Tratamiento</label><textarea id="note-tratamiento" class="form-input"
+                            rows="3"></textarea></div>
+                    <div class="form-group"><label>Evolución</label><textarea id="note-evolucion" class="form-input"
+                            rows="3"></textarea></div>
                 </div>
-
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeNoteModal()">Cancelar</button>
-                    <button type="submit" class="btn-primary" style="width: auto;">Guardar</button>
+                    <button type="button" class="btn-secondary" onclick="submitNote('GUARDAR')"
+                        style="width: auto;">Guardar Borrador</button>
+                    <button type="button" class="btn-primary" onclick="submitNote('FIRMAR')"
+                        style="width: auto; background-color: #e53e3e;">Firmar y Guardar</button>
                 </div>
             </form>
         </div>
@@ -532,326 +434,225 @@
 
         let currentDni = null;
         let currentPatientId = null;
+        let currentNoteId = null;
+        let eventsMap = {}; // Map to store events by ID for easy access
 
-        function handleEnter(e) {
-            if (e.key === 'Enter') searchHistory();
-        }
-
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/static/login.html';
-        }
+        function handleEnter(e) { if (e.key === 'Enter') searchHistory(); }
+        function logout() { localStorage.removeItem('token'); window.location.href = '/static/login.html'; }
 
         async function searchHistory() {
             const input = document.getElementById('search-dni').value.trim();
             if (!input) { alert("Ingrese un DNI o Apellido"); return; }
-
-            // UI Feedback
             const btn = document.querySelector('.search-container button');
             const originalText = btn.textContent;
-            btn.textContent = '...';
-            btn.disabled = true;
+            btn.textContent = '...'; btn.disabled = true;
 
             try {
-                // Determine if input resembles a DNI (digits only, at least 6)
                 const isDni = /^\d+$/.test(input) && input.length > 5;
-
                 if (isDni) {
                     currentDni = input;
                     await fetchAndRender(input);
                 } else {
-                    // It's likely a name/surname
-                    const res = await fetch(`/pacientes/?q=${encodeURIComponent(input)}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-
-                    if (!res.ok) throw new Error("Error searching patients");
-
+                    const res = await fetch(`/pacientes/?q=${encodeURIComponent(input)}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!res.ok) throw new Error("Error");
                     const patients = await res.json();
-
-                    if (patients.length === 0) {
-                        alert("No se encontraron pacientes con ese nombre/apellido.");
-                    } else if (patients.length === 1) {
-                        currentDni = patients[0].dni;
-                        await fetchAndRender(patients[0].dni);
-                    } else {
-                        showPatientModal(patients);
-                    }
+                    if (patients.length === 0) alert("No se encontraron pacientes.");
+                    else if (patients.length === 1) { currentDni = patients[0].dni; await fetchAndRender(patients[0].dni); }
+                    else showPatientModal(patients);
                 }
-            } catch (error) {
-                console.error(error);
-                alert('Error al buscar paciente');
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
+            } catch (error) { console.error(error); alert('Error al buscar paciente'); }
+            finally { btn.textContent = originalText; btn.disabled = false; }
         }
 
         function showPatientModal(patients) {
             const list = document.getElementById('patientList');
             list.innerHTML = '';
-
             patients.forEach(p => {
                 const div = document.createElement('div');
-                div.style.padding = '1rem';
-                div.style.borderBottom = '1px solid #eee';
-                div.style.cursor = 'pointer';
-                div.style.display = 'flex';
-                div.style.justifyContent = 'space-between';
-                div.style.alignItems = 'center';
-                div.onmouseover = () => div.style.background = '#f7fafc';
-                div.onmouseout = () => div.style.background = 'transparent';
-
-                div.innerHTML = `
-                    <div>
-                        <div style="font-weight: 600; color: #2d3748;">${p.apellido}, ${p.nombre}</div>
-                        <div style="font-size: 0.85rem; color: #718096;">DNI: ${p.dni} | OS: ${p.obra_social ? p.obra_social.nombre : '-'}</div>
-                    </div>
-                    <button class="btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">Ver</button>
-                `;
-
-                div.onclick = () => {
-                    currentDni = p.dni;
-                    fetchAndRender(p.dni);
-                    closeModal();
-                };
-
+                div.style.padding = '1rem'; div.style.borderBottom = '1px solid #eee'; div.style.cursor = 'pointer';
+                div.innerHTML = `<strong>${p.apellido}, ${p.nombre}</strong><br><small>DNI: ${p.dni}</small>`;
+                div.onclick = () => { currentDni = p.dni; fetchAndRender(p.dni); closeModal(); };
                 list.appendChild(div);
             });
-
-            const modal = document.getElementById('patientModal');
-            modal.style.display = 'flex';
+            document.getElementById('patientModal').style.display = 'flex';
         }
 
-        function closeModal() {
-            document.getElementById('patientModal').style.display = 'none';
-        }
-
-        // Close modal if clicking outside
-        window.onclick = function (event) {
-            const modal = document.getElementById('patientModal');
-            if (event.target == modal) {
-                modal.style.display = "none";
-            }
-        }
+        function closeModal() { document.getElementById('patientModal').style.display = 'none'; }
+        window.onclick = function (e) { if (e.target == document.getElementById('patientModal')) closeModal(); }
 
         async function applyFilters() {
             if (!currentDni) return;
-            const start = document.getElementById('filter-start').value;
-            const end = document.getElementById('filter-end').value;
-            await fetchAndRender(currentDni, start, end);
+            await fetchAndRender(currentDni, document.getElementById('filter-start').value, document.getElementById('filter-end').value);
         }
 
         async function fetchAndRender(dni, start = null, end = null) {
-            // Show loading...
-
             let url = `/historia-clinica/dni/${dni}/timeline`;
             const params = new URLSearchParams();
             if (start) params.append('start_date', start);
             if (end) params.append('end_date', end);
-
             if (params.toString()) url += `?${params.toString()}`;
 
             try {
-                const res = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (res.status === 404) {
-                    alert("Paciente no encontrado");
-                    return;
-                }
-                if (!res.ok) throw new Error("Error loading history");
-
+                const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.status === 404) { alert("Paciente no encontrado"); return; }
+                if (!res.ok) throw new Error("Error loading");
                 const data = await res.json();
                 renderPage(data);
-
-            } catch (e) {
-                console.error(e);
-                alert("Error al cargar la historia");
-            }
+            } catch (e) { alert("Error al cargar la historia"); }
         }
 
         function renderPage(data) {
             document.getElementById('welcome-state').style.display = 'none';
             document.getElementById('history-content').style.display = 'grid';
-
-            // 1. Render Patient Card
             const p = data.paciente;
             currentPatientId = p.id;
             document.getElementById('p-nombre').textContent = `${p.apellido}, ${p.nombre}`;
             document.getElementById('p-dni').textContent = p.dni;
             document.getElementById('p-edad').textContent = p.edad ? `${p.edad} años` : '-';
-            document.getElementById('p-obra-social').textContent = p.obra_social ? p.obra_social.nombre : 'Particular/Sin OS';
-
-            // 2. Render Timeline
+            document.getElementById('p-obra-social').textContent = p.obra_social ? p.obra_social.nombre : '-';
             renderTimeline(data.timeline);
         }
 
         function renderTimeline(events) {
             const container = document.getElementById('timeline-container');
+            eventsMap = {}; // Reset
+
             if (!events || events.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: #a0aec0;">No hay registros para este periodo.</div>';
+                container.innerHTML = '<div style="text-align:center;padding:2rem;color:#a0aec0">No hay registros.</div>';
                 return;
             }
 
             container.innerHTML = events.map(ev => {
+                if (ev.id_referencia) eventsMap[ev.id_referencia] = ev; // Index for editing
+
                 const isNota = ev.tipo === 'NOTA';
                 const isPlan = ev.tipo === 'PLAN_TRATAMIENTO';
+                let icon = '📝'; let typeClass = 'type-nota'; let title = ev.descripcion;
 
-                let icon = '📝';
-                let typeClass = 'type-nota';
-                let title = isNota ? 'Nota de Evolución' : ev.descripcion;
-
-                if (isPlan) {
-                    icon = '📅';
-                    typeClass = 'type-plan';
-                    title = ev.descripcion;
-                } else if (isNota) {
-                    // Check if it's structured
-                    /* 
-                       Since ev.detalle contains 'texto', we might need to fetch the structured fields 
-                       from the TimelineEvent schema (which currently only has 'detalle'). 
-                       Wait, backend creates TimelineEvent using 'detalle' = nota.texto.
-                       Issue: We need the full structured object in TimelineEvent to render properly.
-                       
-                       QUICK FIX: Append structured text into 'detalle' boolean style or formatted HTML in backend?
-                       OR: Update TimelineEvent schema to optionally include structured map.
-                    */
-                } else if (!isNota) {
-                    const descUpper = ev.descripcion.toUpperCase();
-                    if (descUpper.includes('QUIMIO')) { icon = '💧'; typeClass = 'type-quimio'; }
-                    else if (descUpper.includes('TOMO') || descUpper.includes('RADIO')) { icon = '☢️'; typeClass = 'type-tomo'; }
+                if (isPlan) { icon = '📅'; typeClass = 'type-plan'; }
+                else if (!isNota) {
+                    if (ev.descripcion.includes('QUIMIO')) { icon = '💧'; typeClass = 'type-quimio'; }
+                    else if (ev.descripcion.includes('TOMO')) { icon = '☢️'; typeClass = 'type-tomo'; }
                     else { icon = '🏥'; typeClass = 'type-consult'; }
-                } else {
-                    const srv = (ev.servicio || '').toUpperCase();
-                    if (srv === 'QUIMIOTERAPIA') { typeClass = 'type-quimio'; }
-                    if (srv === 'TOMOGRAFIA') { typeClass = 'type-tomo'; }
                 }
 
-                const dateObj = new Date(ev.fecha);
-                const dateStr = dateObj.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
-                const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+                if (isNota) title = "Nota de Evolución";
+
+                const dateStr = new Date(ev.fecha).toLocaleDateString('es-AR');
+                const timeStr = new Date(ev.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+
+                let content = ev.detalle;
+                if (ev.structured_content && (ev.structured_content.motivo || ev.structured_content.evolucion)) {
+                    const sc = ev.structured_content;
+                    content = `<div style="display:grid;gap:0.5rem;font-size:0.9rem;">
+                        ${sc.motivo ? `<div><strong>Motivo:</strong> ${sc.motivo}</div>` : ''}
+                        ${sc.antecedentes ? `<div><strong>Ant:</strong> ${sc.antecedentes}</div>` : ''}
+                        ${sc.examen ? `<div><strong>Examen:</strong> ${sc.examen}</div>` : ''}
+                        ${sc.dx_dif ? `<div><strong>Dx:</strong> ${sc.dx_dif}</div>` : ''}
+                        ${sc.plan ? `<div><strong>Plan:</strong> ${sc.plan}</div>` : ''}
+                        ${sc.tratamiento ? `<div><strong>Tto:</strong> ${sc.tratamiento}</div>` : ''}
+                        ${sc.evolucion ? `<div><strong>Evolución:</strong> ${sc.evolucion}</div>` : ''}
+                    </div>`;
+                    title = "Evolución Clínica";
+                }
 
                 const signature = ev.medico_nombre ?
-                    `<div style="margin-top:0.5rem; font-size:0.8rem; color:#4a5568; border-top:1px dashed #e2e8f0; padding-top:0.25rem;">
-                        <strong>Prof:</strong> ${ev.medico_nombre} 
-                        ${ev.medico_matricula ? `<span style="color:#718096">(${ev.medico_matricula})</span>` : ''}
+                    `<div style="margin-top:0.5rem;border-top:1px dashed #eee;padding-top:0.5rem;font-size:0.8rem">
+                        Firmado por: <strong>${ev.medico_nombre}</strong>
                      </div>` : '';
 
-                let bodyContent = ev.detalle;
-
-                if (ev.structured_content && (ev.structured_content.motivo || ev.structured_content.tratamiento)) {
-                    const sc = ev.structured_content;
-                    bodyContent = `
-                        <div style="display:grid; gap:0.5rem; font-size:0.9rem;">
-                            ${sc.motivo ? `<div><strong>Motivo:</strong> ${sc.motivo}</div>` : ''}
-                            ${sc.antecedentes ? `<div><strong>Antecedentes:</strong> ${sc.antecedentes}</div>` : ''}
-                            ${sc.examen ? `<div><strong>Examen:</strong> ${sc.examen}</div>` : ''}
-                            ${sc.dx_dif ? `<div><strong>Dx Dif:</strong> ${sc.dx_dif}</div>` : ''}
-                            ${sc.plan ? `<div><strong>Plan:</strong> ${sc.plan}</div>` : ''}
-                            ${sc.tratamiento ? `<div><strong>Tratamiento:</strong> ${sc.tratamiento}</div>` : ''}
-                            ${sc.evolucion ? `<div><strong>Evolución:</strong> ${sc.evolucion}</div>` : ''}
-                        </div>
-                    `;
-                    title = "Evolución Clínica Estructurada";
+                // Edit Button for Drafts
+                let actions = '';
+                if (isNota && ev.estado === 'BORRADOR') {
+                    actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}])" 
+                    style="float:right;background:none;border:none;color:#4299e1;cursor:pointer;font-size:0.85rem">✏️ Editar</button>`;
+                } else if (isNota && ev.estado === 'FIRMADO') {
+                    actions = `<span style="float:right;color:#48bb78;font-size:0.85rem">🔒 Firmado</span>`;
                 }
 
                 return `
-                    <div class="timeline-card">
-                        <div class="timeline-icon ${typeClass}">${icon}</div>
-                        <div class="timeline-header-row">
-                            <div class="timeline-title">${title}</div>
-                            <div class="timeline-date">${dateStr} ${isPlan ? '' : '• ' + timeStr}</div>
-                        </div>
-                        <div class="timeline-body">${bodyContent}</div>
-                         ${ev.servicio && ev.servicio !== 'GENERAL' && !isPlan ?
-                        `<span class="timeline-badge" style="background: #edf2f7; color: #718096; margin-top: 0.75rem;">${ev.servicio}</span>` : ''}
-                        ${ev.estado ?
-                        `<span class="timeline-badge" style="background: ${getStatusColor(ev.estado)}; color: white; margin-left: 0.5rem;">${ev.estado}</span>` : ''}
-                        ${signature}
+                <div class="timeline-card">
+                    <div class="timeline-icon ${typeClass}">${icon}</div>
+                    <div class="timeline-header-row">
+                        <div class="timeline-title">${title} ${actions}</div>
+                        <div class="timeline-date">${dateStr} ${!isPlan ? timeStr : ''}</div>
                     </div>
-                `;
+                    <div class="timeline-body">${content}</div>
+                    <div style="margin-top:0.5rem">
+                         ${ev.servicio ? `<span class="timeline-badge">${ev.servicio}</span>` : ''}
+                         <span class="timeline-badge" style="background:${getStatusColor(ev.estado)};color:white">${ev.estado || '-'}</span>
+                    </div>
+                    ${signature}
+                </div>`;
             }).join('');
         }
 
-        function getStatusColor(status) {
-            const s = status.toUpperCase();
-            if (s === 'COMPLETADO' || s === 'ASISTIÓ' || s === 'REALIZADO') return '#48bb78'; // Green
-            if (s === 'AUSENTE' || s === 'CANCELADO') return '#f56565'; // Red
-            if (s === 'PENDIENTE') return '#d69e2e'; // Yellow (Darker for readability)
-            if (s === 'EN_CURSO') return '#4299e1'; // Blue
+        function getStatusColor(s) {
+            if (!s) return '#a0aec0';
+            s = s.toUpperCase();
+            if (['COMPLETADO', 'REALIZADO', 'FIRMADO', 'ASISTIÓ'].includes(s)) return '#48bb78';
+            if (['BORRADOR', 'PENDIENTE'].includes(s)) return '#a0aec0';
+            if (s === 'EN_CURSO') return '#4299e1';
+            if (['AUSENTE', 'CANCELADO', 'ANULADO'].includes(s)) return '#f56565';
             return '#a0aec0';
         }
 
-        function handlePrint() {
-            // Clone content to print table
-            const pCard = document.querySelector('.patient-card').cloneNode(true);
-            const timeline = document.querySelector('.timeline-section').cloneNode(true);
-
-            // Remove print button from clone
-            const printBtn = pCard.querySelector('button');
-            if (printBtn) printBtn.remove();
-
-            const placeholder = document.getElementById('print-content-placeholder');
-            placeholder.innerHTML = '';
-            placeholder.appendChild(pCard);
-            placeholder.appendChild(timeline);
-
-            window.print();
-        }
-
-        // Note Modal Logic
-        function openNoteModal() {
-            if (!currentDni) { alert("Seleccione un paciente primero"); return; }
+        function openNoteModal(note = null) {
+            if (!currentDni && !note) { alert("Seleccione paciente"); return; }
             document.getElementById('noteModal').classList.add('active');
+            if (note) {
+                currentNoteId = note.id_referencia;
+                document.querySelector('.modal-title').textContent = "Editar Borrador";
+                const sc = note.structured_content || {};
+                document.getElementById('note-motivo').value = sc.motivo || '';
+                document.getElementById('note-antecedentes').value = sc.antecedentes || '';
+                document.getElementById('note-examen').value = sc.examen || '';
+                document.getElementById('note-diagnostico').value = sc.dx_dif || '';
+                document.getElementById('note-plan').value = sc.plan || '';
+                document.getElementById('note-tratamiento').value = sc.tratamiento || '';
+                document.getElementById('note-evolucion').value = sc.evolucion || '';
+            } else {
+                currentNoteId = null;
+                document.querySelector('.modal-title').textContent = "Nueva Evolución";
+                document.getElementById('noteForm').reset();
+            }
         }
-        function closeNoteModal() {
-            document.getElementById('noteModal').classList.remove('active');
-            document.getElementById('noteForm').reset();
-        }
+        function closeNoteModal() { document.getElementById('noteModal').classList.remove('active'); document.getElementById('noteForm').reset(); currentNoteId = null; }
 
-        document.getElementById('noteForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            // Get current patient ID (need to store it when fetching)
-            // We can get it from the URL or store in global var. 
-            // Let's rely on fetchAndRender storing data globally or re-fetching?
-            // BETTER: User global variable `currentPatientId` set in renderPage
-            if (!currentPatientId) return;
-
+        async function submitNote(action) {
+            if (action === 'FIRMAR' && !confirm("¿Firmar nota? No se podrá editar.")) return;
             const payload = {
                 paciente_id: currentPatientId,
-                servicio: "CONSULTA ONC.", // Default service or add selector if needed
+                servicio: "CONSULTA ONC.",
                 motivo_consulta: document.getElementById('note-motivo').value,
                 antecedentes: document.getElementById('note-antecedentes').value,
                 examen_clinico: document.getElementById('note-examen').value,
-                plan_estudio: document.getElementById('note-plan').value,
                 diagnostico_diferencial: document.getElementById('note-diagnostico').value,
+                plan_estudio: document.getElementById('note-plan').value,
                 tratamiento: document.getElementById('note-tratamiento').value,
                 evolucion: document.getElementById('note-evolucion').value,
-                texto: "Nota Estructurada" // Fallback
+                texto: "Nota",
+                accion: action
             };
-
+            const url = currentNoteId ? `/historia-clinica/${currentNoteId}` : '/historia-clinica/';
+            const method = currentNoteId ? 'PUT' : 'POST';
             try {
-                const res = await fetch('/historia-clinica/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    closeNoteModal();
-                    fetchAndRender(currentDni); // Refresh timeline
-                } else {
-                    alert("Error al guardar nota");
-                }
-            } catch (e) { console.error(e); alert("Error de conexión"); }
-        });
+                const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
+                if (res.ok) { closeNoteModal(); fetchAndRender(currentDni); }
+                else { const e = await res.json(); alert(e.detail); }
+            } catch (e) { alert("Error"); }
+        }
+        document.getElementById('noteForm').addEventListener('submit', e => e.preventDefault());
 
-        window.onafterprint = function () {
-            // Cleanup after print to save memory/DOM size
-            document.getElementById('print-content-placeholder').innerHTML = '';
-        };
+        function handlePrint() {
+            const pCard = document.querySelector('.patient-card').cloneNode(true);
+            const timeline = document.querySelector('.timeline-section').cloneNode(true);
+            pCard.querySelector('button')?.remove(); pCard.querySelector('button')?.remove();
+            const pl = document.getElementById('print-content-placeholder');
+            pl.innerHTML = ''; pl.appendChild(pCard); pl.appendChild(timeline);
+            window.print();
+        }
+        window.onafterprint = () => document.getElementById('print-content-placeholder').innerHTML = '';
     </script>
 </body>
 

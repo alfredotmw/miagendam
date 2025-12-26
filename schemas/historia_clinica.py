@@ -12,16 +12,23 @@ class HistoriaClinicaBase(BaseModel):
     diagnostico_diferencial: Optional[str] = None
     tratamiento: Optional[str] = None
     evolucion: Optional[str] = None
+    estado: Optional[str] = "BORRADOR"
 
 class HistoriaClinicaCreate(HistoriaClinicaBase):
     paciente_id: int
     medico_id: Optional[int] = None
+    accion: Optional[str] = "GUARDAR" # GUARDAR | FIRMAR
 
 class HistoriaClinicaOut(HistoriaClinicaBase):
     id: int
     paciente_id: int
     fecha: datetime
     medico_id: Optional[int] = None
+    
+    creado_por_id: Optional[int] = None
+    fecha_creacion: Optional[datetime] = None
+    firmado_por_id: Optional[int] = None
+    fecha_firma: Optional[datetime] = None
 
     class Config:
         orm_mode = True

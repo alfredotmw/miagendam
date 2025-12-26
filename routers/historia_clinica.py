@@ -26,11 +26,27 @@ def crear_nota(
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
 
+    estado_inicial = "BORRADOR"
+    fecha_firma = None
+    firmado_por = None
+    
+    if nota.accion == "FIRMAR":
+        estado_inicial = "FIRMADO"
+        fecha_firma = datetime.now()
+        firmado_por = current_user.get("id")
+
     nueva_nota = HistoriaClinica(
         paciente_id=nota.paciente_id,
-        texto=nota.texto or "Nota Estructurada", # Fallback text
+        texto=nota.texto or "Nota Estructurada",
         servicio=nota.servicio,
-        medico_id=current_user.get("id"),
+        # Audit
+        creado_por_id=current_user.get("id"),
+        fecha_creacion=datetime.now(),
+        # Signature
+        estado=estado_inicial,
+        firmado_por_id=firmado_por,
+        fecha_firma=fecha_firma,
+        # Content
         motivo_consulta=nota.motivo_consulta,
         antecedentes=nota.antecedentes,
         examen_clinico=nota.examen_clinico,
@@ -43,6 +59,46 @@ def crear_nota(
     db.commit()
     db.refresh(nueva_nota)
     return nueva_nota
+
+@router.put("/{nota_id}", response_model=HistoriaClinicaOut)
+def update_nota(
+    nota_id: int, 
+    nota_update: HistoriaClinicaCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    db_nota = db.query(HistoriaClinica).filter(HistoriaClinica.id == nota_id).first()
+    if not db_nota:
+        raise HTTPException(status_code=404, detail="Nota no encontrada")
+
+    # ⛔ BLOCK IF SIGNED
+    if db_nota.estado == "FIRMADO":
+        raise HTTPException(status_code=403, detail="No se puede editar una nota FIRMADA. Debe crear una ENMIENDA.")
+
+    # Apply updates
+    # If action is SIGN, apply signature
+    if nota_update.accion == "FIRMAR":
+        db_nota.estado = "FIRMADO"
+        db_nota.firmado_por_id = current_user.get("id")
+        db_nota.fecha_firma = datetime.now()
+    
+    # Audit edit
+    db_nota.editado_por_id = current_user.get("id")
+    db_nota.fecha_edicion = datetime.now()
+
+    # Update content fields
+    db_nota.motivo_consulta = nota_update.motivo_consulta
+    db_nota.antecedentes = nota_update.antecedentes
+    db_nota.examen_clinico = nota_update.examen_clinico
+    db_nota.plan_estudio = nota_update.plan_estudio
+    db_nota.diagnostico_diferencial = nota_update.diagnostico_diferencial
+    db_nota.tratamiento = nota_update.tratamiento
+    db_nota.evolucion = nota_update.evolucion
+    db_nota.texto = nota_update.texto or db_nota.texto
+
+    db.commit()
+    db.refresh(db_nota)
+    return db_nota
 
 @router.get("/paciente/{paciente_id}/timeline", response_model=TimelineResponse)
 def get_timeline(
@@ -99,6 +155,16 @@ def get_timeline(
 
     # Process Notes
     for nota in notas:
+        # Determine status display
+        estado_display = nota.estado or "BORRADOR"
+        
+        # Determine medic name
+        medico_display = None
+        if nota.medico:
+            medico_display = nota.medico.full_name or nota.medico.username
+        
+        # If signed, maybe show who signed? (Usually same as creator)
+        
         timeline_events.append(TimelineEvent(
             tipo="NOTA",
             fecha=nota.fecha,
@@ -106,8 +172,8 @@ def get_timeline(
             detalle=nota.texto,
             id_referencia=nota.id,
             servicio=nota.servicio,
-            estado="Guardado",
-            medico_nombre=nota.medico.full_name if nota.medico else None,
+            estado=estado_display,
+            medico_nombre=medico_display,
             medico_matricula=nota.medico.matricula if nota.medico else None,
             structured_content={
                 "motivo": nota.motivo_consulta,

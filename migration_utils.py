@@ -119,3 +119,30 @@ def check_and_migrate_db(engine: Engine):
                     conn.execute(text(f"ALTER TABLE historia_clinica ADD COLUMN {f} TEXT")) 
                     conn.commit()
                 logger.info(f"✅ Columna '{f}' agregada.")
+
+        # P0 Columns: Estado, Audit, Signature
+        p0_cols = {
+            "estado": "VARCHAR DEFAULT 'BORRADOR'",
+            "creado_por_id": "INTEGER",
+            "fecha_creacion": "TIMESTAMP",
+            "editado_por_id": "INTEGER",
+            "fecha_edicion": "TIMESTAMP",
+            "firmado_por_id": "INTEGER",
+            "fecha_firma": "TIMESTAMP",
+            "es_enmienda_de_id": "INTEGER"
+        }
+
+        dialect = engine.dialect.name
+        
+        for col_name, col_type in p0_cols.items():
+            if col_name not in h_columns:
+                logger.info(f"⚠️ Columna '{col_name}' faltante en 'historia_clinica'. Agregando...")
+                with engine.connect() as conn:
+                    # Adjust types if needed
+                    final_type = col_type
+                    if "TIMESTAMP" in col_type and dialect == "sqlite":
+                        final_type = "DATETIME"
+                    
+                    conn.execute(text(f"ALTER TABLE historia_clinica ADD COLUMN {col_name} {final_type}"))
+                    conn.commit()
+                logger.info(f"✅ Columna '{col_name}' agregada.")
