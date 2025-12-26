@@ -78,3 +78,17 @@ def check_and_migrate_db(engine: Engine):
                 conn.execute(text("ALTER TABLE users ADD COLUMN allowed_agendas VARCHAR"))
                 conn.commit()
             logger.info("✅ Columna 'allowed_agendas' agregada exitosamente.")
+
+        if "matricula" not in user_columns:
+            logger.info("⚠️ Columna 'matricula' faltante en 'users'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN matricula VARCHAR"))
+                conn.commit()
+            logger.info("✅ Columna 'matricula' agregada exitosamente.")
+
+        if "full_name" not in user_columns:
+            logger.info("⚠️ Columna 'full_name' faltante en 'users'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN full_name VARCHAR"))
+                conn.commit()
+            logger.info("✅ Columna 'full_name' agregada exitosamente.")
