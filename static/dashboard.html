@@ -412,6 +412,9 @@
 
             } catch (e) {
                 console.error("Auth Error:", e);
+                document.getElementById('user-name-display').textContent = 'Error al cargar';
+                document.getElementById('user-name-display').style.color = 'red';
+                document.getElementById('user-name-display').style.fontSize = '0.8rem';
                 // alert("Error obteniendo usuario: " + e.message);
             }
         }
