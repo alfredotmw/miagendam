@@ -92,3 +92,30 @@ def check_and_migrate_db(engine: Engine):
                 conn.execute(text("ALTER TABLE users ADD COLUMN full_name VARCHAR"))
                 conn.commit()
             logger.info("✅ Columna 'full_name' agregada exitosamente.")
+
+    # 3. Verificar tabla 'pacientes'
+    if inspector.has_table("pacientes"):
+        p_columns = [col["name"] for col in inspector.get_columns("pacientes")]
+        if "nro_afiliado" not in p_columns:
+            logger.info("⚠️ Columna 'nro_afiliado' faltante en 'pacientes'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE pacientes ADD COLUMN nro_afiliado VARCHAR"))
+                conn.commit()
+            logger.info("✅ Columna 'nro_afiliado' agregada.")
+
+    # 4. Verificar tabla 'historia_clinica'
+    if inspector.has_table("historia_clinica"):
+        h_columns = [col["name"] for col in inspector.get_columns("historia_clinica")]
+        fields = [
+            "motivo_consulta", "antecedentes", "examen_clinico", 
+            "plan_estudio", "diagnostico_diferencial", 
+            "tratamiento", "evolucion"
+        ]
+        for f in fields:
+            if f not in h_columns:
+                logger.info(f"⚠️ Columna '{f}' faltante en 'historia_clinica'. Agregando...")
+                with engine.connect() as conn:
+                    # Usamos TEXT para postgres/sqlite compat
+                    conn.execute(text(f"ALTER TABLE historia_clinica ADD COLUMN {f} TEXT")) 
+                    conn.commit()
+                logger.info(f"✅ Columna '{f}' agregada.")
