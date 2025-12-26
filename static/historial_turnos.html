@@ -473,6 +473,59 @@
         </div>
     </div>
 
+    <!-- Note Modal -->
+    <div id="noteModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Nueva Evolución</h3>
+                <span class="close-modal" onclick="closeNoteModal()">&times;</span>
+            </div>
+            <form id="noteForm">
+                <div class="form-grid">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Motivo de Consulta</label>
+                        <textarea id="note-motivo" class="form-input" rows="2" style="width:100%" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Antecedentes</label>
+                        <textarea id="note-antecedentes" class="form-input" rows="3" style="width:100%"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Examen Físico</label>
+                        <textarea id="note-examen" class="form-input" rows="3" style="width:100%"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Diagnóstico Diferencial</label>
+                        <textarea id="note-diagnostico" class="form-input" rows="3" style="width:100%"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Plan de Estudio</label>
+                        <textarea id="note-plan" class="form-input" rows="3" style="width:100%"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tratamiento</label>
+                        <textarea id="note-tratamiento" class="form-input" rows="3" style="width:100%"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Evolución</label>
+                        <textarea id="note-evolucion" class="form-input" rows="3" style="width:100%"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeNoteModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="width: auto;">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         const token = localStorage.getItem('token');
         if (!token) window.location.href = '/static/login.html';
