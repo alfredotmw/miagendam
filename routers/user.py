@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User, UserRole
 import bcrypt
-from typing import List
+from typing import List, Optional
 from auth.jwt import create_access_token, get_current_user, require_roles
 from pydantic import BaseModel
 
@@ -16,7 +16,7 @@ class UserCreate(BaseModel):
     username: str
     password: str
     role: UserRole
-    allowed_agendas: str = None # IDs separated by comma
+    allowed_agendas: Optional[str] = None # IDs separated by comma
 
 
 class UserLogin(BaseModel):
@@ -28,7 +28,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     role: UserRole
-    allowed_agendas: str = None
+    allowed_agendas: Optional[str] = None
 
     class Config:
         from_attributes = True  # ✅ Compatible con Pydantic v2
