@@ -444,6 +444,20 @@
                         </div>
                     </div>
 
+                    <div class="form-group"
+                        style="grid-column: 1 / -1; margin-bottom: 1rem; border-bottom: 1px dashed #e2e8f0; padding-bottom: 1rem;">
+                        <label>📑 Plantillas Rápidas (P2)</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <select id="template-selector" class="form-input" style="flex:1;">
+                                <option value="">Seleccionar plantilla...</option>
+                            </select>
+                            <button type="button" onclick="applyTemplate()"
+                                style="background:#edf2f7; border:1px solid #cbd5e0; padding:0 1rem; border-radius:0.375rem; cursor:pointer;">
+                                Insertar en Evolución
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label>Motivo de Consulta</label>
                         <textarea id="note-motivo" class="form-input" rows="2" style="width:100%"></textarea>
@@ -661,6 +675,7 @@
         function openNoteModal(note = null) {
             if (!currentDni && !note) { alert("Seleccione paciente"); return; }
             document.getElementById('noteModal').classList.add('active');
+            loadTemplates(); // P2: Load templates
             if (note) {
                 currentNoteId = note.id_referencia;
                 document.querySelector('.modal-title').textContent = "Editar Borrador";
@@ -723,6 +738,63 @@
             window.print();
         }
         window.onafterprint = () => document.getElementById('print-content-placeholder').innerHTML = '';
+        async function loadTemplates() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                const res = await fetch('/plantillas/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const templates = await res.json();
+                    const sel = document.getElementById('template-selector');
+                    sel.innerHTML = '<option value="">Seleccionar plantilla...</option>';
+                    templates.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.contenido; // Storing content in value for simplicity
+                        opt.textContent = t.titulo;
+                        sel.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error("Error loading templates", e); }
+        }
+
+        function applyTemplate() {
+            const content = document.getElementById('template-selector').value;
+            if (!content) return;
+            const target = document.getElementById('note-evolucion');
+            target.value = (target.value ? target.value + '\n\n' : '') + content;
+            alert("Plantilla insertada.");
+        }
+
+        async function loadTemplates() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                const res = await fetch('/plantillas/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const templates = await res.json();
+                    const sel = document.getElementById('template-selector');
+                    sel.innerHTML = '<option value="">Seleccionar plantilla...</option>';
+                    templates.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.contenido;
+                        opt.textContent = t.titulo;
+                        sel.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error("Error loading templates", e); }
+        }
+
+        function applyTemplate() {
+            const content = document.getElementById('template-selector').value;
+            if (!content) return;
+            const target = document.getElementById('note-evolucion');
+            target.value = (target.value ? target.value + '\n\n' : '') + content;
+            // alert("Plantilla insertada.");
+        }
     </script>
 </body>
 

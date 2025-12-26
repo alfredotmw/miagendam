@@ -5,6 +5,7 @@ from init_data import init_data, sync_new_practicas  # 👉 AGREGADO
 
 from migration_utils import check_and_migrate_db # 👉 MIGRACIÓN
 import models  # 👉 AGREGADO para registrar tablas
+import models.plantilla # Register P2 Model
 
 # Crear tablas en la base de datos
 Base.metadata.create_all(bind=engine)
@@ -56,6 +57,9 @@ app.include_router(historia_clinica.router)
 
 from routers import debug_ops
 app.include_router(debug_ops.router)
+
+from routers import plantilla
+app.include_router(plantilla.router)
 
 from fastapi.responses import RedirectResponse
 
