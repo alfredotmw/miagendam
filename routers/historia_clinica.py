@@ -99,7 +99,9 @@ def get_timeline(
             detalle=nota.texto,
             id_referencia=nota.id,
             servicio=nota.servicio,
-            estado="Guardado"
+            estado="Guardado",
+            medico_nombre=nota.medico.full_name if nota.medico else None,
+            medico_matricula=nota.medico.matricula if nota.medico else None
         ))
 
     # Process Turnos with Grouping Logic
@@ -142,6 +144,15 @@ def get_timeline(
         descripcion = f"Turno: {agenda_nombre}"
         detalle = f"Prácticas: {practica_str if practica_str else 'Consulta/Sin práctica asoc.'}"
         
+        # Try to get professional info from Agenda
+        medico_nom = None
+        medico_mat = None
+        if turno.agenda:
+             # Assuming Agenda.profesional matches a user username or we leave it textual.
+             # Ideally Agenda would link to User, but it seems to be just a string "profesional".
+             # We will use that string as name.
+             medico_nom = turno.agenda.profesional
+
         timeline_events.append(TimelineEvent(
             tipo="TURNO",
             fecha=turno.fecha, 
@@ -149,7 +160,9 @@ def get_timeline(
             detalle=detalle,
             id_referencia=turno.id,
             servicio=normalized_service,
-            estado=turno.estado
+            estado=turno.estado,
+            medico_nombre=medico_nom,
+            medico_matricula=medico_mat
         ))
 
     # Identify and Create Plan Treatment Events

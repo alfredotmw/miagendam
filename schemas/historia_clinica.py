@@ -28,6 +28,8 @@ class TimelineEvent(BaseModel):
     id_referencia: Optional[int] # ID of the note or the turno
     estado: Optional[str] = None # For turnos: "Asistido", "Ausente", etc.
     servicio: Optional[str] = None
+    medico_nombre: Optional[str] = None
+    medico_matricula: Optional[str] = None
 
 from schemas.paciente import PacienteOut
 

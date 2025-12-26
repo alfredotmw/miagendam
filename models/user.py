@@ -17,3 +17,5 @@ class User(Base):
     password = Column(String, nullable=False)
     role = Column(SqlEnum(UserRole), nullable=False)
     allowed_agendas = Column(String, nullable=True) # Comma separated IDs: "1,2,5"
+    matricula = Column(String, nullable=True) # M.N. / M.P.
+    full_name = Column(String, nullable=True) # Nombre Real del Profesional

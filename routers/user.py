@@ -17,6 +17,8 @@ class UserCreate(BaseModel):
     password: str
     role: UserRole
     allowed_agendas: Optional[str] = None # IDs separated by comma
+    matricula: Optional[str] = None
+    full_name: Optional[str] = None
 
 
 class UserLogin(BaseModel):
@@ -29,6 +31,8 @@ class UserResponse(BaseModel):
     username: str
     role: UserRole
     allowed_agendas: Optional[str] = None
+    matricula: Optional[str] = None
+    full_name: Optional[str] = None
 
     class Config:
         from_attributes = True  # ✅ Compatible con Pydantic v2
@@ -50,7 +54,9 @@ def register_user(
         username=user.username, 
         password=hashed_password, 
         role=user.role,
-        allowed_agendas=user.allowed_agendas
+        allowed_agendas=user.allowed_agendas,
+        matricula=user.matricula,
+        full_name=user.full_name
     )
     db.add(db_user)
     db.commit()
@@ -103,6 +109,8 @@ def read_users(
 class UserUpdate(BaseModel):
     role: Optional[UserRole] = None
     allowed_agendas: Optional[str] = None
+    matricula: Optional[str] = None
+    full_name: Optional[str] = None
     password: Optional[str] = None # Opcional: Permitir reset de password
 
 @router.put("/{user_id}", response_model=UserResponse)
@@ -122,6 +130,12 @@ def update_user(
     # Permitir borrar permisos enviando string vacío o cambiarlo explicitamente
     if user_update.allowed_agendas is not None:
         db_user.allowed_agendas = user_update.allowed_agendas
+
+    if user_update.matricula is not None:
+        db_user.matricula = user_update.matricula
+        
+    if user_update.full_name is not None:
+        db_user.full_name = user_update.full_name
 
     if user_update.password:
         hashed_password = bcrypt.hashpw(user_update.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')

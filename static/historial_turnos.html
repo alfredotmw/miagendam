@@ -628,6 +628,12 @@
                 const dateStr = dateObj.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
                 const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
+                const signature = ev.medico_nombre ?
+                    `<div style="margin-top:0.5rem; font-size:0.8rem; color:#4a5568; border-top:1px dashed #e2e8f0; padding-top:0.25rem;">
+                        <strong>Prof:</strong> ${ev.medico_nombre} 
+                        ${ev.medico_matricula ? `<span style="color:#718096">(${ev.medico_matricula})</span>` : ''}
+                     </div>` : '';
+
                 return `
                     <div class="timeline-card">
                         <div class="timeline-icon ${typeClass}">${icon}</div>
@@ -640,6 +646,7 @@
                         `<span class="timeline-badge" style="background: #edf2f7; color: #718096; margin-top: 0.75rem;">${ev.servicio}</span>` : ''}
                         ${ev.estado ?
                         `<span class="timeline-badge" style="background: ${getStatusColor(ev.estado)}; color: white; margin-left: 0.5rem;">${ev.estado}</span>` : ''}
+                        ${signature}
                     </div>
                 `;
             }).join('');

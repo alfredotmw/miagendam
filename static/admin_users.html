@@ -129,8 +129,16 @@
             </div>
             <form id="userForm">
                 <div class="form-group">
-                    <label>Nombre de Usuario</label>
-                    <input type="text" id="new-username" required placeholder="ej: medico_perez">
+                    <label>Nombre Completo (Real)</label>
+                    <input type="text" id="new-full-name" placeholder="Dr. Juan Perez" required>
+                </div>
+                <div class="form-group">
+                    <label>Matrícula (M.P. / M.N.)</label>
+                    <input type="text" id="new-matricula" placeholder="M.P. 1234">
+                </div>
+                <div class="form-group">
+                    <label>Nombre de Usuario (Login)</label>
+                    <input type="text" id="new-username" required placeholder="medico_perez">
                 </div>
                 <div class="form-group">
                     <label>Contraseña</label>
@@ -235,13 +243,15 @@
             const username = document.getElementById('new-username').value;
             const password = document.getElementById('new-password').value;
             const role = document.getElementById('new-role').value;
+            const fullName = document.getElementById('new-full-name').value;
+            const matricula = document.getElementById('new-matricula').value;
 
             // Get selected agendas
             const selectedAgendas = Array.from(document.querySelectorAll('#agenda-options input:checked'))
                 .map(cb => cb.value)
                 .join(',');
 
-            const payload = { role, allowed_agendas: selectedAgendas };
+            const payload = { role, allowed_agendas: selectedAgendas, full_name: fullName, matricula: matricula };
             // Solo enviar username/pass si es creación o si se escribieron (para edit)
             if (!isEditing) {
                 payload.username = username;

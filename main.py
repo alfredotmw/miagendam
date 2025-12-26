@@ -35,6 +35,9 @@ def startup_event():
 
     init_data()
     sync_new_practicas() # 🔄 Parchear prácticas nuevas
+    
+    from add_user_legal_columns import migrate_users_columns
+    migrate_users_columns() # 🚀 Migration for legal fields
 
 # Registrar routers
 app.include_router(user.router)
