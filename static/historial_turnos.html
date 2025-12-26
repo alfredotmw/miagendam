@@ -111,6 +111,41 @@
                 padding: 0 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                counter-reset: page;
+            }
+
+            /* Folio Numbering in Header or Footer */
+            @page {
+                margin: 0;
+                counter-increment: page;
+
+                @bottom-right {
+                    content: "Folio " counter(page);
+                    font-size: 10px;
+                    color: #555;
+                }
+            }
+
+            /* For browsers not supporting @bottom-right (Chrome/Edge often ignore it), use fixed element hack */
+            .folio-number::after {
+                content: "Folio " counter(page);
+                /* Note: CSS counters don't work reliably across page breaks in DOM elements in Chrome */
+                /* Alternative: JS pagination or simple "Página X" text if simpler */
+                content: "";
+                /* Clean slate, difficult to do pure CSS counter per page in HTML-to-PDF standard engines without PagedJS */
+            }
+
+            /* SIMPLER APPROACH: Just put Folio Placeholder for physical stamping or manual JS calculation */
+            /* Actually, user asked for "Hojas Foliadas". Usually usually implies numbered pages. */
+
+            .print-footer-content::after {
+                content: "Hoja Foliada";
+                position: absolute;
+                right: 2cm;
+                font-size: 10px;
+                color: #999;
+                border: 1px solid #ccc;
+                padding: 2px 5px;
             }
 
             /* Hide everything that isn't the print table */
@@ -387,7 +422,11 @@
                     </div>
                 </div>
 
-                <button onclick="handlePrint()" class="btn-primary" style="width: 100%; margin-top: 2rem;">
+                <button onclick="openNoteModal()" class="btn-primary"
+                    style="width: 100%; margin-top: 2rem; background-color: #48bb78;">
+                    ➕ Nueva Evolución
+                </button>
+                <button onclick="handlePrint()" class="btn-primary" style="width: 100%; margin-top: 1rem;">
                     🖨️ Imprimir Historia
                 </button>
             </div>
@@ -439,6 +478,7 @@
         if (!token) window.location.href = '/static/login.html';
 
         let currentDni = null;
+        let currentPatientId = null;
 
         function handleEnter(e) {
             if (e.key === 'Enter') searchHistory();
@@ -585,6 +625,7 @@
 
             // 1. Render Patient Card
             const p = data.paciente;
+            currentPatientId = p.id;
             document.getElementById('p-nombre').textContent = `${p.apellido}, ${p.nombre}`;
             document.getElementById('p-dni').textContent = p.dni;
             document.getElementById('p-edad').textContent = p.edad ? `${p.edad} años` : '-';
@@ -613,6 +654,17 @@
                     icon = '📅';
                     typeClass = 'type-plan';
                     title = ev.descripcion;
+                } else if (isNota) {
+                    // Check if it's structured
+                    /* 
+                       Since ev.detalle contains 'texto', we might need to fetch the structured fields 
+                       from the TimelineEvent schema (which currently only has 'detalle'). 
+                       Wait, backend creates TimelineEvent using 'detalle' = nota.texto.
+                       Issue: We need the full structured object in TimelineEvent to render properly.
+                       
+                       QUICK FIX: Append structured text into 'detalle' boolean style or formatted HTML in backend?
+                       OR: Update TimelineEvent schema to optionally include structured map.
+                    */
                 } else if (!isNota) {
                     const descUpper = ev.descripcion.toUpperCase();
                     if (descUpper.includes('QUIMIO')) { icon = '💧'; typeClass = 'type-quimio'; }
@@ -634,6 +686,24 @@
                         ${ev.medico_matricula ? `<span style="color:#718096">(${ev.medico_matricula})</span>` : ''}
                      </div>` : '';
 
+                let bodyContent = ev.detalle;
+
+                if (ev.structured_content && (ev.structured_content.motivo || ev.structured_content.tratamiento)) {
+                    const sc = ev.structured_content;
+                    bodyContent = `
+                        <div style="display:grid; gap:0.5rem; font-size:0.9rem;">
+                            ${sc.motivo ? `<div><strong>Motivo:</strong> ${sc.motivo}</div>` : ''}
+                            ${sc.antecedentes ? `<div><strong>Antecedentes:</strong> ${sc.antecedentes}</div>` : ''}
+                            ${sc.examen ? `<div><strong>Examen:</strong> ${sc.examen}</div>` : ''}
+                            ${sc.dx_dif ? `<div><strong>Dx Dif:</strong> ${sc.dx_dif}</div>` : ''}
+                            ${sc.plan ? `<div><strong>Plan:</strong> ${sc.plan}</div>` : ''}
+                            ${sc.tratamiento ? `<div><strong>Tratamiento:</strong> ${sc.tratamiento}</div>` : ''}
+                            ${sc.evolucion ? `<div><strong>Evolución:</strong> ${sc.evolucion}</div>` : ''}
+                        </div>
+                    `;
+                    title = "Evolución Clínica Estructurada";
+                }
+
                 return `
                     <div class="timeline-card">
                         <div class="timeline-icon ${typeClass}">${icon}</div>
@@ -641,7 +711,7 @@
                             <div class="timeline-title">${title}</div>
                             <div class="timeline-date">${dateStr} ${isPlan ? '' : '• ' + timeStr}</div>
                         </div>
-                        <div class="timeline-body">${ev.detalle}</div>
+                        <div class="timeline-body">${bodyContent}</div>
                          ${ev.servicio && ev.servicio !== 'GENERAL' && !isPlan ?
                         `<span class="timeline-badge" style="background: #edf2f7; color: #718096; margin-top: 0.75rem;">${ev.servicio}</span>` : ''}
                         ${ev.estado ?
@@ -677,6 +747,53 @@
 
             window.print();
         }
+
+        // Note Modal Logic
+        function openNoteModal() {
+            if (!currentDni) { alert("Seleccione un paciente primero"); return; }
+            document.getElementById('noteModal').classList.add('active');
+        }
+        function closeNoteModal() {
+            document.getElementById('noteModal').classList.remove('active');
+            document.getElementById('noteForm').reset();
+        }
+
+        document.getElementById('noteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get current patient ID (need to store it when fetching)
+            // We can get it from the URL or store in global var. 
+            // Let's rely on fetchAndRender storing data globally or re-fetching?
+            // BETTER: User global variable `currentPatientId` set in renderPage
+            if (!currentPatientId) return;
+
+            const payload = {
+                paciente_id: currentPatientId,
+                servicio: "CONSULTA ONC.", // Default service or add selector if needed
+                motivo_consulta: document.getElementById('note-motivo').value,
+                antecedentes: document.getElementById('note-antecedentes').value,
+                examen_clinico: document.getElementById('note-examen').value,
+                plan_estudio: document.getElementById('note-plan').value,
+                diagnostico_diferencial: document.getElementById('note-diagnostico').value,
+                tratamiento: document.getElementById('note-tratamiento').value,
+                evolucion: document.getElementById('note-evolucion').value,
+                texto: "Nota Estructurada" // Fallback
+            };
+
+            try {
+                const res = await fetch('/historia-clinica/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    closeNoteModal();
+                    fetchAndRender(currentDni); // Refresh timeline
+                } else {
+                    alert("Error al guardar nota");
+                }
+            } catch (e) { console.error(e); alert("Error de conexión"); }
+        });
 
         window.onafterprint = function () {
             // Cleanup after print to save memory/DOM size

@@ -3,8 +3,15 @@ from datetime import datetime
 from typing import Optional, List, Union
 
 class HistoriaClinicaBase(BaseModel):
-    texto: str
+    texto: Optional[str] = None
     servicio: str
+    motivo_consulta: Optional[str] = None
+    antecedentes: Optional[str] = None
+    examen_clinico: Optional[str] = None
+    plan_estudio: Optional[str] = None
+    diagnostico_diferencial: Optional[str] = None
+    tratamiento: Optional[str] = None
+    evolucion: Optional[str] = None
 
 class HistoriaClinicaCreate(HistoriaClinicaBase):
     paciente_id: int
@@ -30,6 +37,7 @@ class TimelineEvent(BaseModel):
     servicio: Optional[str] = None
     medico_nombre: Optional[str] = None
     medico_matricula: Optional[str] = None
+    structured_content: Optional[dict] = None # For structured history fields
 
 from schemas.paciente import PacienteOut
 

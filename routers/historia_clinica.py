@@ -28,9 +28,16 @@ def crear_nota(
 
     nueva_nota = HistoriaClinica(
         paciente_id=nota.paciente_id,
-        texto=nota.texto,
+        texto=nota.texto or "Nota Estructurada", # Fallback text
         servicio=nota.servicio,
-        medico_id=current_user.get("id") # Asignar usuario logueado si existe
+        medico_id=current_user.get("id"),
+        motivo_consulta=nota.motivo_consulta,
+        antecedentes=nota.antecedentes,
+        examen_clinico=nota.examen_clinico,
+        plan_estudio=nota.plan_estudio,
+        diagnostico_diferencial=nota.diagnostico_diferencial,
+        tratamiento=nota.tratamiento,
+        evolucion=nota.evolucion
     )
     db.add(nueva_nota)
     db.commit()
@@ -101,7 +108,16 @@ def get_timeline(
             servicio=nota.servicio,
             estado="Guardado",
             medico_nombre=nota.medico.full_name if nota.medico else None,
-            medico_matricula=nota.medico.matricula if nota.medico else None
+            medico_matricula=nota.medico.matricula if nota.medico else None,
+            structured_content={
+                "motivo": nota.motivo_consulta,
+                "antecedentes": nota.antecedentes,
+                "examen": nota.examen_clinico,
+                "plan": nota.plan_estudio,
+                "dx_dif": nota.diagnostico_diferencial,
+                "tratamiento": nota.tratamiento,
+                "evolucion": nota.evolucion
+            }
         ))
 
     # Process Turnos with Grouping Logic

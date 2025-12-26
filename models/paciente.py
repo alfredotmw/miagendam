@@ -15,6 +15,7 @@ class Paciente(Base):
     celular = Column(String, nullable=True)  # Campo específico para celular (WhatsApp)
     email = Column(String, nullable=True)
     direccion = Column(String, nullable=True)
+    nro_afiliado = Column(String, nullable=True) # Nuevo campo
     obra_social_id = Column(Integer, ForeignKey("obras_sociales.id"), nullable=True)
 
     # Relaciones
