@@ -53,6 +53,9 @@ app.include_router(medicos.router)
 from routers import historia_clinica # 👈 NUEVO
 app.include_router(historia_clinica.router)
 
+from routers import debug_ops
+app.include_router(debug_ops.router)
+
 from fastapi.responses import RedirectResponse
 
 @app.get("/")
