@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Agendas - Centro Oncológico Corrientes</title>
+    <title>Gestión de Prácticas - Centro Oncológico Corrientes</title>
     <link rel="stylesheet" href="/static/css/styles.css?v=2">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -33,7 +33,7 @@
                 </svg>
                 Usuarios
             </a>
-            <a href="/static/admin_agendas.html" class="nav-item active">
+            <a href="/static/admin_agendas.html" class="nav-item">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
@@ -41,7 +41,7 @@
                 </svg>
                 Agendas
             </a>
-            <a href="/static/admin_practicas.html" class="nav-item">
+            <a href="/static/admin_practicas.html" class="nav-item active">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
@@ -58,20 +58,36 @@
     <!-- Main Content -->
     <div class="main-content">
         <header class="top-header">
-            <h1 class="page-title">Gestión de Agendas</h1>
+            <h1 class="page-title">Gestión de Prácticas</h1>
             <div id="user-info" style="font-weight: 500; display: flex; align-items: center; gap: 0.5rem;">
                 <!-- User info loaded via JS -->
             </div>
         </header>
 
         <div class="dashboard-layout">
-            <!-- Agenda List -->
+            <!-- Practices List -->
             <div class="turnos-container" style="flex: 2;">
                 <div
                     style="padding: 1rem; border-bottom: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
-                    <h3 style="font-size: 1.1rem; color: #1e293b;">Agendas Activas</h3>
+                    <div style="display:flex; gap:1rem; align-items:center;">
+                        <h3 style="font-size: 1.1rem; color: #1e293b;">Listado de Prácticas</h3>
+                        <select id="filter-category" class="form-input" style="padding:0.25rem; font-size:0.9rem;"
+                            onchange="loadPracticesList()">
+                            <option value="">Todas las Categorías</option>
+                            <option value="CONSULTA_MEDICA">Consulta Médica</option>
+                            <option value="ECOGRAFIA">Ecografía</option>
+                            <option value="TOMOGRAFIA">Tomografía</option>
+                            <option value="RESONANCIA">Resonancia</option>
+                            <option value="RADIOGRAFIA">Radiografía</option>
+                            <option value="QUIMIOTERAPIA">Quimioterapia</option>
+                            <option value="RADIOTERAPIA">Radioterapia</option>
+                            <option value="PET">PET</option>
+                            <option value="CAMARA_GAMMA">Cámara Gamma</option>
+                            <option value="ELECTRO_MAPEO">Electro Mapeo</option>
+                        </select>
+                    </div>
                     <button class="btn-primary" style="width: auto; padding: 0.5rem 1rem;" onclick="openModal()">
-                        + Nueva Agenda
+                        + Nueva Práctica
                     </button>
                 </div>
                 <table class="turnos-table">
@@ -79,12 +95,11 @@
                         <tr>
                             <th>ID</th>
                             <th>Nombre</th>
-                            <th>Tipo</th>
-                            <th>Slot (min)</th>
+                            <th>Categoría</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="agendas-table-body">
+                    <tbody id="practicas-table-body">
                         <!-- Loaded via JS -->
                     </tbody>
                 </table>
@@ -92,43 +107,31 @@
         </div>
     </div>
 
-    <!-- New Agenda Modal -->
-    <div id="new-agenda-modal" class="modal">
+    <!-- New Practice Modal -->
+    <div id="new-practice-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Nueva Agenda</h3>
+                <h3 class="modal-title">Nueva Práctica</h3>
                 <button class="close-modal" onclick="closeModal()">&times;</button>
             </div>
-            <form id="agendaForm">
+            <form id="practiceForm">
                 <div class="form-group">
-                    <label>Nombre de la Agenda</label>
-                    <input type="text" id="new-agenda-nombre" placeholder="Consultorio Dr. Lopez / Resonador 1"
-                        required>
+                    <label>Nombre de la Práctica</label>
+                    <input type="text" id="new-practice-nombre" placeholder="Ej. TC Torax s/contraste" required>
                 </div>
                 <div class="form-group">
-                    <label>Tipo de Recurso</label>
-                    <select id="new-agenda-tipo" required>
-                        <option value="MEDICO">Médico</option>
+                    <label>Categoría</label>
+                    <select id="new-practice-category" required>
                         <option value="CONSULTA_MEDICA">Consulta Médica</option>
                         <option value="ECOGRAFIA">Ecografía</option>
                         <option value="TOMOGRAFIA">Tomografía</option>
                         <option value="RESONANCIA">Resonancia</option>
+                        <option value="RADIOGRAFIA">Radiografía</option>
                         <option value="QUIMIOTERAPIA">Quimioterapia</option>
                         <option value="RADIOTERAPIA">Radioterapia</option>
                         <option value="PET">PET</option>
                         <option value="CAMARA_GAMMA">Cámara Gamma</option>
                         <option value="ELECTRO_MAPEO">Electro Mapeo</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Duración Slot (Minutos)</label>
-                    <input type="number" id="new-agenda-slot" value="20" required>
-                </div>
-                <div class="form-group">
-                    <label>Estado</label>
-                    <select id="new-agenda-activo" required>
-                        <option value="true">Activa</option>
-                        <option value="false">Inactiva</option>
                     </select>
                 </div>
 
@@ -162,45 +165,50 @@
                     <span>${user.username}</span>
                 `;
 
-                loadAgendasList();
+                loadPracticesList();
             } catch (e) {
                 console.error(e);
                 window.location.href = '/static/login.html';
             }
         }
 
-        async function loadAgendasList() {
-            const res = await fetch('/agendas/', { headers: { 'Authorization': `Bearer ${token}` } });
-            if (res.ok) {
-                const agendas = await res.json();
-                const tbody = document.getElementById('agendas-table-body');
-                tbody.innerHTML = agendas.map(a => `
-                    <tr>
-                        <td>${a.id}</td>
-                        <td style="font-weight: 500;">${a.nombre}</td>
-                        <td><span class="role-badge role-MEDICO" style="background:#edf2f7; color:#4a5568;">${a.tipo}</span></td>
-                        <td>${a.slot_minutos} min</td>
-                        <td>
-                            <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick='editAgenda(${JSON.stringify(a)})'>✏️ Editar</button>
-                             <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background-color: #ef4444;" onclick='deleteAgenda(${a.id}, "${a.nombre}")'>🗑️</button>
-                        </td>
-                    </tr>
-                `).join('');
+        async function loadPracticesList() {
+            const categoryFilter = document.getElementById('filter-category').value;
+            let url = '/practicas/';
+            if (categoryFilter) url += `?categoria=${categoryFilter}`;
+
+            try {
+                const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const practicas = await res.json();
+                    const tbody = document.getElementById('practicas-table-body');
+                    tbody.innerHTML = practicas.map(p => `
+                        <tr>
+                            <td>${p.id}</td>
+                            <td style="font-weight: 500;">${p.nombre}</td>
+                            <td><span class="role-badge" style="background:#edf2f7; color:#4a5568;">${p.categoria}</span></td>
+                            <td>
+                                <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick='editPractice(${JSON.stringify(p)})'>✏️ Editar</button>
+                                <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background-color: #ef4444;" onclick='deletePractice(${p.id}, "${p.nombre}")'>🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error(e);
             }
         }
 
         let isEditing = false;
         let editingId = null;
 
-        document.getElementById('agendaForm').addEventListener('submit', async (e) => {
+        document.getElementById('practiceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const nombre = document.getElementById('new-agenda-nombre').value;
-            const tipo = document.getElementById('new-agenda-tipo').value;
-            const slot = parseInt(document.getElementById('new-agenda-slot').value);
-            const activo = document.getElementById('new-agenda-activo').value === 'true';
+            const nombre = document.getElementById('new-practice-nombre').value;
+            const category = document.getElementById('new-practice-category').value;
 
-            const payload = { nombre, tipo, slot_minutos: slot, activo };
-            const url = isEditing ? `/agendas/${editingId}` : '/agendas/';
+            const payload = { nombre, categoria: category };
+            const url = isEditing ? `/practicas/${editingId}` : '/practicas/';
             const method = isEditing ? 'PUT' : 'POST';
 
             try {
@@ -212,7 +220,7 @@
 
                 if (res.ok) {
                     closeModal();
-                    loadAgendasList();
+                    loadPracticesList();
                 } else {
                     const err = await res.json();
                     alert(err.detail || 'Error al guardar');
@@ -225,32 +233,30 @@
         function openModal() {
             isEditing = false;
             editingId = null;
-            document.querySelector('.modal-title').textContent = 'Nueva Agenda';
-            document.getElementById('agendaForm').reset();
-            document.getElementById('new-agenda-modal').classList.add('active');
+            document.querySelector('.modal-title').textContent = 'Nueva Práctica';
+            document.getElementById('practiceForm').reset();
+            document.getElementById('new-practice-modal').classList.add('active');
         }
 
-        function editAgenda(agenda) {
+        function editPractice(practice) {
             isEditing = true;
-            editingId = agenda.id;
-            document.querySelector('.modal-title').textContent = 'Editar Agenda';
-            document.getElementById('new-agenda-nombre').value = agenda.nombre;
-            document.getElementById('new-agenda-tipo').value = agenda.tipo;
-            document.getElementById('new-agenda-slot').value = agenda.slot_minutos || 20;
-            document.getElementById('new-agenda-activo').value = agenda.activo ? 'true' : 'false';
-            document.getElementById('new-agenda-modal').classList.add('active');
+            editingId = practice.id;
+            document.querySelector('.modal-title').textContent = 'Editar Práctica';
+            document.getElementById('new-practice-nombre').value = practice.nombre;
+            document.getElementById('new-practice-category').value = practice.categoria;
+            document.getElementById('new-practice-modal').classList.add('active');
         }
 
-        async function deleteAgenda(id, nombre) {
-            if (!confirm(`¿Seguro que desea eliminar la agenda "${nombre}"? Esta acción no se puede deshacer.`)) return;
+        async function deletePractice(id, nombre) {
+            if (!confirm(`¿Seguro que desea eliminar la práctica "${nombre}"? Esta acción no se puede deshacer.`)) return;
             try {
-                const res = await fetch(`/agendas/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                if (res.ok) { alert("Agenda eliminada"); loadAgendasList(); }
+                const res = await fetch(`/practicas/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) { alert("Práctica eliminada"); loadPracticesList(); }
                 else { const err = await res.json(); alert(err.detail || "Error"); }
             } catch (e) { alert("Error"); }
         }
 
-        function closeModal() { document.getElementById('new-agenda-modal').classList.remove('active'); }
+        function closeModal() { document.getElementById('new-practice-modal').classList.remove('active'); document.getElementById('form-error').style.display = 'none'; }
         function logout() { localStorage.removeItem('token'); window.location.href = '/static/login.html'; }
 
         loadUser();
