@@ -444,20 +444,6 @@
                         </div>
                     </div>
 
-                    <div class="form-group"
-                        style="grid-column: 1 / -1; margin-bottom: 1rem; border-bottom: 1px dashed #e2e8f0; padding-bottom: 1rem;">
-                        <label>📑 Plantillas Rápidas (P2)</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <select id="template-selector" class="form-input" style="flex:1;">
-                                <option value="">Seleccionar plantilla...</option>
-                            </select>
-                            <button type="button" onclick="applyTemplate()"
-                                style="background:#edf2f7; border:1px solid #cbd5e0; padding:0 1rem; border-radius:0.375rem; cursor:pointer;">
-                                Insertar en Evolución
-                            </button>
-                        </div>
-                    </div>
-
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label>Motivo de Consulta</label>
                         <textarea id="note-motivo" class="form-input" rows="2" style="width:100%"></textarea>
@@ -471,8 +457,6 @@
                     <div class="form-group"><label>Plan de Estudio</label><textarea id="note-plan" class="form-input"
                             rows="3"></textarea></div>
                     <div class="form-group"><label>Tratamiento</label><textarea id="note-tratamiento" class="form-input"
-                            rows="3"></textarea></div>
-                    <div class="form-group"><label>Evolución</label><textarea id="note-evolucion" class="form-input"
                             rows="3"></textarea></div>
                 </div>
                 <div class="modal-actions">
@@ -675,7 +659,7 @@
         function openNoteModal(note = null) {
             if (!currentDni && !note) { alert("Seleccione paciente"); return; }
             document.getElementById('noteModal').classList.add('active');
-            loadTemplates(); // P2: Load templates
+
             if (note) {
                 currentNoteId = note.id_referencia;
                 document.querySelector('.modal-title').textContent = "Editar Borrador";
@@ -691,7 +675,6 @@
                 document.getElementById('note-diagnostico').value = sc.dx_dif || '';
                 document.getElementById('note-plan').value = sc.plan || '';
                 document.getElementById('note-tratamiento').value = sc.tratamiento || '';
-                document.getElementById('note-evolucion').value = sc.evolucion || '';
             } else {
                 currentNoteId = null;
                 document.querySelector('.modal-title').textContent = "Nueva Evolución";
@@ -715,7 +698,6 @@
                 diagnostico_diferencial: document.getElementById('note-diagnostico').value,
                 plan_estudio: document.getElementById('note-plan').value,
                 tratamiento: document.getElementById('note-tratamiento').value,
-                evolucion: document.getElementById('note-evolucion').value,
                 texto: "Nota",
                 accion: action
             };
@@ -759,41 +741,68 @@
             } catch (e) { console.error("Error loading templates", e); }
         }
 
+
         function applyTemplate() {
             const content = document.getElementById('template-selector').value;
-            if (!content) return;
+            if (!content) {
+                alert("Por favor seleccione una plantilla primero.");
+                return;
+            }
             const target = document.getElementById('note-evolucion');
             target.value = (target.value ? target.value + '\n\n' : '') + content;
-            alert("Plantilla insertada.");
+            // Feedback visual opcional
+            const btn = document.querySelector('button[onclick="applyTemplate()"]');
+            const originalText = btn.textContent;
+            btn.textContent = "✅ Insertado";
+            setTimeout(() => btn.textContent = originalText, 1000);
         }
 
-        async function loadTemplates() {
+        // Template Creation Logic
+        function openNewTemplateModal() {
+            document.getElementById('newTemplateModal').style.display = 'flex';
+            document.getElementById('new-template-title').value = '';
+            document.getElementById('new-template-content').value = '';
+        }
+
+        function closeNewTemplateModal() {
+            document.getElementById('newTemplateModal').style.display = 'none';
+        }
+
+        async function saveTemplate() {
+            const title = document.getElementById('new-template-title').value.trim();
+            const content = document.getElementById('new-template-content').value.trim();
+
+            if (!title || !content) {
+                alert("Por favor complete título y contenido.");
+                return;
+            }
+
             try {
-                const token = localStorage.getItem('token');
-                if (!token) return;
                 const res = await fetch('/plantillas/', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        titulo: title,
+                        contenido: content,
+                        servicio: "CONSULTA ONC." // Default service
+                    })
                 });
-                if (res.ok) {
-                    const templates = await res.json();
-                    const sel = document.getElementById('template-selector');
-                    sel.innerHTML = '<option value="">Seleccionar plantilla...</option>';
-                    templates.forEach(t => {
-                        const opt = document.createElement('option');
-                        opt.value = t.contenido;
-                        opt.textContent = t.titulo;
-                        sel.appendChild(opt);
-                    });
-                }
-            } catch (e) { console.error("Error loading templates", e); }
-        }
 
-        function applyTemplate() {
-            const content = document.getElementById('template-selector').value;
-            if (!content) return;
-            const target = document.getElementById('note-evolucion');
-            target.value = (target.value ? target.value + '\n\n' : '') + content;
-            // alert("Plantilla insertada.");
+                if (res.ok) {
+                    alert("Plantilla creada exitosamente.");
+                    closeNewTemplateModal();
+                    loadTemplates(); // Refresh the list
+                } else {
+                    const err = await res.json();
+                    alert("Error al crear plantilla: " + (err.detail || "Desconocido"));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error de conexión al guardar plantilla.");
+            }
         }
     </script>
 </body>
