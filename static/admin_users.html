@@ -73,6 +73,14 @@
                 </svg>
                 Usuarios
             </a>
+            <a href="/static/admin_agendas.html" class="nav-item">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Agendas
+            </a>
             <button onclick="logout()" class="logout-btn">
                 <svg style="width:20px;margin-right:0.5rem" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -229,6 +237,7 @@
                         <td><span class="role-badge role-${u.role}">${u.role}</span></td>
                         <td>
                             <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick='editUser(${JSON.stringify(u)})'>✏️ Editar</button>
+                            <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background-color: #ef4444;" onclick='deleteUser(${u.id}, "${u.username}")'>🗑️</button>
                         </td>
                     </tr>
                 `).join('');
@@ -325,6 +334,28 @@
         }
 
         function closeModal() { document.getElementById('new-user-modal').classList.remove('active'); document.getElementById('form-error').style.display = 'none'; }
+
+        async function deleteUser(id, username) {
+            if (!confirm(`¿Seguro que desea eliminar al usuario ${username}? Esta acción no se puede deshacer.`)) return;
+
+            try {
+                const res = await fetch(`/users/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    alert("Usuario eliminado correctamente.");
+                    loadUsersList();
+                } else {
+                    const err = await res.json();
+                    alert("Error al eliminar: " + (err.detail || "Desconocido"));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error de conexión");
+            }
+        }
 
         function logout() {
             localStorage.removeItem('token');

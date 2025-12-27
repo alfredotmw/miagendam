@@ -134,3 +134,70 @@ def get_agenda_slots(
         current_time = slot_end
 
     return slots
+
+
+# ➕ Crear Agenda (Solo ADMIN)
+from schemas.agenda import AgendaCreate, AgendaOut, AgendaUpdate
+from auth.jwt import require_roles
+
+@router.post("/", response_model=AgendaOut)
+def create_agenda(
+    agenda: AgendaCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles(["ADMIN"]))
+):
+    # Professional is automatically set to the Agenda Name for simplicity if not provided,
+    # or we can extract it. Since schema doesn't have 'profesional', we'll assume name is descriptive enough 
+    # OR update schema. For now, let's use name as profesional if type is MEDICO.
+    
+    profesional = agenda.nombre if agenda.tipo == "MEDICO" else None
+
+    nueva_agenda = Agenda(
+        nombre=agenda.nombre,
+        tipo=agenda.tipo,
+        slot_minutos=agenda.slot_minutos,
+        activo=1 if agenda.activo else 0, # Convert bool to int
+        profesional=profesional
+    )
+    db.add(nueva_agenda)
+    db.commit()
+    db.refresh(nueva_agenda)
+    return nueva_agenda
+
+
+@router.put("/{agenda_id}", response_model=AgendaOut)
+def update_agenda(
+    agenda_id: int,
+    agenda_update: AgendaUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles(["ADMIN"]))
+):
+    db_agenda = db.get(Agenda, agenda_id)
+    if not db_agenda:
+        raise HTTPException(status_code=404, detail="Agenda no encontrada")
+
+    if agenda_update.nombre is not None: db_agenda.nombre = agenda_update.nombre
+    if agenda_update.tipo is not None: db_agenda.tipo = agenda_update.tipo
+    if agenda_update.slot_minutos is not None: db_agenda.slot_minutos = agenda_update.slot_minutos
+    if agenda_update.activo is not None: db_agenda.activo = agenda_update.activo
+    
+    db.commit()
+    db.refresh(db_agenda)
+    return db_agenda
+
+
+@router.delete("/{agenda_id}", status_code=204)
+def delete_agenda(
+    agenda_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles(["ADMIN"]))
+):
+    db_agenda = db.get(Agenda, agenda_id)
+    if not db_agenda:
+        raise HTTPException(status_code=404, detail="Agenda no encontrada")
+
+    # Optional: Check if it has future appointments before deleting?
+    # For now, just allow delete. Cascades usually handle Turnos, or they stick around orphaned.
+    db.delete(db_agenda)
+    db.commit()
+    return None

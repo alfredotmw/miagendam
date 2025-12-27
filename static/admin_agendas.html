@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Agendas - Centro Oncológico Corrientes</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
+            <h3>Agenda Médica</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/static/dashboard.html" class="nav-item">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                    </path>
+                </svg>
+                Dashboard
+            </a>
+            <a href="/static/admin_users.html" class="nav-item">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                    </path>
+                </svg>
+                Usuarios
+            </a>
+            <a href="/static/admin_agendas.html" class="nav-item active">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Agendas
+            </a>
+            <button onclick="logout()" class="logout-btn">
+                Cerrar Sesión
+            </button>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header class="top-header">
+            <h1 class="page-title">Gestión de Agendas</h1>
+            <div id="user-info" style="font-weight: 500; display: flex; align-items: center; gap: 0.5rem;">
+                <!-- User info loaded via JS -->
+            </div>
+        </header>
+
+        <div class="dashboard-layout">
+            <!-- Agenda List -->
+            <div class="turnos-container" style="flex: 2;">
+                <div
+                    style="padding: 1rem; border-bottom: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="font-size: 1.1rem; color: #1e293b;">Agendas Activas</h3>
+                    <button class="btn-primary" style="width: auto; padding: 0.5rem 1rem;" onclick="openModal()">
+                        + Nueva Agenda
+                    </button>
+                </div>
+                <table class="turnos-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Slot (min)</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agendas-table-body">
+                        <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Agenda Modal -->
+    <div id="new-agenda-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Nueva Agenda</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="agendaForm">
+                <div class="form-group">
+                    <label>Nombre de la Agenda</label>
+                    <input type="text" id="new-agenda-nombre" placeholder="Consultorio Dr. Lopez / Resonador 1"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de Recurso</label>
+                    <select id="new-agenda-tipo" required>
+                        <option value="MEDICO">Médico</option>
+                        <option value="CONSULTA_MEDICA">Consulta Médica</option>
+                        <option value="ECOGRAFIA">Ecografía</option>
+                        <option value="TOMOGRAFIA">Tomografía</option>
+                        <option value="RESONANCIA">Resonancia</option>
+                        <option value="QUIMIOTERAPIA">Quimioterapia</option>
+                        <option value="RADIOTERAPIA">Radioterapia</option>
+                        <option value="PET">PET</option>
+                        <option value="CAMARA_GAMMA">Cámara Gamma</option>
+                        <option value="ELECTRO_MAPEO">Electro Mapeo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Duración Slot (Minutos)</label>
+                    <input type="number" id="new-agenda-slot" value="20" required>
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="new-agenda-activo" required>
+                        <option value="true">Activa</option>
+                        <option value="false">Inactiva</option>
+                    </select>
+                </div>
+
+                <div id="form-error" style="color: red; font-size: 0.85rem; margin-bottom: 1rem; display: none;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="submit-btn" style="width: auto; margin:0;">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/static/login.html';
+
+        async function loadUser() {
+            try {
+                const res = await fetch('/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error('Unauthorized');
+                const user = await res.json();
+
+                if (user.role !== 'ADMIN') {
+                    alert('Acceso no autorizado.');
+                    window.location.href = '/static/dashboard.html';
+                    return;
+                }
+
+                document.getElementById('user-info').innerHTML = `
+                    <div style="background: #e2e8f0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>
+                    <span>${user.username}</span>
+                `;
+
+                loadAgendasList();
+            } catch (e) {
+                console.error(e);
+                window.location.href = '/static/login.html';
+            }
+        }
+
+        async function loadAgendasList() {
+            const res = await fetch('/agendas/', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) {
+                const agendas = await res.json();
+                const tbody = document.getElementById('agendas-table-body');
+                tbody.innerHTML = agendas.map(a => `
+                    <tr>
+                        <td>${a.id}</td>
+                        <td style="font-weight: 500;">${a.nombre}</td>
+                        <td><span class="role-badge role-MEDICO" style="background:#edf2f7; color:#4a5568;">${a.tipo}</span></td>
+                        <td>${a.slot_minutos} min</td>
+                        <td>
+                            <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick='editAgenda(${JSON.stringify(a)})'>✏️ Editar</button>
+                             <button class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background-color: #ef4444;" onclick='deleteAgenda(${a.id}, "${a.nombre}")'>🗑️</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        let isEditing = false;
+        let editingId = null;
+
+        document.getElementById('agendaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('new-agenda-nombre').value;
+            const tipo = document.getElementById('new-agenda-tipo').value;
+            const slot = parseInt(document.getElementById('new-agenda-slot').value);
+            const activo = document.getElementById('new-agenda-activo').value === 'true';
+
+            const payload = { nombre, tipo, slot_minutos: slot, activo };
+            const url = isEditing ? `/agendas/${editingId}` : '/agendas/';
+            const method = isEditing ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    loadAgendasList();
+                } else {
+                    const err = await res.json();
+                    alert(err.detail || 'Error al guardar');
+                }
+            } catch (error) {
+                alert('Error de conexión');
+            }
+        });
+
+        function openModal() {
+            isEditing = false;
+            editingId = null;
+            document.querySelector('.modal-title').textContent = 'Nueva Agenda';
+            document.getElementById('agendaForm').reset();
+            document.getElementById('new-agenda-modal').classList.add('active');
+        }
+
+        function editAgenda(agenda) {
+            isEditing = true;
+            editingId = agenda.id;
+            document.querySelector('.modal-title').textContent = 'Editar Agenda';
+            document.getElementById('new-agenda-nombre').value = agenda.nombre;
+            document.getElementById('new-agenda-tipo').value = agenda.tipo;
+            document.getElementById('new-agenda-slot').value = agenda.slot_minutos || 20;
+            document.getElementById('new-agenda-activo').value = agenda.activo ? 'true' : 'false';
+            document.getElementById('new-agenda-modal').classList.add('active');
+        }
+
+        async function deleteAgenda(id, nombre) {
+            if (!confirm(`¿Seguro que desea eliminar la agenda "${nombre}"? Esta acción no se puede deshacer.`)) return;
+            try {
+                const res = await fetch(`/agendas/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) { alert("Agenda eliminada"); loadAgendasList(); }
+                else { const err = await res.json(); alert(err.detail || "Error"); }
+            } catch (e) { alert("Error"); }
+        }
+
+        function closeModal() { document.getElementById('new-agenda-modal').classList.remove('active'); }
+        function logout() { localStorage.removeItem('token'); window.location.href = '/static/login.html'; }
+
+        loadUser();
+    </script>
+</body>
+
+</html>

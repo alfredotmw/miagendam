@@ -11,15 +11,9 @@ class Agenda(Base):
     nombre = Column(String, nullable=False)
     tipo = Column(String, nullable=False)       # MEDICO, TOMOGRAFIA, etc.
     profesional = Column(String, nullable=True) # Solo para consultorios
+    slot_minutos = Column(Integer, default=20)
+    activo = Column(Integer, default=1) # Usamos Integer como Boolean (1=True, 0=False) para mayor compatibilidad
 
     # Relación de agenda → turnos (correcta)
     turnos = relationship("Turno", back_populates="agenda")
-
-    @property
-    def slot_minutos(self):
-        return 20
-
-    @property
-    def activo(self):
-        return True
 

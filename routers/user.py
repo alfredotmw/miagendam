@@ -144,3 +144,23 @@ def update_user(
     db.commit()
     db.refresh(db_user)
     return db_user
+
+
+# 🗑️ Eliminar Usuario (Solo ADMIN)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_roles(["ADMIN"]))
+):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    # Prevent self-deletion (optional but good practice)
+    if db_user.username == current_user["username"]:
+        raise HTTPException(status_code=400, detail="No puedes eliminar tu propio usuario")
+
+    db.delete(db_user)
+    db.commit()
+    return None
