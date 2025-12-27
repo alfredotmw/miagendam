@@ -121,7 +121,8 @@ def get_agenda_slots(
                     "paciente": {
                         "nombre": turno_ocupante.paciente.nombre,
                         "apellido": turno_ocupante.paciente.apellido,
-                        "id": turno_ocupante.paciente.id
+                        "id": turno_ocupante.paciente.id,
+                        "dni": turno_ocupante.paciente.dni
                     } if turno_ocupante.paciente else None,
                     "estado": turno_ocupante.estado,
                     "estado": turno_ocupante.estado,
