@@ -297,6 +297,14 @@
             <a href="/static/nuevo_turno.html" class="nav-item">Nuevo Turno</a>
             <a href="/static/historial_turnos.html" class="nav-item active">Historia Clínica</a>
             <a href="/static/reporte_notificaciones.html" class="nav-item">Notificaciones</a>
+
+            <!-- Admin Only Links -->
+            <div id="admin-links"
+                style="display: none; border-top: 1px solid #4a5568; margin-top: 1rem; padding-top: 1rem;">
+                <a href="/static/admin_users.html" class="nav-item">Usuarios</a>
+                <a href="/static/admin_agendas.html" class="nav-item">Agendas</a>
+                <a href="/static/admin_practicas.html" class="nav-item">Prácticas</a>
+            </div>
         </nav>
         <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
     </div>
@@ -473,6 +481,14 @@
     <script>
         const token = localStorage.getItem('token');
         if (!token) window.location.href = '/static/login.html';
+
+        // Check Admin
+        fetch('/users/me', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()).then(u => {
+            if (u.role === 'ADMIN') {
+                const al = document.getElementById('admin-links');
+                if (al) al.style.display = 'block';
+            }
+        }).catch(e => { });
 
         let currentDni = null;
         let currentPatientId = null;
