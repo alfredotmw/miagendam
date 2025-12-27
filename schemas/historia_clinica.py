@@ -43,7 +43,7 @@ class TimelineEvent(BaseModel):
     tipo: str # "NOTA", "TURNO"
     fecha: datetime
     descripcion: str # "Evolución Dr. X" or "Tomografía de Torax"
-    detalle: str # The note text or extra info about the turno (status, etc)
+    detalle: Optional[str] = "" # The note text or extra info about the turno (status, etc)
     id_referencia: Optional[int] # ID of the note or the turno
     estado: Optional[str] = None # For turnos: "Asistido", "Ausente", etc.
     servicio: Optional[str] = None

@@ -180,7 +180,7 @@ def get_timeline(
             tipo="NOTA",
             fecha=nota.fecha,
             descripcion=f"Nota de {nota.servicio}",
-            detalle=nota.texto,
+            detalle=nota.texto or "",
             id_referencia=nota.id,
             servicio=nota.servicio,
             estado=estado_display,
