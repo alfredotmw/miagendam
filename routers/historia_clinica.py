@@ -31,6 +31,31 @@ def crear_nota(
     firmado_por = None
     
     if nota.accion == "FIRMAR":
+        # 🔐 RESTRICTION: Only MEDICO can sign
+        if current_user["role"] != "MEDICO":
+             raise HTTPException(status_code=403, detail="Solo los usuarios con rol MEDICO pueden firmar historias clínicas.")
+
+        # 🔐 RESTRICTION: Patient must have a Turno in the doctor's allowed agendas TODAY
+        allowed_ids_str = current_user.get("allowed_agendas", "")
+        allowed_ids = [int(x) for x in allowed_ids_str.split(",") if x.strip()] if allowed_ids_str else []
+        
+        if not allowed_ids:
+             raise HTTPException(status_code=403, detail="No tiene agendas asignadas para verificar la atención.")
+        
+        # Check for Turno Today
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        
+        has_turno = db.query(Turno).filter(
+            Turno.paciente_id == nota.paciente_id,
+            Turno.agenda_id.in_(allowed_ids),
+            Turno.fecha >= today_start,
+            Turno.fecha < today_end
+        ).first()
+        
+        if not has_turno:
+             raise HTTPException(status_code=403, detail="No se puede firmar: El paciente no tiene un turno asignado en sus agendas para el día de hoy.")
+
         estado_inicial = "FIRMADO"
         fecha_firma = datetime.now()
         firmado_por = current_user.get("id")
@@ -83,6 +108,31 @@ def update_nota(
     # Apply updates
     # If action is SIGN, apply signature
     if nota_update.accion == "FIRMAR":
+        # 🔐 RESTRICTION: Only MEDICO can sign
+        if current_user["role"] != "MEDICO":
+             raise HTTPException(status_code=403, detail="Solo los usuarios con rol MEDICO pueden firmar historias clínicas.")
+
+        # 🔐 RESTRICTION: Patient must have a Turno in the doctor's allowed agendas TODAY
+        allowed_ids_str = current_user.get("allowed_agendas", "")
+        allowed_ids = [int(x) for x in allowed_ids_str.split(",") if x.strip()] if allowed_ids_str else []
+        
+        if not allowed_ids:
+             raise HTTPException(status_code=403, detail="No tiene agendas asignadas para verificar la atención.")
+        
+        # Check for Turno Today
+        today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today_start + timedelta(days=1)
+        
+        has_turno = db.query(Turno).filter(
+            Turno.paciente_id == db_nota.paciente_id,
+            Turno.agenda_id.in_(allowed_ids),
+            Turno.fecha >= today_start,
+            Turno.fecha < today_end
+        ).first()
+        
+        if not has_turno:
+             raise HTTPException(status_code=403, detail="No se puede firmar: El paciente no tiene un turno asignado en sus agendas para el día de hoy.")
+
         db_nota.estado = "FIRMADO"
         db_nota.firmado_por_id = current_user.get("id")
         db_nota.fecha_firma = datetime.now()
