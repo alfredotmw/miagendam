@@ -162,3 +162,26 @@ def check_and_migrate_db(engine: Engine):
                     conn.execute(text(f"ALTER TABLE historia_clinica ADD COLUMN {col_name} {col_type}"))
                     conn.commit()
                 logger.info(f"✅ Columna '{col_name}' agregada.")
+
+    # 5. Verificar tabla 'agendas'
+    if inspector.has_table("agendas"):
+        a_columns = [col["name"] for col in inspector.get_columns("agendas")]
+        dialect = engine.dialect.name
+        
+        if "slot_minutos" not in a_columns:
+            logger.info("⚠️ Columna 'slot_minutos' faltante en 'agendas'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE agendas ADD COLUMN slot_minutos INTEGER DEFAULT 20"))
+                conn.commit()
+            logger.info("✅ Columna 'slot_minutos' agregada.")
+            
+        if "activo" not in a_columns:
+            logger.info("⚠️ Columna 'activo' faltante en 'agendas'. Agregando...")
+            with engine.connect() as conn:
+                # Default true/1
+                default_true = "TRUE" if dialect == "postgresql" else "1"
+                # Use INTEGER for boolean compat if desired, or BOOLEAN in PG
+                col_type = "BOOLEAN" if dialect == "postgresql" else "INTEGER"
+                conn.execute(text(f"ALTER TABLE agendas ADD COLUMN activo {col_type} DEFAULT {default_true}"))
+                conn.commit()
+            logger.info("✅ Columna 'activo' agregada.")
