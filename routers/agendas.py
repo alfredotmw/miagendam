@@ -156,7 +156,7 @@ def create_agenda(
         nombre=agenda.nombre,
         tipo=agenda.tipo,
         slot_minutos=agenda.slot_minutos,
-        activo=1 if agenda.activo else 0, # Convert bool to int
+        activo=agenda.activo, # Pass boolean directly
         profesional=profesional
     )
     db.add(nueva_agenda)
