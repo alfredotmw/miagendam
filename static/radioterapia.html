@@ -298,9 +298,50 @@
                 const p = patients[0];
                 document.getElementById('selected-patient-display').textContent = `Seleccionado: ${p.apellido}, ${p.nombre} (${p.dni})`;
                 document.getElementById('selected-patient-id').value = p.id;
+
+                // 🟢 Auto-fill attempt
+                fetchHistoryAndFill(p.id);
             } else {
                 alert("Paciente no encontrado");
             }
+        }
+
+        async function fetchHistoryAndFill(pid) {
+            try {
+                const res = await fetch(`/historia-clinica/paciente/${pid}/timeline`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) return;
+                const data = await res.json();
+
+                // Find latest useful entry
+                const events = data.timeline || []; // Already sorted DESC
+                let diag = '';
+
+                for (const ev of events) {
+                    if (ev.tipo === 'NOTA' && ev.structured_content) {
+                        const sc = ev.structured_content;
+                        // Construct Diagnosis String
+                        // If P1 data exists, it's very relevant
+                        let parts = [];
+                        if (sc.dx_dif) parts.push(sc.dx_dif);
+                        if (sc.tnm) parts.push(`(${sc.tnm})`);
+                        if (sc.estadio) parts.push(`Estadio ${sc.estadio}`);
+
+                        if (parts.length > 0) {
+                            diag = parts.join(' ');
+                            break; // Found latest
+                        }
+                    }
+                }
+
+                if (diag) {
+                    const field = document.getElementById('patologia');
+                    if (!field.value) {
+                        field.value = diag;
+                        field.style.backgroundColor = '#f0fff4'; // faint green highlight
+                        setTimeout(() => field.style.backgroundColor = '', 2000);
+                    }
+                }
+            } catch (e) { console.error(e); }
         }
 
         document.getElementById('radForm').onsubmit = async (e) => {
