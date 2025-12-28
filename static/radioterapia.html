@@ -329,6 +329,12 @@
                         if (parts.length > 0) {
                             diag = parts.join(' ');
                             break; // Found latest
+                        } else if (sc.motivo) {
+                            // Fallback to Motivo if no specific Dx
+                            diag = sc.motivo;
+                            // Continue searching just in case a better one exists? 
+                            // No, let's take the latest info we have.
+                            break;
                         }
                     }
                 }

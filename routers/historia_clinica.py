@@ -333,7 +333,10 @@ def get_timeline(
             servicio=normalized_service,
             estado=turno.estado,
             medico_nombre=medico_nom,
-            medico_matricula=medico_mat
+            medico_matricula=medico_mat,
+            structured_content={             # 🟢 ADDED: Expose Pathology 
+                "patologia": turno.patologia
+            }
         ))
 
     # Identify and Create Plan Treatment Events
