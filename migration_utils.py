@@ -163,6 +163,17 @@ def check_and_migrate_db(engine: Engine):
                     conn.commit()
                 logger.info(f"✅ Columna '{col_name}' agregada.")
 
+        # Automation Column: Radiotherapy
+        if "requiere_radioterapia" not in h_columns:
+            logger.info("⚠️ Columna 'requiere_radioterapia' faltante en 'historia_clinica'. Agregando...")
+            with engine.connect() as conn:
+                dialect = engine.dialect.name
+                default_false = "FALSE" if dialect == "postgresql" else "0"
+                col_type = "BOOLEAN" if dialect == "postgresql" else "INTEGER"
+                conn.execute(text(f"ALTER TABLE historia_clinica ADD COLUMN requiere_radioterapia {col_type} DEFAULT {default_false}"))
+                conn.commit()
+            logger.info("✅ Columna 'requiere_radioterapia' agregada.")
+
     # 5. Verificar tabla 'agendas'
     if inspector.has_table("agendas"):
         a_columns = [col["name"] for col in inspector.get_columns("agendas")]
