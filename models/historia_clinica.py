@@ -48,5 +48,6 @@ class HistoriaClinica(Base):
     medico = relationship("User", foreign_keys=[medico_id], backref="historias_creadas") # Medico principal (compatibilidad)
     
     creado_por = relationship("User", foreign_keys=[creado_por_id])
+    editado_por = relationship("User", foreign_keys=[editado_por_id])
     firmado_por = relationship("User", foreign_keys=[firmado_por_id])
     enmienda_de = relationship("HistoriaClinica", remote_side=[id], backref="enmiendas")

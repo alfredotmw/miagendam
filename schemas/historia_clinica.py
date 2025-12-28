@@ -49,6 +49,9 @@ class TimelineEvent(BaseModel):
     servicio: Optional[str] = None
     medico_nombre: Optional[str] = None
     medico_matricula: Optional[str] = None
+    creado_por: Optional[str] = None
+    editado_por: Optional[str] = None
+    firmado_por: Optional[str] = None
     structured_content: Optional[dict] = None # For structured history fields
 
 from schemas.paciente import PacienteOut

@@ -236,6 +236,9 @@ def get_timeline(
             estado=estado_display,
             medico_nombre=medico_display,
             medico_matricula=nota.medico.matricula if nota.medico else None,
+            creado_por=(nota.creado_por.full_name or nota.creado_por.username) if nota.creado_por else None,
+            editado_por=(nota.editado_por.full_name or nota.editado_por.username) if nota.editado_por else None,
+            firmado_por=(nota.firmado_por.full_name or nota.firmado_por.username) if nota.firmado_por else None,
             structured_content={
                 "motivo": nota.motivo_consulta,
                 "antecedentes": nota.antecedentes,

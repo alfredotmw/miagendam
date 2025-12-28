@@ -633,7 +633,9 @@
 
                 const signature = ev.medico_nombre ?
                     `<div style="margin-top:0.5rem;border-top:1px dashed #eee;padding-top:0.5rem;font-size:0.8rem">
-                        Firmado por: <strong>${ev.medico_nombre}</strong>
+                         <div style="color:#718096">👤 Creado por: <strong>${ev.creado_por || ev.medico_nombre}</strong></div>
+                         ${ev.editado_por && ev.editado_por !== ev.creado_por ? `<div style="color:#718096">✏️ Modif. por: <strong>${ev.editado_por}</strong></div>` : ''}
+                         ${ev.firmado_por ? `<div style="color:#2f855a">🔒 Firmado por: <strong>${ev.firmado_por}</strong></div>` : ''}
                      </div>` : '';
 
                 // Edit Button for Drafts
@@ -642,7 +644,8 @@
                     actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}])" 
                     style="float:right;background:none;border:none;color:#4299e1;cursor:pointer;font-size:0.85rem">✏️ Editar</button>`;
                 } else if (isNota && ev.estado === 'FIRMADO') {
-                    actions = `<span style="float:right;color:#48bb78;font-size:0.85rem">🔒 Firmado</span>`;
+                    // actions = `<span style="float:right;color:#48bb78;font-size:0.85rem">🔒 Firmado</span>`;
+                    // Ya mostramos quien firmó abajo
                 }
 
                 return `
