@@ -9,5 +9,6 @@ from .practica import Practica
 from .medico import MedicoDerivante
 from .turno_practica import TurnoPractica  # 👈 NUEVO
 from .historia_clinica import HistoriaClinica # 👈 NUEVO HISTORIA CLINICA
+from .radioterapia import SeguimientoRadioterapia # 👈 NUEVO RADIOTERAPIA
 
 

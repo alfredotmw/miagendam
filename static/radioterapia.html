@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento Radioterapia</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .main-container {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .rad-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .rad-table th {
+            background: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+            text-align: left;
+            padding: 1rem;
+            font-size: 0.85rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .rad-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #edf2f7;
+            color: #2d3748;
+            vertical-align: middle;
+        }
+
+        .rad-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background-color: #feebc8;
+            color: #744210;
+        }
+
+        .status-active {
+            background-color: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-done {
+            background-color: #bee3f8;
+            color: #2a4365;
+        }
+
+        /* Modal Styles */
+        .modal-body-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .modal-body-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar (Shared) -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
+            <h3>Agenda Médica</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/static/dashboard.html" class="nav-item">Dashboard</a>
+            <a href="/static/radioterapia.html" class="nav-item active">☢️ Radioterapia</a>
+            <a href="/static/agendas.html" class="nav-item">Agendas</a>
+            <a href="/static/nuevo_turno.html" class="nav-item">Nuevo Turno</a>
+            <a href="/static/historial_turnos.html" class="nav-item">Historia Clínica</a>
+        </nav>
+        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+    </div>
+
+    <div class="main-content">
+        <div class="main-container">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">☢️ Seguimiento Radioterapia</h1>
+                    <p style="color: #718096; margin-top: 0.5rem;">Registro de pacientes en tratamiento de radioterapia.
+                    </p>
+                </div>
+                <button class="btn-primary" onclick="openModal()" style="width: auto;">+ Nuevo Registro</button>
+            </div>
+
+            <table class="rad-table">
+                <thead>
+                    <tr>
+                        <th>Paciente</th>
+                        <th>Patología</th>
+                        <th>Derivante</th>
+                        <th>Fechas (Cons / TAC / Ini / Fin)</th>
+                        <th>Responsable</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- JS Loaded -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="radModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 id="modal-title">Nuevo Registro Radioterapia</h3>
+                <span class="close-modal" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="radForm">
+                <input type="hidden" id="reg-id">
+
+                <!-- Patient Selector (Only on create) -->
+                <div class="form-group" id="patient-selector-group">
+                    <label>Buscar Paciente (DNI o Apellido)</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="search-patient" class="form-input" placeholder="Ingrese DNI...">
+                        <button type="button" class="btn-secondary" onclick="searchPatient()"
+                            style="width: auto;">🔍</button>
+                    </div>
+                    <div id="selected-patient-display" style="margin-top: 0.5rem; font-weight: bold; color: #2c5282;">
+                    </div>
+                    <input type="hidden" id="selected-patient-id">
+                </div>
+
+                <div class="modal-body-grid">
+                    <div class="form-group">
+                        <label>Patología</label>
+                        <input type="text" id="patologia" class="form-input" required placeholder="ej. Ca. Mama Izq">
+                    </div>
+                    <div class="form-group">
+                        <label>Médico Derivante</label>
+                        <input type="text" id="medico-derivante" class="form-input" placeholder="Nombre Dr.">
+                    </div>
+                    <div class="form-group">
+                        <label>Médico Responsable</label>
+                        <select id="medico-responsable" class="form-input">
+                            <option value="Dra. Duarte Angelica">Dra. Duarte Angelica</option>
+                            <option value="Dr. Angel Miño">Dr. Angel Miño</option>
+                            <option value="Otro">Otro/a</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha 1ra Consulta</label>
+                        <input type="date" id="fecha-consulta" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha TAC (Simulación)</label>
+                        <input type="date" id="fecha-tac" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha Inicio Tto.</label>
+                        <input type="date" id="fecha-inicio" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha Fin Tto.</label>
+                        <input type="date" id="fecha-fin" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea id="observaciones" class="form-input" rows="3"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary" style="width: auto;">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/static/login.html';
+
+        async function loadData() {
+            try {
+                const res = await fetch('/radioterapia/', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error('Failed to load');
+                const data = await res.json();
+                renderTable(data);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#a0aec0;">No hay registros.</td></tr>';
+                return;
+            }
+
+            data.forEach(item => {
+                const p = item.paciente;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight:600;">${p.apellido}, ${p.nombre}</div>
+                        <div style="font-size:0.8rem; color:#718096;">DNI: ${p.dni} | Edad: ${p.edad || '-'}</div>
+                        <div style="font-size:0.8rem; color:#4299e1;">${p.obra_social ? p.obra_social.nombre : '-'}</div>
+                    </td>
+                    <td>${item.patologia || '-'}</td>
+                    <td>${item.medico_derivante || '-'}</td>
+                    <td style="font-size:0.85rem;">
+                        <div>Cons: ${fmtDate(item.fecha_consulta)}</div>
+                        <div>TAC: ${fmtDate(item.fecha_tac)}</div>
+                        <div>Ini: <b>${fmtDate(item.fecha_inicio)}</b></div>
+                        <div>Fin: ${fmtDate(item.fecha_fin)}</div>
+                    </td>
+                    <td>${item.medico_responsable || '-'}</td>
+                    <td>
+                        <button onclick='editReg(${JSON.stringify(item)})' style="background:none; border:none; cursor:pointer;">✏️</button>
+                        <button onclick='deleteReg(${item.id})' style="background:none; border:none; cursor:pointer; color:#e53e3e;">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function fmtDate(d) {
+            if (!d) return '<span style="color:#cbd5e0;">-</span>';
+            const [y, m, da] = d.split('-');
+            return `${da}/${m}/${y}`;
+        }
+
+        function openModal() {
+            document.getElementById('radModal').style.display = 'flex';
+            document.getElementById('radForm').reset();
+            document.getElementById('reg-id').value = '';
+            document.getElementById('patient-selector-group').style.display = 'block';
+            document.getElementById('selected-patient-display').textContent = '';
+            document.getElementById('modal-title').textContent = 'Nuevo Registro Radioterapia';
+        }
+
+        function closeModal() {
+            document.getElementById('radModal').style.display = 'none';
+        }
+
+        function editReg(item) {
+            openModal();
+            document.getElementById('modal-title').textContent = 'Editar Registro';
+            document.getElementById('patient-selector-group').style.display = 'none'; // Can't change patient on edit
+            document.getElementById('reg-id').value = item.id;
+            document.getElementById('selected-patient-id').value = item.paciente_id;
+
+            document.getElementById('patologia').value = item.patologia || '';
+            document.getElementById('medico-derivante').value = item.medico_derivante || '';
+            document.getElementById('medico-responsable').value = item.medico_responsable || 'Dra. Duarte Angelica';
+            document.getElementById('fecha-consulta').value = item.fecha_consulta || '';
+            document.getElementById('fecha-tac').value = item.fecha_tac || '';
+            document.getElementById('fecha-inicio').value = item.fecha_inicio || '';
+            document.getElementById('fecha-fin').value = item.fecha_fin || '';
+            document.getElementById('observaciones').value = item.observaciones || '';
+        }
+
+        async function searchPatient() {
+            const q = document.getElementById('search-patient').value;
+            if (!q) return;
+            const res = await fetch(`/pacientes/?q=${q}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const patients = await res.json();
+            if (patients.length > 0) {
+                const p = patients[0];
+                document.getElementById('selected-patient-display').textContent = `Seleccionado: ${p.apellido}, ${p.nombre} (${p.dni})`;
+                document.getElementById('selected-patient-id').value = p.id;
+            } else {
+                alert("Paciente no encontrado");
+            }
+        }
+
+        document.getElementById('radForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('reg-id').value;
+            const payload = {
+                paciente_id: document.getElementById('selected-patient-id').value,
+                patologia: document.getElementById('patologia').value,
+                medico_derivante: document.getElementById('medico-derivante').value,
+                medico_responsable: document.getElementById('medico-responsable').value,
+                fecha_consulta: document.getElementById('fecha-consulta').value || null,
+                fecha_tac: document.getElementById('fecha-tac').value || null,
+                fecha_inicio: document.getElementById('fecha-inicio').value || null,
+                fecha_fin: document.getElementById('fecha-fin').value || null,
+                observaciones: document.getElementById('observaciones').value
+            };
+
+            const url = id ? `/radioterapia/${id}` : '/radioterapia/';
+            const method = id ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                closeModal();
+                loadData();
+            } else {
+                alert("Error al guardar");
+            }
+        }
+
+        async function deleteReg(id) {
+            if (!confirm("¿Eliminar registro?")) return;
+            await fetch(`/radioterapia/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            loadData();
+        }
+
+        function logout() { localStorage.removeItem('token'); window.location.href = '/static/login.html'; }
+
+        loadData();
+    </script>
+</body>
+
+</html>
