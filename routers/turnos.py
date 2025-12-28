@@ -123,6 +123,61 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
         db.commit()
         db.refresh(nuevo_turno)
 
+        # 🟢 AUTOMATION: Update Radiotherapy Registry Dates
+        # 1. Check if patient has an active/latest radiotherapy tracking
+        from models.radioterapia import SeguimientoRadioterapia
+        from sqlalchemy import desc
+        
+        # Find the LATEST tracking entry
+        seguimiento = db.query(SeguimientoRadioterapia)\
+            .filter(SeguimientoRadioterapia.paciente_id == turno_in.paciente_id)\
+            .order_by(desc(SeguimientoRadioterapia.created_at))\
+            .first()
+
+        if seguimiento:
+            # Check Agenda Type (Radio San Martin ID=3, Colombia ID=4)
+            # Or fuzzy check on agenda name/type
+            is_radio_agenda = turno_in.agenda_id in [3, 4] 
+            
+            # Check Practice (TAC de Marcación)
+            # We check if ANY of the practices is TAC de Marcación
+            is_tac_marcacion = False
+            for p in practicas:
+                if "MARCACION" in p.nombre.upper() or "TAC" in p.nombre.upper():
+                    # If it's just TAC, maybe we verify if agenda is TOMOGRAFIA (ID 5)?
+                    # For now, let's assume any TAC in this context might be relevant, 
+                    # but User specifically said "TAC de Marcación".
+                    if "MARCACION" in p.nombre.upper():
+                        is_tac_marcacion = True
+                    # Fallback: If it's a TAC agenda (5) and we have a tracking open?
+                    if agenda.id == 5 and "TAC" in p.nombre.upper():
+                         # Maybe too broad? Let's stick to MARCACION for now as primary trigger
+                         pass
+
+            # Update Logic
+            updated = False
+            
+            # Radiotherapy Start Date
+            if is_radio_agenda:
+                # If there is no start date, or this is earlier? 
+                # Usually we want the EARLIEST start date of the treatment.
+                # If fecha_inicio is None, set it.
+                if not seguimiento.fecha_inicio:
+                    seguimiento.fecha_inicio = nuevo_turno.fecha.date()
+                    updated = True
+                elif nuevo_turno.fecha.date() < seguimiento.fecha_inicio:
+                    seguimiento.fecha_inicio = nuevo_turno.fecha.date()
+                    updated = True
+            
+            # Simulation CT Date
+            if is_tac_marcacion:
+                if not seguimiento.fecha_tac:
+                    seguimiento.fecha_tac = nuevo_turno.fecha.date()
+                    updated = True
+
+            if updated:
+                db.commit()
+
         return nuevo_turno
     except HTTPException as e:
         raise e

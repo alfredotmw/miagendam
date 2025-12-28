@@ -5,6 +5,7 @@ from typing import Optional, List, Union
 class HistoriaClinicaBase(BaseModel):
     texto: Optional[str] = None
     servicio: str
+    requiere_radioterapia: Optional[bool] = False
     motivo_consulta: Optional[str] = None
     antecedentes: Optional[str] = None
     examen_clinico: Optional[str] = None

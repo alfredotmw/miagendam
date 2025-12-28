@@ -451,6 +451,13 @@
                             <label>Toxicidad (CTCAE)</label>
                             <input type="text" id="note-toxicidad" class="form-input" placeholder="ej. Neutropenia G2">
                         </div>
+                        <div class="form-group"
+                            style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; background: #fffbe6; padding: 0.5rem; border: 1px solid #fefcbf; border-radius: 4px;">
+                            <input type="checkbox" id="note-radio-check" style="width: 1.2rem; height: 1.2rem;">
+                            <label for="note-radio-check"
+                                style="font-weight: 700; color: #b7791f; margin: 0; cursor: pointer;">☢️ Indicar
+                                Radioterapia (Crear registro automático)</label>
+                        </div>
                     </div>
 
                     <div class="form-group" style="grid-column: 1 / -1;">
@@ -688,6 +695,7 @@
                 document.getElementById('note-tnm').value = sc.tnm || '';
                 document.getElementById('note-estadio').value = sc.estadio || '';
                 document.getElementById('note-toxicidad').value = sc.toxicidad || '';
+                document.getElementById('note-radio-check').checked = sc.requiere_radioterapia || false; // Restore state if editing
 
                 document.getElementById('note-motivo').value = sc.motivo || '';
                 document.getElementById('note-antecedentes').value = sc.antecedentes || '';
@@ -718,7 +726,9 @@
                 diagnostico_diferencial: document.getElementById('note-diagnostico').value,
                 plan_estudio: document.getElementById('note-plan').value,
                 tratamiento: document.getElementById('note-tratamiento').value,
+                tratamiento: document.getElementById('note-tratamiento').value,
                 texto: "Nota",
+                requiere_radioterapia: document.getElementById('note-radio-check').checked,
                 accion: action
             };
             const url = currentNoteId ? `/historia-clinica/${currentNoteId}` : '/historia-clinica/';

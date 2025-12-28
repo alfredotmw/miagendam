@@ -88,6 +88,26 @@ def crear_nota(
     db.add(nueva_nota)
     db.commit()
     db.refresh(nueva_nota)
+
+    # 🟢 AUTOMATION: Create Radiotherapy Registry Entry
+    if nueva_nota.requiere_radioterapia:
+        from models.radioterapia import SeguimientoRadioterapia
+        
+        # Get Current Doctor Name
+        responsable = "Desconocido"
+        if current_user:
+            responsable = current_user.get("full_name") or current_user.get("username")
+
+        nuevo_seguimiento = SeguimientoRadioterapia(
+            paciente_id=nueva_nota.paciente_id,
+            fecha_consulta=date.today(),
+            medico_responsable=responsable,
+            medico_derivante="", # Manual entry required as per user request
+            observaciones=f"Indicado por {responsable} en nota del {datetime.now().strftime('%d/%m/%Y')}"
+        )
+        db.add(nuevo_seguimiento)
+        db.commit()
+
     return nueva_nota
 
 @router.put("/{nota_id}", response_model=HistoriaClinicaOut)

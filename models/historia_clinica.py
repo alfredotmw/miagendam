@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Date, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -13,6 +13,7 @@ class HistoriaClinica(Base):
     fecha = Column(DateTime, default=datetime.now)
     texto = Column(Text, nullable=True) # Mantener como fallback o resumen
     servicio = Column(String, nullable=False) # CONSULTORIO, QUIMIOTERAPIA, ETC.
+    requiere_radioterapia = Column(Boolean, default=False) # 👈 NUEVO: Indicar si requiere radioterapia
 
     # Campos Estructurados (Ley 26.529 / Requerimiento User)
     motivo_consulta = Column(Text, nullable=True)
