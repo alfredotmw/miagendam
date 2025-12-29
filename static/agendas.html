@@ -295,8 +295,20 @@
                     <div class="form-group"><label>Tratamiento</label><textarea id="note-tratamiento" class="form-input"
                             rows="3" disabled></textarea></div>
                 </div>
-                <div class="modal-actions" style="display:none">
-                    <!-- Buttons hidden for read-only -->
+                <div class="modal-actions"
+                    style="display:flex; gap: 1rem; padding: 1rem; border-top: 1px solid #e2e8f0; margin-top: 1rem;">
+                    <button type="button" class="action-btn btn-cancel" onclick="closeNoteModal()"
+                        style="background: #e2e8f0; color: #4a5568;">Cancelar</button>
+                    <div style="flex:1"></div>
+                    <!-- Optional: Button to view history -->
+                    <button type="button" class="action-btn" onclick="viewHistoryFromModal()"
+                        style="margin-right:auto; background:none; color:#4299e1; text-decoration:underline;">📜 Ver
+                        Historial Anterior</button>
+
+                    <button type="button" class="action-btn btn-confirm" onclick="submitNote('BORRADOR')"
+                        style="background: #4299e1;">Guardar Borrador</button>
+                    <button type="button" class="action-btn btn-confirm" onclick="submitNote('FIRMADO')"
+                        style="background: #48bb78;">Firmar y Guardar</button>
                 </div>
             </form>
         </div>
@@ -523,7 +535,7 @@
 
                         html += `
                             <button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>
-                            <button class="action-btn" onclick="openHistoria(${turno.paciente_id}, '${turno.paciente ? turno.paciente.dni : ''}', '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}')" title="Historia Clínica" style="background: #e2e8f0;">📋</button>
+                            <button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0;">📋</button>
                         `;
                     }
                 } else {
@@ -735,10 +747,35 @@
 
         // --- Historia Clinica Logic ---
         let currentHistoriaPacienteId = null;
-        let eventsMap = {}; // Store events for modal access
+        let currentNoteId = null;
+        let eventsMap = {};
 
-        function openNoteModal(note) {
-            document.getElementById('noteModal').classList.add('active');
+        function openNoteModal(note = null, readOnly = false, patientData = null) {
+            const modal = document.getElementById('noteModal');
+            modal.classList.add('active');
+
+            // Setup Buttons & Title
+            const actionsDiv = modal.querySelector('.modal-actions');
+            const title = modal.querySelector('.modal-title');
+
+            // Reset Form
+            const form = document.getElementById('noteForm');
+            if (!note) form.reset();
+
+            // Handle Patient Data for new notes
+            if (patientData) {
+                currentHistoriaPacienteId = patientData.id;
+            }
+
+            if (readOnly) {
+                title.textContent = "Detalle de Evolución";
+                if (actionsDiv) actionsDiv.style.display = 'none';
+                form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = true);
+            } else {
+                title.textContent = "Nueva Evolución";
+                if (actionsDiv) actionsDiv.style.display = 'flex';
+                form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
+            }
 
             if (note) {
                 const sc = note.structured_content || {};
@@ -760,6 +797,77 @@
         function closeNoteModal() {
             document.getElementById('noteModal').classList.remove('active');
             document.getElementById('noteForm').reset();
+            // Re-enable 
+            document.getElementById('noteForm').querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
+        }
+
+        function viewHistoryFromModal() {
+            if (currentHistoriaPacienteId) {
+                closeNoteModal();
+                // We need to fetch details if we don't have them easily, or relies on openHistoria doing it
+                // We don't have DNI/Name readily available here unless we store it.
+                // But openHistoria clears the timeline, so we might need to rely on what we have.
+                // Ideally we call openHistoria, but we lack parameters.
+                // Fallback: Just show modal and load timeline.
+                document.getElementById('historiaModal').classList.add('active');
+                loadHistoriaTimeline(currentHistoriaPacienteId);
+            }
+        }
+
+        async function submitNote(estado) {
+            if (!currentHistoriaPacienteId) { alert("Error: Paciente no identificado"); return; }
+            if (estado === 'FIRMADO' && !confirm("¿Firmar nota? No se podrá editar.")) return;
+
+            const structuredData = {
+                ecog: document.getElementById('note-ecog').value,
+                tnm: document.getElementById('note-tnm').value,
+                estadio: document.getElementById('note-estadio').value,
+                toxicidad: document.getElementById('note-toxicidad').value,
+                requiere_radioterapia: document.getElementById('note-radio-check').checked,
+
+                motivo: document.getElementById('note-motivo').value,
+                antecedentes: document.getElementById('note-antecedentes').value,
+                examen: document.getElementById('note-examen').value,
+                dx_dif: document.getElementById('note-diagnostico').value,
+                plan: document.getElementById('note-plan').value,
+                tratamiento: document.getElementById('note-tratamiento').value
+            };
+
+            // Basic Validation
+            if (!structuredData.motivo && !structuredData.examen) {
+                alert("Ingrese al menos Motivo o Examen Físico");
+                return;
+            }
+
+            const btn = document.querySelector(`.btn-confirm[onclick*="${estado}"]`);
+            const originalText = btn ? btn.textContent : 'Guardar';
+            if (btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
+
+            try {
+                const res = await fetch('/historia-clinica/', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        paciente_id: currentHistoriaPacienteId,
+                        estado: estado,
+                        servicio: currentAgendaType || 'CONSULTORIO',
+                        structured_content: structuredData
+                    })
+                });
+
+                if (res.ok) {
+                    alert("Nota guardada correctamente");
+                    closeNoteModal();
+                } else {
+                    const err = await res.json();
+                    alert("Error: " + (err.detail || "Error al guardar"));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error de conexión");
+            } finally {
+                if (btn) { btn.textContent = originalText; btn.disabled = false; }
+            }
         }
 
         async function openHistoria(pacienteId, dni, nombre) {
@@ -837,7 +945,7 @@
                 // Add View Detail Button for Notes
                 let actions = '';
                 if (isNota) {
-                    actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}])" 
+                    actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}], true)" 
                      style="float:right;background:none;border:none;color:#2b6cb0;cursor:pointer;font-size:0.85rem">👁️ Ver Detalle</button>`;
                 }
 
