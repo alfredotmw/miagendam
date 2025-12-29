@@ -87,7 +87,6 @@ def crear_nota(
         tnm=nota.tnm,
         estadio=nota.estadio,
         toxicidad=nota.toxicidad
-        toxicidad=nota.toxicidad
     )
     
     # 🟢 AUTO-LEARN PATHOLOGY
