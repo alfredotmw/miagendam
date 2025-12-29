@@ -25,6 +25,7 @@ def verify_automation():
         # Clean existing test data for patient 9
         PID = 9
         db.query(SeguimientoRadioterapia).filter(SeguimientoRadioterapia.paciente_id == PID).delete()
+        db.query(Turno).filter(Turno.paciente_id == PID).delete() # 👈 Clean Turnos
         db.commit()
         print("Cleaned old records")
 
@@ -63,13 +64,22 @@ def verify_automation():
             db.add(agenda_tomo)
             db.commit()
             
+        # 🟢 Create and Assign Medico Derivante
+        from models.medico import MedicoDerivante
+        derivante = db.query(MedicoDerivante).filter(MedicoDerivante.nombre == "JUAN DERIVANTE").first()
+        if not derivante:
+            derivante = MedicoDerivante(nombre="JUAN DERIVANTE", matricula="111")
+            db.add(derivante)
+            db.commit()
+            
         tomo_date = datetime.now() - timedelta(days=5)
         t1 = Turno(
             paciente_id=PID,
             agenda_id=agenda_tomo.id,
             fecha=tomo_date,
             hora="10:00",
-            estado="COMPLETADO" # As per logic
+            estado="COMPLETADO",
+            medico_derivante_id=derivante.id # Assign!
         )
         db.add(t1)
         
@@ -106,6 +116,15 @@ def verify_automation():
              print("✅ SUCCESS: Dates Auto-filled correctly.")
         else:
              print(f"❌ FAIL: Dates mismatch. Expected {tomo_date.date()} & {start_date.date()}")
+
+        # Check Names
+        print(f"Responsable In DB: {my_reg.medico_responsable}")
+        print(f"Derivante In DB: {my_reg.medico_derivante}")
+        
+        if "JUAN DERIVANTE" in my_reg.medico_derivante:
+             print("✅ SUCCESS: Derivante detected correctly.")
+        else:
+             print("❌ FAIL: Derivante NOT detected.")
 
     except Exception as e:
         print(f"❌ ERROR: {e}")

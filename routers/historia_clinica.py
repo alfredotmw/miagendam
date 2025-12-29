@@ -101,18 +101,26 @@ def crear_nota(
         ).first()
 
         if not existing_radio:
-            # Get Current Doctor Name as Derivante (since they are creating the indication)
-            derivante = "Desconocido"
+            # 1. Responsable: The doctor creating the note (current_user)
+            responsable_nombre = "Desconocido"
             if current_user:
-                derivante = current_user.get("full_name") or current_user.get("username")
+                responsable_nombre = current_user.get("full_name") or current_user.get("username")
             
-            # Smartly assign Responsable if the creator is one of the known oncologists
-            responsable = "Dra. Duarte Angelica" # Default
-            if "Miño" in derivante:
-                responsable = "Dr. Angel Miño"
-            elif "Duarte" in derivante:
-                responsable = "Dra. Duarte Angelica"
+            # 2. Derivante: Try to get from the Turno that justified this note (if found above 'has_turno')
+            # If 'has_turno' variable isn't available (e.g. ADMIN or logic flow), we can try to find one again or leave blank.
+            # We already queried 'has_turno' in FIRMAR block, but if GUARDAR, we might not have it.
+            # Let's try to find a recent valid turno for this patient to get the derivante.
+            medico_derivante_str = ""
             
+            # Re-query a recent completed/present turno for this patient
+            last_turno = db.query(Turno).filter(
+                Turno.paciente_id == nueva_nota.paciente_id,
+                Turno.fecha <= datetime.now()
+            ).order_by(Turno.fecha.desc()).first()
+            
+            if last_turno and last_turno.medico_derivante:
+                 medico_derivante_str = last_turno.medico_derivante.nombre
+
             # Construct Pathology string
             patologia_str = nueva_nota.diagnostico_diferencial or nueva_nota.motivo_consulta or "A determinar"
             if nueva_nota.estadio:
@@ -124,9 +132,9 @@ def crear_nota(
                 paciente_id=nueva_nota.paciente_id,
                 fecha_consulta=date.today(),
                 patologia=patologia_str,
-                medico_responsable=responsable,
-                medico_derivante=derivante,
-                observaciones=f"Indicado en nota del {datetime.now().strftime('%d/%m/%Y')} por {derivante}."
+                medico_responsable=responsable_nombre, # Creator
+                medico_derivante=medico_derivante_str, # External Referrer
+                observaciones=f"Indicado en nota del {datetime.now().strftime('%d/%m/%Y')}."
             )
             db.add(nuevo_seguimiento)
             db.commit()
