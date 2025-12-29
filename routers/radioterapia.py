@@ -49,8 +49,6 @@ def get_excel_feed(
             "Nombre": pat.nombre if pat else "",
             "DNI": pat.dni if pat else "",
             "Patologia": reg.patologia,
-            "Dosis": reg.dosis_total,
-            "Fracciones": reg.numero_fracciones,
             "Medico_Responsable": reg.medico_responsable,
             "Medico_Derivante": reg.medico_derivante,
             "Fecha_TAC": reg.fecha_tac,
