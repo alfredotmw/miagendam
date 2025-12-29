@@ -239,6 +239,68 @@
             </div>
         </div>
     </div>
+
+    <!-- Note Detail Modal (Read Only for Agendas) -->
+    <div id="noteModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Detalle de Evolución</h3>
+                <span class="close-modal" onclick="closeNoteModal()">&times;</span>
+            </div>
+            <form id="noteForm">
+                <div class="form-grid">
+                    <!-- P1: Oncology Section -->
+                    <div
+                        style="grid-column: 1 / -1; background: #ebf8ff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #2b6cb0;">📊 Estado Oncológico (P1)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>ECOG (0-5)</label>
+                                <input type="text" id="note-ecog" class="form-input" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>TNM</label>
+                                <input type="text" id="note-tnm" class="form-input" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>Estadio</label>
+                                <input type="text" id="note-estadio" class="form-input" disabled>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 0.5rem;">
+                            <label>Toxicidad (CTCAE)</label>
+                            <input type="text" id="note-toxicidad" class="form-input" disabled>
+                        </div>
+                        <div class="form-group"
+                            style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; background: #fffbe6; padding: 0.5rem; border: 1px solid #fefcbf; border-radius: 4px;">
+                            <input type="checkbox" id="note-radio-check" style="width: 1.2rem; height: 1.2rem;"
+                                disabled>
+                            <label for="note-radio-check" style="font-weight: 700; color: #b7791f; margin: 0;">☢️
+                                Indicar Radioterapia</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Motivo de Consulta</label>
+                        <textarea id="note-motivo" class="form-input" rows="2" style="width:100%" disabled></textarea>
+                    </div>
+                    <div class="form-group"><label>Antecedentes</label><textarea id="note-antecedentes"
+                            class="form-input" rows="3" disabled></textarea></div>
+                    <div class="form-group"><label>Examen Físico</label><textarea id="note-examen" class="form-input"
+                            rows="3" disabled></textarea></div>
+                    <div class="form-group"><label>Diagnóstico Diferencial</label><textarea id="note-diagnostico"
+                            class="form-input" rows="3" disabled></textarea></div>
+                    <div class="form-group"><label>Plan de Estudio</label><textarea id="note-plan" class="form-input"
+                            rows="3" disabled></textarea></div>
+                    <div class="form-group"><label>Tratamiento</label><textarea id="note-tratamiento" class="form-input"
+                            rows="3" disabled></textarea></div>
+                </div>
+                <div class="modal-actions" style="display:none">
+                    <!-- Buttons hidden for read-only -->
+                </div>
+            </form>
+        </div>
+    </div>
     </div>
 
     <script>
@@ -673,6 +735,32 @@
 
         // --- Historia Clinica Logic ---
         let currentHistoriaPacienteId = null;
+        let eventsMap = {}; // Store events for modal access
+
+        function openNoteModal(note) {
+            document.getElementById('noteModal').classList.add('active');
+
+            if (note) {
+                const sc = note.structured_content || {};
+                document.getElementById('note-ecog').value = sc.ecog || '';
+                document.getElementById('note-tnm').value = sc.tnm || '';
+                document.getElementById('note-estadio').value = sc.estadio || '';
+                document.getElementById('note-toxicidad').value = sc.toxicidad || '';
+                document.getElementById('note-radio-check').checked = sc.requiere_radioterapia || false;
+
+                document.getElementById('note-motivo').value = sc.motivo || '';
+                document.getElementById('note-antecedentes').value = sc.antecedentes || '';
+                document.getElementById('note-examen').value = sc.examen || '';
+                document.getElementById('note-diagnostico').value = sc.dx_dif || '';
+                document.getElementById('note-plan').value = sc.plan || '';
+                document.getElementById('note-tratamiento').value = sc.tratamiento || '';
+            }
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').classList.remove('active');
+            document.getElementById('noteForm').reset();
+        }
 
         async function openHistoria(pacienteId, dni, nombre) {
             currentHistoriaPacienteId = pacienteId;
@@ -709,6 +797,8 @@
 
         function renderTimeline(events) {
             const container = document.getElementById('historiaTimeline');
+            eventsMap = {}; // Reset map
+
             if (!events || events.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 4rem; color: #a0aec0;">
@@ -720,6 +810,8 @@
             }
 
             container.innerHTML = events.map(ev => {
+                if (ev.id_referencia) eventsMap[ev.id_referencia] = ev; // Index
+
                 const isNota = ev.tipo === 'NOTA';
                 let icon = '📝';
                 let typeClass = 'type-nota';
@@ -742,12 +834,19 @@
                 const dateStr = dateObj.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
                 const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
+                // Add View Detail Button for Notes
+                let actions = '';
+                if (isNota) {
+                    actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}])" 
+                     style="float:right;background:none;border:none;color:#2b6cb0;cursor:pointer;font-size:0.85rem">👁️ Ver Detalle</button>`;
+                }
+
                 return `
                     <div class="timeline-card">
                         <div class="timeline-icon ${typeClass}">${icon}</div>
                         
                         <div class="timeline-header-row">
-                            <div class="timeline-title">${title}</div>
+                            <div class="timeline-title">${title} ${actions}</div>
                             <div class="timeline-date">${dateStr} • ${timeStr}</div>
                         </div>
 
