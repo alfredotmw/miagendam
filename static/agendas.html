@@ -321,62 +321,28 @@
     </div>
 
     <datalist id="cancer-types-list">
-        <option value="Carcinoma de Mama"></option>
-        <option value="Carcinoma de Pulmón (No Células Pequeñas)"></option>
-        <option value="Carcinoma de Pulmón (Células Pequeñas)"></option>
-        <option value="Cáncer de Próstata"></option>
-        <option value="Cáncer Colorrectal"></option>
-        <option value="Cáncer de Colon"></option>
-        <option value="Cáncer de Recto"></option>
-        <option value="Cáncer de Páncreas"></option>
-        <option value="Carcinoma Hepatocelular (Hígado)"></option>
-        <option value="Cáncer Gástrico (Estómago)"></option>
-        <option value="Cáncer de Esófago"></option>
-        <option value="Cáncer de Ovario"></option>
-        <option value="Cáncer de Endometrio"></option>
-        <option value="Cáncer de Cuello Uterino"></option>
-        <option value="Cáncer de Riñón (Carcinoma de Células Renales)"></option>
-        <option value="Cáncer de Vejiga"></option>
-        <option value="Melanoma"></option>
-        <option value="Carcinoma Basocelular"></option>
-        <option value="Carcinoma Espinocelular"></option>
-        <option value="Linfoma Hodgkin"></option>
-        <option value="Linfoma No Hodgkin"></option>
-        <option value="Mieloma Múltiple"></option>
-        <option value="Leucemia Mieloide Aguda"></option>
-        <option value="Leucemia Linfoide Aguda"></option>
-        <option value="Leucemia Mieloide Crónica"></option>
-        <option value="Leucemia Linfoide Crónica"></option>
-        <option value="Glioblastoma Multiforme"></option>
-        <option value="Astrocitoma"></option>
-        <option value="Meningioma"></option>
-        <option value="Sarcoma de Tejidos Blandos"></option>
-        <option value="Osteosarcoma"></option>
-        <option value="Cáncer de Tiroides"></option>
-        <option value="Cáncer de Cabeza y Cuello"></option>
-        <option value="Tumor Neuroendocrino"></option>
-        <option value="Cáncer de Testículo"></option>
-        <!-- Metastasis -->
-        <option value="Metástasis de Cáncer de Mama"></option>
-        <option value="Metástasis de Cáncer de Pulmón"></option>
-        <option value="Metástasis de Cáncer de Próstata"></option>
-        <option value="Metástasis de Cáncer de Colon"></option>
-        <option value="Metástasis de Cáncer de Recto"></option>
-        <option value="Metástasis de Melanoma"></option>
-        <option value="Metástasis de Cáncer Renal"></option>
-        <option value="Metástasis de Cáncer de Vejiga"></option>
-        <option value="Metástasis de Sarcoma"></option>
-        <option value="Metástasis Óseas (Origen Desconocido)"></option>
-        <option value="Metástasis Cerebrales (Origen Desconocido)"></option>
-        <option value="Metástasis Hepáticas (Origen Desconocido)"></option>
-        <option value="Metástasis Pulmonares (Origen Desconocido)"></option>
-        <option value="Carcinomatosis Peritoneal"></option>
+        <!-- Javascript will populate this -->
     </datalist>
     </div>
 
     <script>
         const token = localStorage.getItem('token');
         if (!token) window.location.href = '/static/login.html';
+
+        // Load Patologias
+        fetch('/common/patologias', { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(data => {
+                const dl = document.getElementById('cancer-types-list');
+                dl.innerHTML = '';
+                data.forEach(item => {
+                    const op = document.createElement('option');
+                    op.value = item;
+                    dl.appendChild(op);
+                });
+            })
+            .catch(e => console.error("Could not load pathologies", e));
+
 
         let currentAgendaId = null;
         let currentAgendaType = null;

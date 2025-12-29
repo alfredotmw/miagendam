@@ -15,6 +15,52 @@ router = APIRouter(
     tags=["Radioterapia"]
 )
 
+from fastapi import Query
+from jose import jwt, JWTError
+from auth.jwt import SECRET_KEY, ALGORITHM
+
+@router.get("/feed")
+def get_excel_feed(
+    token: str = Query(..., description="JWT Token for authentication"),
+    db: Session = Depends(get_db)
+):
+    # Verify Token manually
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if "sub" not in payload:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    registros = db.query(SeguimientoRadioterapia).order_by(SeguimientoRadioterapia.id.desc()).all()
+    
+    # Check autofills
+    for reg in registros:
+        check_and_autofill(reg, db)
+    
+    # Flatten Data
+    data = []
+    for reg in registros:
+        pat = reg.paciente
+        data.append({
+            "ID": reg.id,
+            "Fecha": reg.fecha_consulta,
+            "Apellido": pat.apellido if pat else "",
+            "Nombre": pat.nombre if pat else "",
+            "DNI": pat.dni if pat else "",
+            "Patologia": reg.patologia,
+            "Dosis": reg.dosis_total,
+            "Fracciones": reg.numero_fracciones,
+            "Medico_Responsable": reg.medico_responsable,
+            "Medico_Derivante": reg.medico_derivante,
+            "Fecha_TAC": reg.fecha_tac,
+            "Inicio_Tto": reg.fecha_inicio,
+            "Fin_Tto": reg.fecha_fin,
+            "Estado": ("Finalizado" if reg.fecha_fin and reg.fecha_fin < date.today() else "En Curso") if reg.fecha_inicio else "Pendiente",
+            "Observaciones": reg.observaciones
+        })
+    return data
+
 @router.post("/", response_model=SeguimientoRadioterapiaOut)
 def create_registro(
     registro: SeguimientoRadioterapiaCreate, 

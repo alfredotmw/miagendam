@@ -4,6 +4,7 @@ from database import get_db
 from models.historia_clinica import HistoriaClinica
 from models.turno import Turno
 from models.paciente import Paciente
+from models.patologia import Patologia
 from schemas.historia_clinica import HistoriaClinicaCreate, HistoriaClinicaOut, TimelineResponse, TimelineEvent
 from auth.jwt import get_current_user
 from typing import List, Optional
@@ -86,7 +87,18 @@ def crear_nota(
         tnm=nota.tnm,
         estadio=nota.estadio,
         toxicidad=nota.toxicidad
+        toxicidad=nota.toxicidad
     )
+    
+    # 🟢 AUTO-LEARN PATHOLOGY
+    if nota.patologia:
+        normalized_pat = nota.patologia.strip()
+        if normalized_pat:
+            exists = db.query(Patologia).filter(Patologia.nombre == normalized_pat).first()
+            if not exists:
+                db.add(Patologia(nombre=normalized_pat))
+                # We don't verify commit here, main commit will handle it or we commit if we want it immediately available elsewhere
+                
     db.add(nueva_nota)
     db.commit()
     db.refresh(nueva_nota)
