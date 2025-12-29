@@ -43,19 +43,27 @@ def get_excel_feed(
     for reg in registros:
         pat = reg.paciente
         data.append({
-            "ID": reg.id,
-            "Fecha": reg.fecha_consulta,
-            "Apellido": pat.apellido if pat else "",
-            "Nombre": pat.nombre if pat else "",
-            "DNI": pat.dni if pat else "",
+            # Column 1: Nombre y Apellido
+            "Paciente": f"{pat.apellido}, {pat.nombre}" if pat else "",
+            # Column 2: Edad
+            "Edad": pat.edad if pat else "",
+            # Column 3: Patología
             "Patologia": reg.patologia,
+            # Column 4: Medico Responsable
             "Medico_Responsable": reg.medico_responsable,
+            # Column 5: Medico Derivante
             "Medico_Derivante": reg.medico_derivante,
+            # Column 6: Fecha de Consulta
+            "Fecha_Consulta": reg.fecha_consulta,
+            # Column 7: Fecha de TAC
             "Fecha_TAC": reg.fecha_tac,
+            # Column 8: Inicio Tratamiento
             "Inicio_Tto": reg.fecha_inicio,
+            # Column 9: Fin Tratamiento
             "Fin_Tto": reg.fecha_fin,
-            "Estado": ("Finalizado" if reg.fecha_fin and reg.fecha_fin < date.today() else "En Curso") if reg.fecha_inicio else "Pendiente",
-            "Observaciones": reg.observaciones
+            # Extras (optional, keep at end)
+            "Observaciones": reg.observaciones,
+            "Estado": ("Finalizado" if reg.fecha_fin and reg.fecha_fin < date.today() else "En Curso") if reg.fecha_inicio else "Pendiente"
         })
     return data
 
