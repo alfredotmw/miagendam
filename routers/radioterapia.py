@@ -5,6 +5,10 @@ from database import get_db
 from models.radioterapia import SeguimientoRadioterapia
 from schemas.radioterapia import SeguimientoRadioterapiaCreate, SeguimientoRadioterapiaOut, SeguimientoRadioterapiaUpdate
 from auth.jwt import get_current_user
+from models.turno import Turno
+from models.agenda import Agenda
+from models.practica import Practica
+from datetime import date
 
 router = APIRouter(
     prefix="/radioterapia",
@@ -36,7 +40,13 @@ def list_registros(
         # Basic filtering logic could be improved (join patient name)
         pass # TODO: Search by patient name if needed
         
-    return query.order_by(SeguimientoRadioterapia.id.desc()).offset(skip).limit(limit).all()
+    registros = query.order_by(SeguimientoRadioterapia.id.desc()).offset(skip).limit(limit).all()
+    
+    # 🟢 AUTO-FILL LOGIC
+    for reg in registros:
+        check_and_autofill(reg, db)
+        
+    return registros
 
 @router.get("/paciente/{paciente_id}", response_model=List[SeguimientoRadioterapiaOut])
 def get_by_patient(
@@ -44,7 +54,64 @@ def get_by_patient(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    return db.query(SeguimientoRadioterapia).filter(SeguimientoRadioterapia.paciente_id == paciente_id).all()
+    registros = db.query(SeguimientoRadioterapia).filter(SeguimientoRadioterapia.paciente_id == paciente_id).all()
+    
+    # 🟢 AUTO-FILL LOGIC
+    for reg in registros:
+        check_and_autofill(reg, db)
+
+    return registros  
+
+def check_and_autofill(reg: SeguimientoRadioterapia, db: Session):
+    """
+    Checks if dates are missing and tries to fill them from Turnos.
+    Updates DB if changes found.
+    """
+    changes = False
+
+    # 1. FECHA TAC (Simulacion)
+    # Look for latest 'TOMOGRAFIA' appointment
+    if not reg.fecha_tac:
+        last_tac = db.query(Turno).join(Agenda).join(Practica, Turno.practica_id == Practica.id, isouter=True).filter(
+            Turno.paciente_id == reg.paciente_id,
+            Turno.estado == "COMPLETADO", # Only completed? Or asignado? User said "a medida que se cargan". So maybe any valid state.
+                                          # Let's say "ASISTIO" or just existing event? 
+                                          # Usually date is known when turno is taken.
+            (Agenda.tipo == "TOMOGRAFIA") | (Practica.categoria == "TOMOGRAFIA")
+        ).order_by(Turno.fecha.desc()).first()
+        
+        if last_tac:
+            reg.fecha_tac = last_tac.fecha.date()
+            changes = True
+
+    # 2. FECHA INICIO TTO (First Radiotherapy Session)
+    if not reg.fecha_inicio:
+        first_radio = db.query(Turno).join(Agenda).filter(
+            Turno.paciente_id == reg.paciente_id,
+            Agenda.tipo == "RADIOTERAPIA"
+        ).order_by(Turno.fecha.asc()).first()
+        
+        if first_radio:
+            reg.fecha_inicio = first_radio.fecha.date()
+            changes = True
+
+    # 3. FECHA FIN TTO (Last Radiotherapy Session)
+    # We always update 'fin' if we find a later date than current 'fin' or if 'fin' is missing
+    last_radio = db.query(Turno).join(Agenda).filter(
+        Turno.paciente_id == reg.paciente_id,
+        Agenda.tipo == "RADIOTERAPIA"
+    ).order_by(Turno.fecha.desc()).first()
+
+    if last_radio:
+        last_date = last_radio.fecha.date()
+        if not reg.fecha_fin or reg.fecha_fin != last_date:
+            reg.fecha_fin = last_date
+            changes = True
+
+    if changes:
+        db.add(reg)
+        db.commit()
+        db.refresh(reg)
 
 @router.put("/{reg_id}", response_model=SeguimientoRadioterapiaOut)
 def update_registro(

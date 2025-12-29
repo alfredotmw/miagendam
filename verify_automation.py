@@ -1,130 +1,118 @@
-from auth.jwt import create_access_token
-from database import SessionLocal, engine, Base
+from database import SessionLocal
 from models.user import User
-from models.paciente import Paciente
-from models.radioterapia import SeguimientoRadioterapia
 from models.historia_clinica import HistoriaClinica
+from models.radioterapia import SeguimientoRadioterapia
 from models.turno import Turno
 from models.agenda import Agenda
-from datetime import datetime, date
-
-db = SessionLocal()
+from models.practica import Practica
+from routers.historia_clinica import crear_nota
+from routers.radioterapia import list_registros
+from schemas.historia_clinica import HistoriaClinicaCreate
+from datetime import datetime, date, timedelta
 
 def verify_automation():
-    print("--- 1. Setup Data ---")
-    # Get a doctor user
-    doctor = db.query(User).filter(User.role == "MEDICO").first()
-    if not doctor:
-        print("SKIP: No doctor found")
-        return
+    db = SessionLocal()
+    try:
+        print("--- SETUP ---")
+        # 0. Get User and Patient
+        user = db.query(User).filter(User.role == "MEDICO").first()
+        if not user:
+            user = db.query(User).first() # Fallback
+        
+        current_user = {"id": user.id, "username": user.username, "role": user.role, "full_name": user.full_name}
+        print(f"User: {current_user['username']}")
 
-    # Get a patient
-    paciente = db.query(Paciente).first()
-    if not paciente:
-        print("SKIP: No patient found")
-        return
-
-    print(f"Doctor: {doctor.username}, Paciente: {paciente.apellido}")
-
-    # --- TEST 1: Create Note with Indication ---
-    print("\n--- 2. Creating Note with 'requiere_radioterapia=True' ---")
-    
-    # We simulate the API logic manually since we are in a script, 
-    # OR we use requests to hit localhost if running. 
-    # Let's use direct DB manipulation simulating the Router logic to test the LOGIC itself.
-    
-    # Simulate Router Logic for Create Note
-    responsable = doctor.full_name or doctor.username
-    nueva_nota = HistoriaClinica(
-        paciente_id=paciente.id,
-        texto="Nota de prueba automation",
-        servicio="CONSULTA ONC.",
-        creado_por_id=doctor.id,
-        requiere_radioterapia=True, # 👈 KEY
-        fecha=datetime.now()
-    )
-    db.add(nueva_nota)
-    db.commit() # This saves note.
-    
-    # TRIGGER LOGIC (Copied from Router)
-    if nueva_nota.requiere_radioterapia:
-        nuevo_seguimiento = SeguimientoRadioterapia(
-            paciente_id=nueva_nota.paciente_id,
-            fecha_consulta=date.today(),
-            medico_responsable=responsable,
-            medico_derivante="",
-            observaciones=f"Indicado por {responsable} (AUTO TEST)"
-        )
-        db.add(nuevo_seguimiento)
+        # Clean existing test data for patient 9
+        PID = 9
+        db.query(SeguimientoRadioterapia).filter(SeguimientoRadioterapia.paciente_id == PID).delete()
         db.commit()
-        print("✅ Registry Entry Created via Trigger Logic")
+        print("Cleaned old records")
 
-    # Verify Registry Exists
-    reg = db.query(SeguimientoRadioterapia).filter(
-        SeguimientoRadioterapia.paciente_id == paciente.id, 
-        SeguimientoRadioterapia.medico_responsable == responsable
-    ).order_by(SeguimientoRadioterapia.id.desc()).first()
-    
-    assert reg is not None
-    assert reg.fecha_consulta == date.today()
-    print(f"✅ Registry found: ID {reg.id}, Resp: {reg.medico_responsable}")
+        print("\n--- STEP 1: CREATE CLINICAL HISTORY (Trigger) ---")
+        note_data = HistoriaClinicaCreate(
+            paciente_id=PID,
+            servicio="ONCOLOGIA",
+            texto="Paciente requiere inicio de tratamiento.",
+            requiere_radioterapia=True, # <--- TRIGGER
+            diagnostico_diferencial="Ca. Mama",
+            estadio="IIA",
+            accion="GUARDAR"
+        )
+        
+        # Call the router function directly
+        crear_nota(note_data, db, current_user)
+        print("Note Created.")
+        
+        # Verify creation
+        reg = db.query(SeguimientoRadioterapia).filter(SeguimientoRadioterapia.paciente_id == PID).first()
+        if not reg:
+            print("❌ FAIL: Radiotherapy Registry NOT created.")
+            return
+        print(f"✅ SUCCESS: Registry created. ID: {reg.id}, Path: {reg.patologia}")
 
-    # --- TEST 2: Create Turno for Radio (Updates Start Date) ---
-    print("\n--- 3. Creating Turno for Radiotherapy (Agenda 3) ---")
-    
-    radio_agenda = db.query(Agenda).filter(Agenda.id == 3).first()
-    if not radio_agenda:
-        print("⚠️ Agenda 3 not found, using first available")
-        radio_agenda = db.query(Agenda).first()
-    
-    nuevo_turno = Turno(
-        fecha=datetime.now(),
-        hora="10:00",
-        duracion=15,
-        paciente_id=paciente.id,
-        agenda_id=3, # FORCE RADIOTERAPIA SAN MARTIN
-        estado="PENDIENTE"
-    )
-    db.add(nuevo_turno)
-    db.commit()
-    
-    # TRIGGER LOGIC (Copied from Router)
-    # Find LATEST tracking
-    seguimiento = db.query(SeguimientoRadioterapia)\
-        .filter(SeguimientoRadioterapia.paciente_id == paciente.id)\
-        .order_by(SeguimientoRadioterapia.created_at.desc())\
-        .first()
-    
-    if seguimiento:
-        is_radio_agenda = nuevo_turno.agenda_id in [3, 4] 
-        print(f"   -> Turno Agenda ID: {nuevo_turno.agenda_id}. Is Radio? {is_radio_agenda}")
+        print("\n--- STEP 2: CREATE APPOINTMENTS (Dates Source) ---")
+        # Create Agenda Types if needed (assuming they exist or using raw strings)
+        # Ensure we have a TOMOGRAFIA agenda/practice
         
-        updated = False
-        if is_radio_agenda:
-            if not seguimiento.fecha_inicio:
-                seguimiento.fecha_inicio = nuevo_turno.fecha.date()
-                updated = True
-                print("   -> Set fecha_inicio (was empty)")
-            elif nuevo_turno.fecha.date() < seguimiento.fecha_inicio:
-                seguimiento.fecha_inicio = nuevo_turno.fecha.date()
-                updated = True
-                print("   -> Updated fecha_inicio (earlier date)")
-        
-        if updated:
+        # Create a TOMOGRAFIA appointment (simulate usage)
+        # We need an agenda.
+        agenda_tomo = db.query(Agenda).filter(Agenda.tipo == "TOMOGRAFIA").first()
+        if not agenda_tomo:
+            print("Creating Mock TOMO Agenda")
+            agenda_tomo = Agenda(nombre="TOMO TEST", tipo="TOMOGRAFIA")
+            db.add(agenda_tomo)
             db.commit()
-            print("✅ Registry Updated via Trigger Logic")
-    
-    # Verify Update
-    db.refresh(reg)
-    print(f"Registry fecha_inicio: {reg.fecha_inicio}")
-    assert reg.fecha_inicio == date.today()
-    print("✅ Verification Successful!")
+            
+        tomo_date = datetime.now() - timedelta(days=5)
+        t1 = Turno(
+            paciente_id=PID,
+            agenda_id=agenda_tomo.id,
+            fecha=tomo_date,
+            hora="10:00",
+            estado="COMPLETADO" # As per logic
+        )
+        db.add(t1)
+        
+        # Create RADIOTERAPIA appointment (Start)
+        agenda_radio = db.query(Agenda).filter(Agenda.tipo == "RADIOTERAPIA").first()
+        if not agenda_radio:
+            print("Creating Mock RADIO Agenda")
+            agenda_radio = Agenda(nombre="RADIO TEST", tipo="RADIOTERAPIA")
+            db.add(agenda_radio)
+            db.commit()
+            
+        start_date = datetime.now() + timedelta(days=2)
+        t2 = Turno(
+            paciente_id=PID,
+            agenda_id=agenda_radio.id,
+            fecha=start_date,
+            hora="08:00",
+            estado="PENDIENTE"
+        )
+        db.add(t2)
+        
+        db.commit()
+        print("Appointments Created.")
 
-try:
+        print("\n--- STEP 3: LIST REGISTRIES (Trigger Auto-fill) ---")
+        # Function triggers check_and_autofill
+        results = list_registros(db=db, current_user=current_user, limit=10)
+        
+        my_reg = next((r for r in results if r.id == reg.id), None)
+        
+        print(f"Results: TAC={my_reg.fecha_tac}, INICIO={my_reg.fecha_inicio}")
+        
+        if my_reg.fecha_tac == tomo_date.date() and my_reg.fecha_inicio == start_date.date():
+             print("✅ SUCCESS: Dates Auto-filled correctly.")
+        else:
+             print(f"❌ FAIL: Dates mismatch. Expected {tomo_date.date()} & {start_date.date()}")
+
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        db.close()
+
+if __name__ == "__main__":
     verify_automation()
-except Exception as e:
-    print(f"❌ Error: {e}")
-    import traceback
-    traceback.print_exc()
-finally:
-    db.close()

@@ -64,6 +64,7 @@ def crear_nota(
         paciente_id=nota.paciente_id,
         texto=nota.texto or "Nota Estructurada",
         servicio=nota.servicio,
+        requiere_radioterapia=nota.requiere_radioterapia, # 👈 FIX: Save to DB
         # Audit
         creado_por_id=current_user.get("id"),
         fecha_creacion=datetime.now(),
@@ -93,20 +94,42 @@ def crear_nota(
     if nueva_nota.requiere_radioterapia:
         from models.radioterapia import SeguimientoRadioterapia
         
-        # Get Current Doctor Name
-        responsable = "Desconocido"
-        if current_user:
-            responsable = current_user.get("full_name") or current_user.get("username")
+        # Check if active record exists (avoid duplicates)
+        existing_radio = db.query(SeguimientoRadioterapia).filter(
+            SeguimientoRadioterapia.paciente_id == nueva_nota.paciente_id,
+            SeguimientoRadioterapia.fecha_fin == None # Active treatment
+        ).first()
 
-        nuevo_seguimiento = SeguimientoRadioterapia(
-            paciente_id=nueva_nota.paciente_id,
-            fecha_consulta=date.today(),
-            medico_responsable=responsable,
-            medico_derivante="", # Manual entry required as per user request
-            observaciones=f"Indicado por {responsable} en nota del {datetime.now().strftime('%d/%m/%Y')}"
-        )
-        db.add(nuevo_seguimiento)
-        db.commit()
+        if not existing_radio:
+            # Get Current Doctor Name as Derivante (since they are creating the indication)
+            derivante = "Desconocido"
+            if current_user:
+                derivante = current_user.get("full_name") or current_user.get("username")
+            
+            # Smartly assign Responsable if the creator is one of the known oncologists
+            responsable = "Dra. Duarte Angelica" # Default
+            if "Miño" in derivante:
+                responsable = "Dr. Angel Miño"
+            elif "Duarte" in derivante:
+                responsable = "Dra. Duarte Angelica"
+            
+            # Construct Pathology string
+            patologia_str = nueva_nota.diagnostico_diferencial or nueva_nota.motivo_consulta or "A determinar"
+            if nueva_nota.estadio:
+                patologia_str += f" (Estadio {nueva_nota.estadio})"
+            if nueva_nota.tnm:
+                patologia_str += f" {nueva_nota.tnm}"
+
+            nuevo_seguimiento = SeguimientoRadioterapia(
+                paciente_id=nueva_nota.paciente_id,
+                fecha_consulta=date.today(),
+                patologia=patologia_str,
+                medico_responsable=responsable,
+                medico_derivante=derivante,
+                observaciones=f"Indicado en nota del {datetime.now().strftime('%d/%m/%Y')} por {derivante}."
+            )
+            db.add(nuevo_seguimiento)
+            db.commit()
 
     return nueva_nota
 
