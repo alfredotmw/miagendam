@@ -23,6 +23,7 @@ class HistoriaClinica(Base):
     diagnostico_diferencial = Column(Text, nullable=True)
     tratamiento = Column(Text, nullable=True)
     evolucion = Column(Text, nullable=True) # Pronostico y Evolucion
+    patologia = Column(Text, nullable=True) # 👈 NUEVO: Diagnostico Principal / Patologia Especifica
 
     # P0: Estados y Auditoría
     estado = Column(String, default="BORRADOR") # BORRADOR, FIRMADO, ANULADO

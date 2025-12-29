@@ -13,6 +13,7 @@ class HistoriaClinicaBase(BaseModel):
     diagnostico_diferencial: Optional[str] = None
     tratamiento: Optional[str] = None
     evolucion: Optional[str] = None
+    patologia: Optional[str] = None # 👈 NUEVO
     estado: Optional[str] = "BORRADOR"
     # P1 Oncology
     ecog: Optional[int] = None # 0-5

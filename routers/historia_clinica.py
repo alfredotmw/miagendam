@@ -80,6 +80,7 @@ def crear_nota(
         diagnostico_diferencial=nota.diagnostico_diferencial,
         tratamiento=nota.tratamiento,
         evolucion=nota.evolucion,
+        patologia=nota.patologia, # 👈 SAVE
         # P1 Oncology
         ecog=nota.ecog,
         tnm=nota.tnm,
@@ -200,6 +201,7 @@ def update_nota(
     db_nota.diagnostico_diferencial = nota_update.diagnostico_diferencial
     db_nota.tratamiento = nota_update.tratamiento
     db_nota.evolucion = nota_update.evolucion
+    db_nota.patologia = nota_update.patologia
     db_nota.texto = nota_update.texto or db_nota.texto
     
     # P1 Update
@@ -298,6 +300,7 @@ def get_timeline(
                 "dx_dif": nota.diagnostico_diferencial,
                 "tratamiento": nota.tratamiento,
                 "evolucion": nota.evolucion,
+                "patologia": nota.patologia, # 👈 EXPOSE
                 # P1
                 "ecog": nota.ecog,
                 "tnm": nota.tnm,

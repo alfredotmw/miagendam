@@ -460,6 +460,12 @@
                         </div>
                     </div>
 
+                    <div class="form-group" style="grid-column: 1 / -1; margin-top: 1rem;">
+                        <label style="font-weight: 600; color: #2d3748;">Patología (Diagnóstico Principal)</label>
+                        <input type="text" id="note-patologia" class="form-input" list="cancer-types-list"
+                            placeholder="Escriba para buscar o ingrese una nueva..." style="width: 100%;">
+                    </div>
+
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label>Motivo de Consulta</label>
                         <textarea id="note-motivo" class="form-input" rows="2" style="width:100%"></textarea>
@@ -485,6 +491,44 @@
             </form>
         </div>
     </div>
+
+    <datalist id="cancer-types-list">
+        <option value="Carcinoma de Mama"></option>
+        <option value="Carcinoma de Pulmón (No Células Pequeñas)"></option>
+        <option value="Carcinoma de Pulmón (Células Pequeñas)"></option>
+        <option value="Cáncer de Próstata"></option>
+        <option value="Cáncer Colorrectal"></option>
+        <option value="Cáncer de Colon"></option>
+        <option value="Cáncer de Recto"></option>
+        <option value="Cáncer de Páncreas"></option>
+        <option value="Carcinoma Hepatocelular (Hígado)"></option>
+        <option value="Cáncer Gástrico (Estómago)"></option>
+        <option value="Cáncer de Esófago"></option>
+        <option value="Cáncer de Ovario"></option>
+        <option value="Cáncer de Endometrio"></option>
+        <option value="Cáncer de Cuello Uterino"></option>
+        <option value="Cáncer de Riñón (Carcinoma de Células Renales)"></option>
+        <option value="Cáncer de Vejiga"></option>
+        <option value="Melanoma"></option>
+        <option value="Carcinoma Basocelular"></option>
+        <option value="Carcinoma Espinocelular"></option>
+        <option value="Linfoma Hodgkin"></option>
+        <option value="Linfoma No Hodgkin"></option>
+        <option value="Mieloma Múltiple"></option>
+        <option value="Leucemia Mieloide Aguda"></option>
+        <option value="Leucemia Linfoide Aguda"></option>
+        <option value="Leucemia Mieloide Crónica"></option>
+        <option value="Leucemia Linfoide Crónica"></option>
+        <option value="Glioblastoma Multiforme"></option>
+        <option value="Astrocitoma"></option>
+        <option value="Meningioma"></option>
+        <option value="Sarcoma de Tejidos Blandos"></option>
+        <option value="Osteosarcoma"></option>
+        <option value="Cáncer de Tiroides"></option>
+        <option value="Cáncer de Cabeza y Cuello"></option>
+        <option value="Tumor Neuroendocrino"></option>
+        <option value="Cáncer de Testículo"></option>
+    </datalist>
 
     <script>
         const token = localStorage.getItem('token');
@@ -715,6 +759,8 @@
                 document.getElementById('note-toxicidad').value = sc.toxicidad || '';
                 document.getElementById('note-radio-check').checked = sc.requiere_radioterapia || false;
 
+                document.getElementById('note-patologia').value = sc.patologia || '';
+
                 document.getElementById('note-motivo').value = sc.motivo || '';
                 document.getElementById('note-antecedentes').value = sc.antecedentes || '';
                 document.getElementById('note-examen').value = sc.examen || '';
@@ -753,8 +799,9 @@
                 plan_estudio: document.getElementById('note-plan').value,
                 tratamiento: document.getElementById('note-tratamiento').value,
                 tratamiento: document.getElementById('note-tratamiento').value,
-                texto: "Nota",
                 requiere_radioterapia: document.getElementById('note-radio-check').checked,
+                patologia: document.getElementById('note-patologia').value,
+                texto: "Nota",
                 accion: action
             };
             const url = currentNoteId ? `/historia-clinica/${currentNoteId}` : '/historia-clinica/';
