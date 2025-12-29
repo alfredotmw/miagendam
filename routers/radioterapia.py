@@ -43,6 +43,8 @@ def get_excel_feed(
     for reg in registros:
         pat = reg.paciente
         data.append({
+            # Column 0: ID (Required by Excel cache sometimes)
+            "ID": reg.id,
             # Column 1: Nombre y Apellido
             "Paciente": f"{pat.apellido}, {pat.nombre}" if pat else "",
             # Column 2: Edad
