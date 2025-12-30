@@ -261,6 +261,9 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
     turno = db.get(Turno, turno_id)
     if not turno:
         raise HTTPException(status_code=404, detail="Turno no encontrado")
+    
+    # Capture old date for tracking logic
+    old_date = turno.fecha.date() if turno.fecha else None
 
     # Actualización de Fecha y Hora (Combinadas)
     if turno_in.fecha is not None or turno_in.hora is not None:
@@ -326,7 +329,7 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
                      if "MARCACION" in p_name:
                          is_tac_marcacion = True
                      if agenda.tipo == "TOMOGRAFIA" and "TAC" in p_name:
-                          if not seguimiento.fecha_tac:
+                          if not seguimiento.fecha_tac or (old_date and seguimiento.fecha_tac == old_date):
                               is_tac_marcacion = True
                  
                  # Update Dates if applicable
@@ -352,7 +355,7 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
                        if is_explicit:
                            seguimiento.fecha_tac = new_date
                            updated_track = True
-                       elif not seguimiento.fecha_tac:
+                       elif not seguimiento.fecha_tac or (old_date and seguimiento.fecha_tac == old_date):
                            seguimiento.fecha_tac = new_date
                            updated_track = True
 
