@@ -283,7 +283,66 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
         turno.patologia = turno_in.patologia.strip().upper() if turno_in.patologia else None
 
     db.commit()
+    db.commit()
     db.refresh(turno)
+
+    # 🟢 AUTOMATION: Update Radiotherapy Registry on Reschedule
+    if turno_in.fecha is not None:
+        try:
+            from models.radioterapia import SeguimientoRadioterapia
+            from sqlalchemy import desc
+            # Find associated tracking
+            seguimiento = db.query(SeguimientoRadioterapia)\
+                .filter(SeguimientoRadioterapia.paciente_id == turno.paciente_id)\
+                .order_by(desc(SeguimientoRadioterapia.created_at))\
+                .first()
+            
+            if seguimiento:
+                 updated_track = False
+                 agenda = turno.agenda
+                 practicas = turno.practicas
+                 
+                 # Check Agenda Type
+                 is_radio_agenda = agenda.tipo == "RADIOTERAPIA" or agenda.id in [3, 4]
+                 
+                 # Check Practice (TAC de Marcación)
+                 is_tac_marcacion = False
+                 for p in practicas:
+                    p_name = p.nombre.upper()
+                    if "MARCACION" in p_name:
+                        is_tac_marcacion = True
+                    if agenda.tipo == "TOMOGRAFIA" and "TAC" in p_name:
+                         if not seguimiento.fecha_tac:
+                             is_tac_marcacion = True
+                 
+                 # Update Dates if applicable
+                 new_date = turno.fecha.date()
+                 
+                 if is_radio_agenda:
+                     # Update start date logic (intelligent)
+                     # If previous start date was THIS turno's old date, update it.
+                     # Or if existing date is None.
+                     # Or if new date is earlier.
+                     if not seguimiento.fecha_inicio or new_date < seguimiento.fecha_inicio:
+                         seguimiento.fecha_inicio = new_date
+                         updated_track = True
+                 
+                 if is_tac_marcacion:
+                      # If it explicitly says MARCACION, we trust this new date
+                      is_explicit = any("MARCACION" in p.nombre.upper() for p in practicas)
+                      if is_explicit:
+                          seguimiento.fecha_tac = new_date
+                          updated_track = True
+                      elif not seguimiento.fecha_tac:
+                          seguimiento.fecha_tac = new_date
+                          updated_track = True
+
+                 if updated_track:
+                     db.add(seguimiento)
+                     db.commit()
+        except Exception as e:
+            print(f"Error updating tracking on reschedule: {e}")
+
     return turno
 
 
