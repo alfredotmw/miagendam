@@ -585,10 +585,16 @@
             try {
                 const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
                 if (res.status === 404) { alert("Paciente no encontrado"); return; }
-                if (!res.ok) throw new Error("Error loading");
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({ detail: res.statusText }));
+                    throw new Error(`${res.status}: ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
+                }
                 const data = await res.json();
                 renderPage(data);
-            } catch (e) { alert("Error al cargar la historia"); }
+            } catch (e) {
+                console.error(e);
+                alert("Error al cargar la historia: " + e.message);
+            }
         }
 
         function renderPage(data) {
