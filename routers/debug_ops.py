@@ -118,3 +118,26 @@ def wipe_radioterapia(db: Session = Depends(get_db)):
         return {"status": "success", "message": "All Radiotherapy Tracking data wiped."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+@router.delete("/wipe-all")
+def wipe_all_data(db: Session = Depends(get_db)):
+    """
+    ⚠️ DANGER: Deletes ALL Patient Data (Pacientes, Turnos, HC, Seguimiento).
+    DOES NOT delete Users, Agendas, Practicas, Obras Sociales.
+    """
+    try:
+        # 1. Tablas dependientes (Hijas)
+        db.execute(text("DELETE FROM turno_practica")) 
+        db.execute(text("DELETE FROM seguimiento_radioterapia"))
+        db.execute(text("DELETE FROM historia_clinica"))
+        
+        # 2. Tablas principales (Padres)
+        db.execute(text("DELETE FROM turnos")) 
+        db.execute(text("DELETE FROM pacientes"))
+        # Note: Users and Doctors are NOT wiped.
+        
+        db.commit()
+        return {"status": "success", "message": "ALL Patient data wiped (Clean Slate)."}
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e)}
