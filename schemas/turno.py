@@ -31,6 +31,7 @@ class TurnoUpdate(BaseModel):
     duracion: Optional[int] = None
     medico_derivante_id: Optional[int] = None
     patologia: Optional[str] = None
+    crear_seguimiento: Optional[bool] = False
 
 class TurnoOut(BaseModel):
     id: int

@@ -557,14 +557,17 @@
 
                     if (estado !== 'COMPLETADO') {
                         html += `
-                            <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar">✅</button>
-                            <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar">📅</button>
-                        `;
+                                <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar">✅</button>
+                                <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar">📅</button>
+                            `;
 
                         const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
                         const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar WhatsApp';
 
                         html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}">💬</button>`;
+
+                        // 🟢 NEW: Start Tracking Button
+                        html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030;">☢️</button>`;
 
                         if (estado !== 'AUSENTE') {
                             html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>`;
@@ -581,6 +584,46 @@
 
             html += `</tbody></table>`;
             container.innerHTML = html;
+        }
+
+        // 🟢 NEW: Start Radiotherapy Function
+        async function startRadiotherapy(id, btn) {
+            if (!confirm("¿Iniciar Seguimiento de Radioterapia para este paciente?\n\nEsto creará un registro activo si no existe.")) return;
+
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`/turnos/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ crear_seguimiento: true })
+                });
+
+                if (response.ok) {
+                    alert('Seguimiento Iniciado / Verificado.');
+                    // Optional: Change icon to indicate success
+                    btn.style.background = "#C6F6D5";
+                    btn.style.borderColor = "#68D391";
+                    btn.style.color = "#22543D";
+                    btn.innerHTML = "☢️✅";
+                } else {
+                    const err = await response.text();
+                    alert('Error: ' + err);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error de conexión');
+            } finally {
+                if (btn.innerHTML === '...') {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
         }
 
         function agendar(fechaIso, hora) {

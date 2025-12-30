@@ -409,6 +409,82 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
     db.commit()
     db.refresh(turno)
 
+    # 🟢 AUTOMATION: Create Radiotherapy Registry on Trigger (Patch with crear_seguimiento=True)
+    if turno_in.crear_seguimiento:
+        try:
+             # Logic Duplicated from crear_turno (Refactor later into service if possible)
+             # 1. Check if already exists (Active)
+             from models.radioterapia import SeguimientoRadioterapia
+             from sqlalchemy import desc
+             from models.medico import MedicoDerivante
+
+             cutoff_date = datetime.now().date() - timedelta(days=60)
+             latest_seg = db.query(SeguimientoRadioterapia)\
+                 .filter(SeguimientoRadioterapia.paciente_id == turno.paciente_id)\
+                 .order_by(desc(SeguimientoRadioterapia.created_at))\
+                 .first()
+
+             is_finished = False
+             if latest_seg and latest_seg.fecha_fin:
+                 if latest_seg.fecha_fin < cutoff_date:
+                     is_finished = True
+             
+             seguimiento = None
+             if not latest_seg or (latest_seg and is_finished):
+                 # Create NEW
+                 # Determine Responsible
+                 agenda = turno.agenda
+                 practicas = turno.practicas
+                 
+                 responsable = "Dr. Angel Miño" # Default fallback
+                 a_name = agenda.nombre.upper()
+                 if "DUARTE" in a_name:
+                     responsable = "Dra. Duarte Angelica"
+                 elif "MIÑO" in a_name:
+                     responsable = "Dr. Angel Miño"
+                 
+                 # Determine Sede
+                 sede = None
+                 if agenda.id == 3 or "SAN MARTIN" in a_name:
+                     sede = "San Martín"
+                 elif agenda.id == 4 or "COLOMBIA" in a_name:
+                     sede = "Colombia"
+                     
+                 # Determine Technique
+                 technique = None
+                 for p in practicas:
+                     p_name_upper = p.nombre.upper()
+                     if "IMRT" in p_name_upper:
+                         technique = "IMRT"
+                     elif "3D" in p_name_upper or "TRIDIMENSIONAL" in p_name_upper:
+                         technique = "RT 3D"
+                 
+                 # Get Derivante Name
+                 derivante_name = ""
+                 if turno.medico_derivante_id:
+                     md = db.get(MedicoDerivante, turno.medico_derivante_id)
+                     if md: derivante_name = md.nombre
+                 
+                 # IMPORTANT: Use Turno Date as Initial Date if not explicitly tracked before
+                 seguimiento = SeguimientoRadioterapia(
+                     paciente_id=turno.paciente_id,
+                     patologia=turno.patologia,
+                     medico_derivante=derivante_name,
+                     medico_responsable=responsable,
+                     sede=sede,
+                     tipo_tecnica=technique,
+                     fecha_consulta=turno.fecha.date(), # Or today? Usually consult date matches.
+                     created_at=datetime.now()
+                 )
+                 db.add(seguimiento)
+                 db.commit()
+                 print(f"✅ Seguimiento creado manualmente para turno {turno.id}")
+             else:
+                 print(f"ℹ️ Seguimiento activo ya existe, no se crea uno nuevo.")
+
+        except Exception as e:
+            print(f"Error creating tracking on trigger: {e}")
+
     # 🟢 AUTOMATION: Update Radiotherapy Registry on Reschedule
     if turno_in.fecha is not None:
         try:
