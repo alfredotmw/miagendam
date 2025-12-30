@@ -127,7 +127,7 @@ def wipe_all_data(db: Session = Depends(get_db)):
     """
     try:
         # 1. Tablas dependientes (Hijas)
-        db.execute(text("DELETE FROM turno_practica")) 
+        db.execute(text("DELETE FROM turnos_practicas")) 
         db.execute(text("DELETE FROM seguimiento_radioterapia"))
         db.execute(text("DELETE FROM historia_clinica"))
         
