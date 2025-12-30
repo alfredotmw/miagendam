@@ -638,7 +638,7 @@
                     // Create Clone
                     const payload = {
                         paciente_id: foundTurno.paciente_id,
-                        agenda_id: foundTurno.agenda_id,
+                        agenda_id: foundTurno.agenda_id || parseInt(currentAgendaId), // 👈 FIX: Fallback to global
                         fecha: newDate,
                         hora: newTime,
                         duracion: foundTurno.duracion || 20,
