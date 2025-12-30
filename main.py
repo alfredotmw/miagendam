@@ -8,8 +8,8 @@ import models  # 👉 AGREGADO para registrar tablas
 import models.plantilla # Register P2 Model
 import models.patologia # Register Patologia Model
 
-# Crear tablas en la base de datos
-Base.metadata.create_all(bind=engine)
+# Crear tablas en la base de datos (Moved to startup)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Agenda Médica CMCNE",
@@ -34,9 +34,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.on_event("startup")
 def startup_event():
     try:
+        # Create Tables first!
+        Base.metadata.create_all(bind=engine)
         check_and_migrate_db(engine) # 🔄 Verificar Schema antes de iniciar
     except Exception as e:
-        print(f"⚠️ MIGRATION ERROR: {e}")
+        print(f"⚠️ MIGRATION/DB ERROR: {e}")
 
     try:
         init_data()
