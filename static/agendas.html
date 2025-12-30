@@ -465,6 +465,8 @@
             }
         }
 
+        let currentSlots = []; // Global store
+
         async function loadSlots() {
             if (!currentAgendaId) return;
 
@@ -483,6 +485,7 @@
                 });
 
                 const slots = await response.json();
+                currentSlots = slots; // Store for access
                 renderSlots(slots);
             } catch (error) {
                 console.error(error);
@@ -547,7 +550,12 @@
 
                 if (isOccupied) {
                     const estado = turno.estado ? turno.estado.toUpperCase().trim() : '';
-                    if (estado !== 'COMPLETADO' && estado !== 'AUSENTE') {
+
+                    // Logic: Show Reschedule/Complete for everyone except Completed
+                    // BUT: Only show Absent button if not completed/absent? 
+                    // Wait, user wants Reschedule EVEN IF Absent.
+
+                    if (estado !== 'COMPLETADO') {
                         html += `
                             <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar">✅</button>
                             <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar">📅</button>
@@ -558,10 +566,11 @@
 
                         html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}">💬</button>`;
 
-                        html += `
-                            <button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>
-                            <button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0;">📋</button>
-                        `;
+                        if (estado !== 'AUSENTE') {
+                            html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>`;
+                        }
+
+                        html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0;">📋</button>`;
                     }
                 } else {
                     html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
@@ -612,27 +621,75 @@
             btn.textContent = 'Guardando...';
             btn.disabled = true;
 
-            try {
-                const response = await fetch(`/turnos/${currentTurnoId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        fecha: newDate,
-                        hora: newTime
-                    })
-                });
-
-                if (response.ok) {
-                    alert('Turno reprogramado exitosamente');
-                    closeModal();
-                    loadSlots();
-                } else {
-                    const err = await response.text();
-                    alert('Error al reprogramar: ' + err);
+            // Find current turno data
+            let foundTurno = null;
+            if (currentSlots) {
+                for (let s of currentSlots) {
+                    if (s.turno && s.turno.id === currentTurnoId) {
+                        foundTurno = s.turno;
+                        break;
+                    }
                 }
+            }
+
+            try {
+                // BRANCH LOGIC: If AUSENTE -> Create NEW Turno. Else -> PATCH.
+                if (foundTurno && foundTurno.estado === 'AUSENTE') {
+                    // Create Clone
+                    const payload = {
+                        paciente_id: foundTurno.paciente_id,
+                        agenda_id: foundTurno.agenda_id,
+                        fecha: newDate,
+                        hora: newTime,
+                        duracion: foundTurno.duracion || 20,
+                        estado: "PENDIENTE",
+                        medico_derivante_id: foundTurno.medico_derivante_id,
+                        patologia: foundTurno.patologia,
+                        crear_seguimiento: false, // Don't duplicate logic, but dates will update
+                        practicas_ids: foundTurno.practicas ? foundTurno.practicas.map(p => p.id) : []
+                    };
+
+                    const response = await fetch('/turnos/', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        alert('Nuevo turno creado (El anterior permanece como Ausente)');
+                        closeModal();
+                        loadSlots();
+                    } else {
+                        const err = await response.text();
+                        alert('Error al crear nuevo turno: ' + err);
+                    }
+
+                } else {
+                    // Standard Reschedule (PATCH)
+                    const response = await fetch(`/turnos/${currentTurnoId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            fecha: newDate,
+                            hora: newTime
+                        })
+                    });
+
+                    if (response.ok) {
+                        alert('Turno reprogramado exitosamente');
+                        closeModal();
+                        loadSlots();
+                    } else {
+                        const err = await response.text();
+                        alert('Error al reprogramar: ' + err);
+                    }
+                }
+
             } catch (error) {
                 console.error(error);
                 alert('Error de conexión');
