@@ -109,7 +109,7 @@ def check_and_migrate_db(engine: Engine):
         fields = [
             "motivo_consulta", "antecedentes", "examen_clinico", 
             "plan_estudio", "diagnostico_diferencial", 
-            "tratamiento", "evolucion"
+            "tratamiento", "evolucion", "patologia"
         ]
         for f in fields:
             if f not in h_columns:
