@@ -38,8 +38,11 @@ def startup_event():
     except Exception as e:
         print(f"⚠️ MIGRATION ERROR: {e}")
 
-    init_data()
-    sync_new_practicas() # 🔄 Parchear prácticas nuevas
+    try:
+        init_data()
+        sync_new_practicas() # 🔄 Parchear prácticas nuevas
+    except Exception as e:
+        print(f"⚠️ INIT DATA ERROR: {e}")
 
 
 # Registrar routers
