@@ -1,57 +1,45 @@
-from database import SessionLocal
-from models.radioterapia import SeguimientoRadioterapia
-from routers.radioterapia import get_excel_feed, check_and_autofill
-from datetime import date
+from fastapi.testclient import TestClient
+from main import app
+from auth.jwt import create_access_token 
 import json
+import sys
+import os
 
-# Mock DB Session
-db = SessionLocal()
+# Add parent directory to path if needed (though running from root usually works)
+sys.path.append(os.getcwd())
 
-try:
-    print("Querying registros...")
-    registros = db.query(SeguimientoRadioterapia).order_by(SeguimientoRadioterapia.id.desc()).all()
-    print(f"Found {len(registros)} registros.")
+client = TestClient(app)
 
-    print("Running autofill logic...")
-    for reg in registros:
-        try:
-            check_and_autofill(reg, db)
-        except Exception as e:
-            print(f"Error in autofill for reg {reg.id}: {e}")
+def dump_feed():
+    # Generate a fresh token
+    print("Generating token...")
+    token = create_access_token(data={"sub": "admin", "role": "ADMIN"})
+    
+    url = f"/radioterapia/feed?token={token}"
+    print(f"Requesting: {url}")
+    
+    response = client.get(url)
+    
+    print(f"Status Code: {response.status_code}")
+    print(f"Content-Type: {response.headers.get('content-type')}")
+    
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Total items: {len(data)}")
+        if len(data) > 0:
+            print("--- JSON OUTPUT SAMPLE (First 1 items) ---")
+            print(json.dumps(data[:1], indent=2, default=str)) # Use default=str for any dates
+            
+            # Detailed type check
+            print("\n--- TYPE ANALYSIS ---")
+            item = data[0]
+            for k, v in item.items():
+                print(f"Key: {k}, Type: {type(v).__name__}, Value: {v}")
+        else:
+            print("No data returned.")
+    else:
+        print("Error response:")
+        print(response.text)
 
-    print("Building JSON data...")
-    data = []
-    for reg in registros:
-        try:
-            pat = reg.paciente
-            item = {
-                "ID": reg.id,
-                "Fecha": str(reg.fecha_consulta) if reg.fecha_consulta else None,
-                "Apellido": pat.apellido if pat else "",
-                "Nombre": pat.nombre if pat else "",
-                "DNI": pat.dni if pat else "",
-                "Patologia": reg.patologia,
-                "Dosis": reg.dosis_total,
-                "Fracciones": reg.numero_fracciones,
-                "Medico_Responsable": reg.medico_responsable,
-                "Medico_Derivante": reg.medico_derivante,
-                "Fecha_TAC": str(reg.fecha_tac) if reg.fecha_tac else None,
-                "Inicio_Tto": str(reg.fecha_inicio) if reg.fecha_inicio else None,
-                "Fin_Tto": str(reg.fecha_fin) if reg.fecha_fin else None,
-                "Estado": ("Finalizado" if reg.fecha_fin and reg.fecha_fin < date.today() else "En Curso") if reg.fecha_inicio else "Pendiente",
-                "Observaciones": reg.observaciones
-            }
-            data.append(item)
-        except Exception as e:
-             print(f"Error building item for reg {reg.id}: {e}")
-             raise e
-
-    print("Serialization check...")
-    json_output = json.dumps(data)
-    print("Success! JSON length:", len(json_output))
-
-except Exception as e:
-    print("\nCRITICAL ERROR REPRODUCED:")
-    print(e)
-finally:
-    db.close()
+if __name__ == "__main__":
+    dump_feed()

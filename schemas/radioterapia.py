@@ -7,6 +7,8 @@ class SeguimientoRadioterapiaBase(BaseModel):
     paciente_id: int
     patologia: Optional[str] = None
     medico_derivante: Optional[str] = None
+    sede: Optional[str] = None
+    tipo_tecnica: Optional[str] = None
     fecha_consulta: Optional[date] = None
     fecha_tac: Optional[date] = None
     fecha_inicio: Optional[date] = None

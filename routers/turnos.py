@@ -143,6 +143,22 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
             elif "MIÑO" in a_name:
                 responsable = "Dr. Angel Miño"
             
+            # Determine Sede
+            sede = None
+            if agenda.id == 3 or "SAN MARTIN" in a_name:
+                sede = "San Martín"
+            elif agenda.id == 4 or "COLOMBIA" in a_name:
+                sede = "Colombia"
+                
+            # Determine Technique
+            technique = None
+            for p in practicas:
+                p_name_upper = p.nombre.upper()
+                if "IMRT" in p_name_upper:
+                    technique = "IMRT"
+                elif "3D" in p_name_upper or "TRIDIMENSIONAL" in p_name_upper:
+                    technique = "RT 3D"
+            
             # Get Derivante Name
             derivante_name = ""
             if medico_id:
@@ -154,6 +170,8 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
                 patologia=turno_in.patologia.strip().upper() if turno_in.patologia else None,
                 medico_derivante=derivante_name,
                 medico_responsable=responsable,
+                sede=sede,
+                tipo_tecnica=technique,
                 fecha_consulta=fecha_hora_real.date(),
                 created_at=datetime.now()
             )
@@ -212,6 +230,32 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
                 elif not seguimiento.fecha_tac:
                      seguimiento.fecha_tac = nuevo_turno.fecha.date()
                      updated = True
+
+            # 🟢 NEW: Update Sede and Technique if not set (or always?)
+            # Let's update technique if we find a specific one
+            technique = None
+            for p in practicas:
+                p_name_upper = p.nombre.upper()
+                if "IMRT" in p_name_upper:
+                    technique = "IMRT"
+                elif "3D" in p_name_upper or "TRIDIMENSIONAL" in p_name_upper:
+                    technique = "RT 3D"
+            
+            if technique and technique != seguimiento.tipo_tecnica:
+                seguimiento.tipo_tecnica = technique
+                updated = True
+                
+            # Update Sede if generic/empty
+            current_sede = None
+            a_name = agenda.nombre.upper()
+            if agenda.id == 3 or "SAN MARTIN" in a_name:
+                current_sede = "San Martín"
+            elif agenda.id == 4 or "COLOMBIA" in a_name:
+                current_sede = "Colombia"
+            
+            if current_sede and not seguimiento.sede:
+                 seguimiento.sede = current_sede
+                 updated = True
 
             if updated:
                 db.add(seguimiento)
@@ -358,6 +402,19 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
                        elif not seguimiento.fecha_tac or (old_date and seguimiento.fecha_tac == old_date):
                            seguimiento.fecha_tac = new_date
                            updated_track = True
+
+                 # 🟢 NEW: Update Technique on Reschedule
+                 technique = None
+                 for p in practicas:
+                      p_name_upper = p.nombre.upper()
+                      if "IMRT" in p_name_upper:
+                          technique = "IMRT"
+                      elif "3D" in p_name_upper or "TRIDIMENSIONAL" in p_name_upper:
+                          technique = "RT 3D"
+                 
+                 if technique and technique != seguimiento.tipo_tecnica:
+                     seguimiento.tipo_tecnica = technique
+                     updated_track = True
 
                  if updated_track:
                      db.add(seguimiento)

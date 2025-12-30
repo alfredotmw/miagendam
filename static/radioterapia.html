@@ -122,6 +122,7 @@
                         <th>Paciente</th>
                         <th>Patología</th>
                         <th>Derivante</th>
+                        <th>Sede / Técnica</th>
                         <th>Fechas (Cons / TAC / Ini / Fin)</th>
                         <th>Responsable</th>
                         <th>Acciones</th>
@@ -165,6 +166,22 @@
                     <div class="form-group">
                         <label>Médico Derivante</label>
                         <input type="text" id="medico-derivante" class="form-input" placeholder="Nombre Dr.">
+                    </div>
+                    <div class="form-group">
+                        <label>Sede</label>
+                        <select id="sede" class="form-input">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="San Martín">San Martín</option>
+                            <option value="Colombia">Colombia</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Técnica</label>
+                        <select id="tipo-tecnica" class="form-input">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="IMRT">IMRT</option>
+                            <option value="RT 3D">RT 3D</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Médico Responsable</label>
@@ -237,6 +254,10 @@
                     </td>
                     <td>${item.patologia || '-'}</td>
                     <td>${item.medico_derivante || '-'}</td>
+                    <td>
+                        <div style="font-weight:600; color:#2c5282;">${item.sede || '-'}</div>
+                        <div style="font-size:0.8rem; color:#4a5568;">${item.tipo_tecnica || '-'}</div>
+                    </td>
                     <td style="font-size:0.85rem;">
                         <div>Cons: ${fmtDate(item.fecha_consulta)}</div>
                         <div>TAC: ${fmtDate(item.fecha_tac)}</div>
@@ -281,6 +302,8 @@
 
             document.getElementById('patologia').value = item.patologia || '';
             document.getElementById('medico-derivante').value = item.medico_derivante || '';
+            document.getElementById('sede').value = item.sede || '';
+            document.getElementById('tipo-tecnica').value = item.tipo_tecnica || '';
             document.getElementById('medico-responsable').value = item.medico_responsable || 'Dra. Duarte Angelica';
             document.getElementById('fecha-consulta').value = item.fecha_consulta || '';
             document.getElementById('fecha-tac').value = item.fecha_tac || '';
@@ -357,6 +380,8 @@
                 paciente_id: document.getElementById('selected-patient-id').value,
                 patologia: document.getElementById('patologia').value,
                 medico_derivante: document.getElementById('medico-derivante').value,
+                sede: document.getElementById('sede').value || null,
+                tipo_tecnica: document.getElementById('tipo-tecnica').value || null,
                 medico_responsable: document.getElementById('medico-responsable').value,
                 fecha_consulta: document.getElementById('fecha-consulta').value || null,
                 fecha_tac: document.getElementById('fecha-tac').value || null,

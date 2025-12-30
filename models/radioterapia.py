@@ -11,6 +11,8 @@ class SeguimientoRadioterapia(Base):
     
     patologia = Column(String, nullable=True) # e.g. "Ca. Mama", "Ca. Próstata"
     medico_derivante = Column(String, nullable=True) # Doctor that sent the patient
+    sede = Column(String, nullable=True) # "San Martín" or "Colombia"
+    tipo_tecnica = Column(String, nullable=True) # "IMRT" or "RT 3D"
     
     # Dates
     fecha_consulta = Column(Date, nullable=True)
