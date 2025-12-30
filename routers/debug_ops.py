@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+import io
 from sqlalchemy import text, inspect
 from sqlalchemy.orm import Session
 from database import get_db, engine
@@ -63,3 +64,45 @@ def fix_schema_manual():
         log.append(f"❌ Error: {str(e)}")
         
     return {"log": log}
+
+@router.get("/fix-schema-all")
+def fix_schema_all():
+    """ Runs the full check_and_migrate_db logic from migration_utils. """
+    from migration_utils import check_and_migrate_db, logger
+    import logging
+    import io
+    
+    # Capture logs
+    log_capture_string = io.StringIO()
+    ch = logging.StreamHandler(log_capture_string)
+    ch.setLevel(logging.INFO)
+    logger.addHandler(ch)
+
+    status = "Started"
+    try:
+        check_and_migrate_db(engine)
+        status = "Completed"
+    except Exception as e:
+        status = f"Error: {e}"
+        logger.error(f"Migration error: {e}")
+    
+    log_contents = log_capture_string.getvalue()
+    logger.removeHandler(ch)
+    
+    # Inspector check for specific columns
+    inspector = inspect(engine)
+    cols_turnos = []
+    if inspector.has_table("turnos"):
+        cols_turnos = [c["name"] for c in inspector.get_columns("turnos")]
+
+    cols_hc = []
+    if inspector.has_table("historia_clinica"):
+        cols_hc = [c["name"] for c in inspector.get_columns("historia_clinica")]
+
+    return {
+        "status": status,
+        "turnos_columns": cols_turnos,
+        "historia_clinica_columns": cols_hc,
+        "logs": log_contents
+    }
+
