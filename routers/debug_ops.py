@@ -106,3 +106,15 @@ def fix_schema_all():
         "logs": log_contents
     }
 
+@router.delete("/wipe-radioterapia")
+def wipe_radioterapia(db: Session = Depends(get_db)):
+    """
+    ⚠️ DANGER: Deletes ALL records from SeguimientoRadioterapia table.
+    Used for testing "from scratch".
+    """
+    try:
+        db.execute(text("DELETE FROM seguimiento_radioterapia"))
+        db.commit()
+        return {"status": "success", "message": "All Radiotherapy Tracking data wiped."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

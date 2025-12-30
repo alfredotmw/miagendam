@@ -200,6 +200,43 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
             db.add(seguimiento)
             db.commit()
             db.refresh(seguimiento)
+        
+        # 🟢 FIX: If we ARE reusing a tracking record, force update of Derivante/Patologia if they changed
+        # This fixes the issue where old tracking info persists even if the new appointment has different data.
+        elif seguimiento:
+             # Logic to update persistent fields if they are different in the NEW appointment
+             # This assumes the latest appointment is the source of truth for the current treatment.
+             
+             # 1. Update Pathology if present
+             if turno_in.patologia:
+                 pato_normalized = turno_in.patologia.strip().upper()
+                 if seguimiento.patologia != pato_normalized:
+                     seguimiento.patologia = pato_normalized
+                     updated_persistent = True
+                     
+             # 2. Update Derivante if present
+             if medico_id:
+                 md = db.get(MedicoDerivante, medico_id)
+                 if md and seguimiento.medico_derivante != md.nombre:
+                     seguimiento.medico_derivante = md.nombre
+                     updated_persistent = True
+
+             # 3. Update Responsible (if agenda changed doctors)
+             # Determine Responsible from Agenda Name
+             responsable = "Dr. Angel Miño" # Default fallback
+             a_name = agenda.nombre.upper()
+             if "DUARTE" in a_name:
+                 responsable = "Dra. Duarte Angelica"
+             elif "MIÑO" in a_name:
+                 responsable = "Dr. Angel Miño"
+             
+             if seguimiento.medico_responsable != responsable:
+                 seguimiento.medico_responsable = responsable
+                 updated_persistent = True
+
+             if updated_persistent:
+                 db.add(seguimiento)
+                 db.commit()
 
         # 3. Update Logic (if tracking exists)
         if seguimiento:
