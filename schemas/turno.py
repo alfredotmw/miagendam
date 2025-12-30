@@ -22,7 +22,7 @@ class TurnoBase(BaseModel):
     patologia: Optional[str] = None 
 
 class TurnoCreate(TurnoBase):
-    pass
+    crear_seguimiento: bool = False
 
 class TurnoUpdate(BaseModel):
     fecha: Optional[datetime] = None

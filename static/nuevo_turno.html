@@ -282,6 +282,19 @@
                         </div>
                     </div>
 
+                    <!-- Checkbox Seguimiento Radioterapia -->
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="crear_seguimiento"
+                                style="width: auto; height: 1.25rem; width: 1.25rem;">
+                            <label for="crear_seguimiento" style="margin: 0; font-weight: 500;">Iniciar Seguimiento
+                                Radioterapia</label>
+                        </div>
+                        <p style="color: #718096; font-size: 0.85rem; margin-top: 0.25rem; margin-left: 1.8rem;">
+                            Marcar para pacientes de Dr. Miño / Dra. Duarte
+                        </p>
+                    </div>
+
                     <!-- Patología (Condicional) -->
                     <div id="patologia_container" class="form-group" style="display: none; margin-top: 1rem;">
                         <label>Patología *</label>
@@ -597,13 +610,16 @@
             const singleDateContainer = document.getElementById('single_date_container');
 
             // Toggle Pathology
-            if (tipo === 'QUIMIOTERAPIA' || tipo === 'RADIOTERAPIA') {
+            const isSeguimiento = document.getElementById('crear_seguimiento').checked;
+            if (tipo === 'QUIMIOTERAPIA' || tipo === 'RADIOTERAPIA' || isSeguimiento) {
                 patologiaContainer.style.display = 'block';
-                document.getElementById('patologia').required = true; // ✅ REQUIRED
+                // Only make it required if it's strictly a Radio/Chemo agenda, otherwise optional but recommended?
+                // Or make it required if tracking is enabled.
+                document.getElementById('patologia').required = true;
             } else {
                 patologiaContainer.style.display = 'none';
                 document.getElementById('patologia').value = '';
-                document.getElementById('patologia').required = false; // ✅ NOT REQUIRED
+                document.getElementById('patologia').required = false;
             }
 
             // Toggle Multi-day
@@ -640,6 +656,11 @@
                 count++;
             }
         }
+
+        // Add listener to Checkbox
+        document.getElementById('crear_seguimiento').addEventListener('change', function () {
+            toggleSpecialFields();
+        });
 
         async function checkAvailability() {
             const agendaSelect = document.getElementById('agenda_id');
@@ -798,6 +819,7 @@
 
                 for (const fecha of selectedDates) {
                     const turnoData = {
+                        crear_seguimiento: document.getElementById('crear_seguimiento').checked,
                         paciente_id: parseInt(pacienteId),
                         agenda_id: parseInt(agendaId),
                         fecha: fecha,

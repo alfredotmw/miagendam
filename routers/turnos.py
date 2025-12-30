@@ -123,45 +123,67 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
         db.commit()
         db.refresh(nuevo_turno)
 
-        # 🟢 AUTOMATION: Update Radiotherapy Registry Dates
-        # 1. Check if patient has an active/latest radiotherapy tracking
+        # 🟢 AUTOMATION: Radiotherapy Registry (Create & Update)
         from models.radioterapia import SeguimientoRadioterapia
         from sqlalchemy import desc
         
-        # Find the LATEST tracking entry
+        # 1. Find existing tracking
         seguimiento = db.query(SeguimientoRadioterapia)\
             .filter(SeguimientoRadioterapia.paciente_id == turno_in.paciente_id)\
             .order_by(desc(SeguimientoRadioterapia.created_at))\
             .first()
 
-        if seguimiento:
-            # Check Agenda Type (Radio San Martin ID=3, Colombia ID=4)
-            # Or fuzzy check on agenda name/type
-            is_radio_agenda = turno_in.agenda_id in [3, 4] 
+        # 2. Creation Logic (if requested and not exists)
+        if turno_in.crear_seguimiento and not seguimiento:
+            # Determine Responsible from Agenda Name
+            responsable = "Dr. Angel Miño" # Default fallback
+            a_name = agenda.nombre.upper()
+            if "DUARTE" in a_name:
+                responsable = "Dra. Duarte Angelica"
+            elif "MIÑO" in a_name:
+                responsable = "Dr. Angel Miño"
             
-            # Check Practice (TAC de Marcación)
-            # We check if ANY of the practices is TAC de Marcación
-            is_tac_marcacion = False
-            for p in practicas:
-                if "MARCACION" in p.nombre.upper() or "TAC" in p.nombre.upper():
-                    # If it's just TAC, maybe we verify if agenda is TOMOGRAFIA (ID 5)?
-                    # For now, let's assume any TAC in this context might be relevant, 
-                    # but User specifically said "TAC de Marcación".
-                    if "MARCACION" in p.nombre.upper():
-                        is_tac_marcacion = True
-                    # Fallback: If it's a TAC agenda (5) and we have a tracking open?
-                    if agenda.id == 5 and "TAC" in p.nombre.upper():
-                         # Maybe too broad? Let's stick to MARCACION for now as primary trigger
-                         pass
+            # Get Derivante Name
+            derivante_name = ""
+            if medico_id:
+                md = db.get(MedicoDerivante, medico_id)
+                if md: derivante_name = md.nombre
 
-            # Update Logic
+            seguimiento = SeguimientoRadioterapia(
+                paciente_id=turno_in.paciente_id,
+                patologia=turno_in.patologia.strip().upper() if turno_in.patologia else None,
+                medico_derivante=derivante_name,
+                medico_responsable=responsable,
+                fecha_consulta=fecha_hora_real.date(),
+                created_at=datetime.now()
+            )
+            db.add(seguimiento)
+            db.commit()
+            db.refresh(seguimiento)
+
+        # 3. Update Logic (if tracking exists)
+        if seguimiento:
             updated = False
             
+            # Check Agenda Type (Radio San Martin ID=3, Colombia ID=4, or type RADIOTERAPIA)
+            is_radio_agenda = agenda.tipo == "RADIOTERAPIA" or agenda.id in [3, 4]
+            
+            # Check Practice (TAC de Marcación)
+            is_tac_marcacion = False
+            for p in practicas:
+                p_name = p.nombre.upper()
+                if "MARCACION" in p_name:
+                    is_tac_marcacion = True
+                # También si es una agenda de TOMOGRAFIA y la práctica tiene TAC
+                if agenda.tipo == "TOMOGRAFIA" and "TAC" in p_name:
+                     # Refuerzo: Si ya tiene seguimiento, cualquier TAC en agenda de tomografia podría ser la simulación
+                     # Pero priorizamos la palabra MARCACION si existe.
+                     # Si no tiene fecha_tac aun, tomamos este TAC.
+                     if not seguimiento.fecha_tac:
+                         is_tac_marcacion = True
+
             # Radiotherapy Start Date
             if is_radio_agenda:
-                # If there is no start date, or this is earlier? 
-                # Usually we want the EARLIEST start date of the treatment.
-                # If fecha_inicio is None, set it.
                 if not seguimiento.fecha_inicio:
                     seguimiento.fecha_inicio = nuevo_turno.fecha.date()
                     updated = True
@@ -171,11 +193,19 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
             
             # Simulation CT Date
             if is_tac_marcacion:
-                if not seguimiento.fecha_tac:
-                    seguimiento.fecha_tac = nuevo_turno.fecha.date()
-                    updated = True
+                # Si es una marcación explicita, sobreescribimos o seteamos
+                # Si es un TAC generico, solo seteamos si esta vacio
+                is_explicit = any("MARCACION" in p.nombre.upper() for p in practicas)
+                
+                if is_explicit:
+                     seguimiento.fecha_tac = nuevo_turno.fecha.date()
+                     updated = True
+                elif not seguimiento.fecha_tac:
+                     seguimiento.fecha_tac = nuevo_turno.fecha.date()
+                     updated = True
 
             if updated:
+                db.add(seguimiento)
                 db.commit()
 
         return nuevo_turno
