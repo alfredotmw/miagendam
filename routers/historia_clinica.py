@@ -379,8 +379,8 @@ def get_timeline(
             estado=turno.estado,
             medico_nombre=medico_nom,
             medico_matricula=medico_mat,
-            structured_content={             # 🟢 ADDED: Expose Pathology 
-                "patologia": turno.patologia
+            structured_content={
+                "patologia": getattr(turno, "patologia", None)
             }
         ))
 
