@@ -33,7 +33,10 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 👉 SE EJECUTA AUTOMÁTICAMENTE AL ARRANCAR FastAPI
 @app.on_event("startup")
 def startup_event():
-    check_and_migrate_db(engine) # 🔄 Verificar Schema antes de iniciar
+    try:
+        check_and_migrate_db(engine) # 🔄 Verificar Schema antes de iniciar
+    except Exception as e:
+        print(f"⚠️ MIGRATION ERROR: {e}")
 
     init_data()
     sync_new_practicas() # 🔄 Parchear prácticas nuevas
