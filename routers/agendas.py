@@ -125,7 +125,10 @@ def get_agenda_slots(
                         "dni": turno_ocupante.paciente.dni
                     } if turno_ocupante.paciente else None,
                     "estado": turno_ocupante.estado,
-                    "estado": turno_ocupante.estado,
+                    "agenda_id": turno_ocupante.agenda_id, # 👈 Added
+                    "duracion": turno_ocupante.duracion,   # 👈 Added
+                    "medico_derivante_id": turno_ocupante.medico_derivante_id, # 👈 Added
+                    "patologia": turno_ocupante.patologia, # 👈 Added
                     "practicas": [{"nombre": p.nombre, "id": p.id} for p in turno_ocupante.practicas],
                     "recordatorio_enviado": turno_ocupante.recordatorio_enviado # ✅ Para el check de WhatsApp
                 }
