@@ -64,6 +64,9 @@ app.include_router(plantilla.router)
 from routers import radioterapia
 app.include_router(radioterapia.router)
 
+from routers import common
+app.include_router(common.router)
+
 from fastapi.responses import RedirectResponse
 
 @app.get("/")

@@ -113,32 +113,45 @@ def crear_nota(
         ).first()
 
         if not existing_radio:
-            # 1. Responsable: The doctor creating the note (current_user)
+            # 1. Responsable: Try to be smart.
             responsable_nombre = "Desconocido"
-            if current_user:
-                responsable_nombre = current_user.get("full_name") or current_user.get("username")
-            
-            # 2. Derivante: Try to get from the Turno that justified this note (if found above 'has_turno')
-            # If 'has_turno' variable isn't available (e.g. ADMIN or logic flow), we can try to find one again or leave blank.
-            # We already queried 'has_turno' in FIRMAR block, but if GUARDAR, we might not have it.
-            # Let's try to find a recent valid turno for this patient to get the derivante.
-            medico_derivante_str = ""
             
             # Re-query a recent completed/present turno for this patient
-            last_turno = db.query(Turno).filter(
-                Turno.paciente_id == nueva_nota.paciente_id,
-                Turno.fecha <= datetime.now()
-            ).order_by(Turno.fecha.desc()).first()
-            
-            if last_turno and last_turno.medico_derivante:
-                 medico_derivante_str = last_turno.medico_derivante.nombre
+            last_turno = db.query(Turno)\
+                .filter(Turno.paciente_id == nueva_nota.paciente_id)\
+                .order_by(Turno.fecha.desc())\
+                .first()
+
+            medico_derivante_str = ""
+            if last_turno:
+                # Derivante
+                if last_turno.medico_derivante:
+                    medico_derivante_str = last_turno.medico_derivante.nombre
+                
+                # Responsable from Agenda (User request priority)
+                if last_turno.agenda:
+                    aname = last_turno.agenda.nombre.upper()
+                    if "DUARTE" in aname:
+                        responsable_nombre = "Dra. Duarte Angelica"
+                    elif "MIÑO" in aname:
+                         responsable_nombre = "Dr. Angel Miño"
+                    elif current_user:
+                         # Fallback to curr user if agenda doesn't match specific logic
+                         responsable_nombre = current_user.get("full_name") or current_user.get("username")
+            elif current_user:
+                # Fallback if no turno found
+                responsable_nombre = current_user.get("full_name") or current_user.get("username")
 
             # Construct Pathology string
-            patologia_str = nueva_nota.diagnostico_diferencial or nueva_nota.motivo_consulta or "A determinar"
-            if nueva_nota.estadio:
-                patologia_str += f" (Estadio {nueva_nota.estadio})"
-            if nueva_nota.tnm:
-                patologia_str += f" {nueva_nota.tnm}"
+            # Prioritize the specific Pathology field (P1)
+            patologia_str = nueva_nota.patologia
+            
+            if not patologia_str:
+                patologia_str = nueva_nota.diagnostico_diferencial or nueva_nota.motivo_consulta or "A determinar"
+                if nueva_nota.estadio:
+                    patologia_str += f" (Estadio {nueva_nota.estadio})"
+                if nueva_nota.tnm:
+                    patologia_str += f" {nueva_nota.tnm}"
 
             nuevo_seguimiento = SeguimientoRadioterapia(
                 paciente_id=nueva_nota.paciente_id,

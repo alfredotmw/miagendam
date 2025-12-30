@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from database import get_db
-from models.patologia import Patologia
+from typing import List
 from auth.jwt import get_current_user
 
 router = APIRouter(
@@ -9,6 +7,66 @@ router = APIRouter(
     tags=["Common"]
 )
 
-@router.get("/patologias")
-def get_patologias(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    return [p.nombre for p in db.query(Patologia).order_by(Patologia.nombre).all()]
+@router.get("/patologias", response_model=List[str])
+def get_common_patologias(current_user: dict = Depends(get_current_user)):
+    """
+    Returns a comprehensive list of oncology diagnoses for autocomplete.
+    """
+    return [
+        "Carcinoma Ductal In Situ (Mama)",
+        "Carcinoma Lobulillar In Situ (Mama)",
+        "Carcinoma Ductal Invasivo (Mama)",
+        "Carcinoma Lobulillar Invasivo (Mama)",
+        "Cáncer de Mama Inflamatorio",
+        "Enfermedad de Paget (Mama)",
+        "Carcinoma de Células No Pequeñas (Pulmón)",
+        "Adenocarcinoma (Pulmón)",
+        "Carcinoma de Células Escamosas (Pulmón)",
+        "Carcinoma de Células Grandes (Pulmón)",
+        "Carcinoma de Células Pequeñas (Pulmón)",
+        "Adenocarcinoma de Próstata",
+        "Carcinoma de Células Renales",
+        "Carcinoma Urotelial (Vejiga)",
+        "Adenocarcinoma de Colon",
+        "Adenocarcinoma de Recto",
+        "Carcinoma de Células Escamosas (Ano)",
+        "Carcinoma de Células Escamosas (Cabeza y Cuello)",
+        "Carcinoma Nasofaríngeo",
+        "Glioblastoma Multiforme",
+        "Astrocitoma",
+        "Meningioma",
+        "Meduloblastoma",
+        "Melanoma",
+        "Carcinoma Basocelular (Piel)",
+        "Carcinoma Espinocelular (Piel)",
+        "Adenocarcinoma Gástrico",
+        "GIST (Tumor del Estroma Gastrointestinal)",
+        "Adenocarcinoma de Páncreas",
+        "Carcinoma Hepatocelular (Hígado)",
+        "Colangiocarcinoma",
+        "Carcinoma de Ovario Epitelial",
+        "Tumor de Células Germinales",
+        "Adenocarcinoma de Endometrio",
+        "Sarcoma Uterino",
+        "Carcinoma de Cuello Uterino (Cervix)",
+        "Linfoma de Hodgkin",
+        "Linfoma No Hodgkin",
+        "Leucemia Mieloide Aguda",
+        "Leucemia Linfoide Crónica",
+        "Mieloma Múltiple",
+        "Sarcoma de Ewing",
+        "Osteosarcoma",
+        "Condrosarcoma",
+        "Rabdomiosarcoma",
+        "Leiomiosarcoma",
+        "Liposarcoma",
+        "Metástasis Ósea",
+        "Metástasis Cerebral",
+        "Metástasis Hepática",
+        "Metástasis Pulmonar",
+        "Metástasis Ganglionar",
+        "Tumor Neuroendocrino",
+        "Timoma",
+        "Mesotelioma",
+        "Otro"
+    ]
