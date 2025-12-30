@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from database import get_db
 from models.turno import Turno
@@ -123,17 +123,39 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
         db.commit()
         db.refresh(nuevo_turno)
 
+            
         # 🟢 AUTOMATION: Radiotherapy Registry (Create & Update)
         from models.radioterapia import SeguimientoRadioterapia
         from sqlalchemy import desc
         
-        # 1. Find existing tracking
-        seguimiento = db.query(SeguimientoRadioterapia)\
+        # Logic:
+        # 1. Get latest record.
+        # 2. Check if it's "Finished":
+        #    - If fecha_fin exists AND > 60 days passed since then.
+        #    - If no fecha_fin or <= 60 days -> Continued Treatment.
+        
+        cutoff_date = datetime.now().date() - timedelta(days=60)
+        
+        latest_seg = db.query(SeguimientoRadioterapia)\
             .filter(SeguimientoRadioterapia.paciente_id == turno_in.paciente_id)\
             .order_by(desc(SeguimientoRadioterapia.created_at))\
             .first()
 
-        # 2. Creation Logic (if requested and not exists)
+        is_finished = False
+        if latest_seg and latest_seg.fecha_fin:
+            if latest_seg.fecha_fin < cutoff_date:
+                is_finished = True
+        
+        # Determine if we should create NEW or reuse
+        seguimiento = None
+        if not latest_seg or (latest_seg and is_finished):
+             # Create Logic applies
+             pass
+        else:
+             # Update latest
+             seguimiento = latest_seg
+
+        # 2. Create Logic (if needed)
         if turno_in.crear_seguimiento and not seguimiento:
             # Determine Responsible from Agenda Name
             responsable = "Dr. Angel Miño" # Default fallback
@@ -207,12 +229,20 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
 
             # Radiotherapy Start Date
             if is_radio_agenda:
-                if not seguimiento.fecha_inicio:
-                    seguimiento.fecha_inicio = nuevo_turno.fecha.date()
-                    updated = True
-                elif nuevo_turno.fecha.date() < seguimiento.fecha_inicio:
-                    seguimiento.fecha_inicio = nuevo_turno.fecha.date()
-                    updated = True
+                new_start_date = nuevo_turno.fecha.date()
+                can_update_start = True
+                
+                # 🟢 VALIDATION: Start Date cannot be before TAC Date
+                if seguimiento.fecha_tac and new_start_date < seguimiento.fecha_tac:
+                    can_update_start = False
+                    
+                if can_update_start:
+                    if not seguimiento.fecha_inicio:
+                        seguimiento.fecha_inicio = new_start_date
+                        updated = True
+                    elif new_start_date < seguimiento.fecha_inicio:
+                        seguimiento.fecha_inicio = new_start_date
+                        updated = True
             
             # Simulation CT Date
             if is_tac_marcacion:
@@ -348,10 +378,20 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
             from models.radioterapia import SeguimientoRadioterapia
             from sqlalchemy import desc
             # Find associated tracking
+            # 🟢 AUTOMATION: Check if we need to create a NEW record on UPDATE?
+            # Scenario: Patient comes back after 60 days, user reschedules an old appointment? 
+            # No, usually reschedule is for active.
+            # But if the user edits the appointment to mark "Iniciar Seguimiento", we should check logic.
+            # For now, let's keep the existing logic of find_latest.
+            
             seguimiento = db.query(SeguimientoRadioterapia)\
                 .filter(SeguimientoRadioterapia.paciente_id == turno.paciente_id)\
                 .order_by(desc(SeguimientoRadioterapia.created_at))\
                 .first()
+                
+            # Re-apply finished logic if we are "Finding" it?
+            # If we are just updating a date, we probably want the latest one, unless it's very old.
+            # But assume reschedule is relevant to the *current* or *latest* context.
             
             if seguimiento:
                  updated_track = False
