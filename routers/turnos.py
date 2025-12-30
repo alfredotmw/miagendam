@@ -171,7 +171,12 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
             # Check Practice (TAC de Marcación)
             is_tac_marcacion = False
             for p in practicas:
-                p_name = p.nombre.upper()
+                # 🟢 FIX: Normalize Accents (Marcación -> MARCACION)
+                import unicodedata
+                def normalize_text(text):
+                    return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn').upper()
+
+                p_name = normalize_text(p.nombre)
                 if "MARCACION" in p_name:
                     is_tac_marcacion = True
                 # También si es una agenda de TOMOGRAFIA y la práctica tiene TAC
@@ -195,7 +200,11 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
             if is_tac_marcacion:
                 # Si es una marcación explicita, sobreescribimos o seteamos
                 # Si es un TAC generico, solo seteamos si esta vacio
-                is_explicit = any("MARCACION" in p.nombre.upper() for p in practicas)
+                is_explicit = False
+                for p in practicas:
+                     if "MARCACION" in normalize_text(p.nombre):
+                         is_explicit = True
+                         break
                 
                 if is_explicit:
                      seguimiento.fecha_tac = nuevo_turno.fecha.date()
@@ -305,37 +314,47 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
                  # Check Agenda Type
                  is_radio_agenda = agenda.tipo == "RADIOTERAPIA" or agenda.id in [3, 4]
                  
-                 # Check Practice (TAC de Marcación)
+                  # Check Practice (TAC de Marcación)
                  is_tac_marcacion = False
                  for p in practicas:
-                    p_name = p.nombre.upper()
-                    if "MARCACION" in p_name:
-                        is_tac_marcacion = True
-                    if agenda.tipo == "TOMOGRAFIA" and "TAC" in p_name:
-                         if not seguimiento.fecha_tac:
-                             is_tac_marcacion = True
+                     # 🟢 FIX: Normalize Accents (Marcación -> MARCACION)
+                     import unicodedata
+                     def normalize_text(text):
+                         return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn').upper()
+
+                     p_name = normalize_text(p.nombre)
+                     if "MARCACION" in p_name:
+                         is_tac_marcacion = True
+                     if agenda.tipo == "TOMOGRAFIA" and "TAC" in p_name:
+                          if not seguimiento.fecha_tac:
+                              is_tac_marcacion = True
                  
                  # Update Dates if applicable
                  new_date = turno.fecha.date()
                  
                  if is_radio_agenda:
-                     # Update start date logic (intelligent)
-                     # If previous start date was THIS turno's old date, update it.
-                     # Or if existing date is None.
-                     # Or if new date is earlier.
-                     if not seguimiento.fecha_inicio or new_date < seguimiento.fecha_inicio:
-                         seguimiento.fecha_inicio = new_date
-                         updated_track = True
+                      # Update start date logic (intelligent)
+                      # If previous start date was THIS turno's old date, update it.
+                      # Or if existing date is None.
+                      # Or if new date is earlier.
+                      if not seguimiento.fecha_inicio or new_date < seguimiento.fecha_inicio:
+                          seguimiento.fecha_inicio = new_date
+                          updated_track = True
                  
                  if is_tac_marcacion:
-                      # If it explicitly says MARCACION, we trust this new date
-                      is_explicit = any("MARCACION" in p.nombre.upper() for p in practicas)
-                      if is_explicit:
-                          seguimiento.fecha_tac = new_date
-                          updated_track = True
-                      elif not seguimiento.fecha_tac:
-                          seguimiento.fecha_tac = new_date
-                          updated_track = True
+                       # If it explicitly says MARCACION, we trust this new date
+                       is_explicit = False
+                       for p in practicas:
+                           if "MARCACION" in normalize_text(p.nombre):
+                               is_explicit = True
+                               break
+                       
+                       if is_explicit:
+                           seguimiento.fecha_tac = new_date
+                           updated_track = True
+                       elif not seguimiento.fecha_tac:
+                           seguimiento.fecha_tac = new_date
+                           updated_track = True
 
                  if updated_track:
                      db.add(seguimiento)
