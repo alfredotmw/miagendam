@@ -196,3 +196,21 @@ def check_and_migrate_db(engine: Engine):
                 conn.execute(text(f"ALTER TABLE agendas ADD COLUMN activo {col_type} DEFAULT {default_true}"))
                 conn.commit()
             logger.info("✅ Columna 'activo' agregada.")
+            
+    # 6. Verificar tabla 'seguimiento_radioterapia'
+    if inspector.has_table("seguimiento_radioterapia"):
+        rt_columns = [col["name"] for col in inspector.get_columns("seguimiento_radioterapia")]
+        
+        if "sede" not in rt_columns:
+            logger.info("⚠️ Columna 'sede' faltante en 'seguimiento_radioterapia'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE seguimiento_radioterapia ADD COLUMN sede VARCHAR"))
+                conn.commit()
+            logger.info("✅ Columna 'sede' agregada.")
+            
+        if "tipo_tecnica" not in rt_columns:
+            logger.info("⚠️ Columna 'tipo_tecnica' faltante en 'seguimiento_radioterapia'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE seguimiento_radioterapia ADD COLUMN tipo_tecnica VARCHAR"))
+                conn.commit()
+            logger.info("✅ Columna 'tipo_tecnica' agregada.")
