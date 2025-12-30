@@ -34,9 +34,12 @@ def get_excel_feed(
 
     registros = db.query(SeguimientoRadioterapia).order_by(SeguimientoRadioterapia.id.desc()).all()
     
-    # Check autofills
+    # Check autofills with error handling
     for reg in registros:
-        check_and_autofill(reg, db)
+        try:
+            check_and_autofill(reg, db)
+        except Exception as e:
+            print(f"Error autofilling reg {reg.id}: {e}")
     
     # Flatten Data
     data = []
@@ -63,6 +66,9 @@ def get_excel_feed(
             "Inicio_Tto": reg.fecha_inicio,
             # Column 9: Fin Tratamiento
             "Fin_Tto": reg.fecha_fin,
+            # New Columns
+            "Sede": reg.sede,
+            "Tecnica": reg.tipo_tecnica,
             # Extras (optional, keep at end)
             "Observaciones": reg.observaciones,
             "Estado": ("Finalizado" if reg.fecha_fin and reg.fecha_fin < date.today() else "En Curso") if reg.fecha_inicio else "Pendiente"
