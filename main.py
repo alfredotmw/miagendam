@@ -6,6 +6,7 @@ from init_data import init_data, sync_new_practicas  # 👉 AGREGADO
 from migration_utils import check_and_migrate_db # 👉 MIGRACIÓN
 import models  # 👉 AGREGADO para registrar tablas
 import models.plantilla # Register P2 Model
+import models.patologia # Register Patologia Model
 
 # Crear tablas en la base de datos
 Base.metadata.create_all(bind=engine)
