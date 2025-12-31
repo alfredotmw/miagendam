@@ -67,6 +67,9 @@ app.include_router(historia_clinica.router)
 from routers import debug_ops
 app.include_router(debug_ops.router)
 
+from routers import backup
+app.include_router(backup.router)
+
 from routers import plantilla
 app.include_router(plantilla.router)
 

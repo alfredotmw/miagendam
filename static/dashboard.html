@@ -88,6 +88,16 @@
                         </svg>
                         Prácticas
                     </a>
+                    
+                    <!-- PANIC BUTTON -->
+                    <a href="#" onclick="downloadBackup(event)" class="nav-item" style="color: #c53030; font-weight: 600;">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4">
+                            </path>
+                        </svg>
+                        Descargar Backup
+                    </a>
                 </div>
             </nav>
 
@@ -457,6 +467,43 @@
         // Initialize
         loadUser();
         loadTurnos();
+
+        async function downloadBackup(event) {
+            if(event) event.preventDefault();
+            
+            if(!confirm("¿Desea descargar una COPIA COMPLETA de la base de datos?\n\nEste archivo contiene TODA la información sensible de pacientes. Guárdelo en un lugar seguro.")) return;
+
+            try {
+                const response = await fetch('/backup/download', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    // Trigger download
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    // Try to get filename from header or default
+                    const contentDisp = response.headers.get('Content-Disposition');
+                    let filename = 'backup_miagenda.json';
+                    if (contentDisp && contentDisp.indexOf('filename=') !== -1) {
+                         filename = contentDisp.split('filename=')[1].replace(/"/g, '');
+                    }
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    const err = await response.json();
+                    alert('Error: ' + (err.detail || 'No autorizado'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error al descargar backup');
+            }
+        }
     </script>
 </body>
 
