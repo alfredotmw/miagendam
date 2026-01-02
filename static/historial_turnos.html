@@ -122,32 +122,30 @@
         #print-footer { display: none; }
 
         @media print {
-            /* 1. REMOVE BROWSER HEADERS/FOOTERS by setting margin to 0 */
+            /* 1. HIDE BROWSER HEADERS/FOOTERS */
             @page {
                 size: A4;
                 margin: 0; 
-                padding: 0;
             }
 
-            /* 2. BODY SETUP */
+            /* 2. BODY SETUP - REMOVED HEIGHT: 100% TO FIX PAGINATION */
             html, body {
                 margin: 0 !important;
                 padding: 0 !important;
                 background: white !important;
-                width: 100%;
-                height: 100%;
+                /* height: 100%;  <-- REMOVED THIS */
             }
 
-            /* 3. HIDE NON-PRINT ELEMENTS */
+            /* 3. BASIC VISIBILITY */
             body > * { display: none !important; }
             #print-layout { display: table !important; }
-            #print-footer { display: flex !important; } /* Use flex for the footer div */
-            
+            #print-footer { display: flex !important; }
+
             .sidebar, .logout-btn, .search-header-container, #welcome-state, .modal, .filters-card { 
                 display: none !important; 
             }
 
-            /* 4. LAYOUT STRUCTURE (Table method for paging) */
+            /* 4. LAYOUT STRUCTURE */
             #print-layout {
                 width: 100%;
                 border-collapse: collapse;
@@ -156,13 +154,13 @@
             #print-layout tfoot { display: table-footer-group; }
             #print-layout tbody { display: table-row-group; }
 
-            /* 5. SPACERS (Reserve space for fixed header/footer) */
-            /* These empty divs in the table push the body content away from the edges */
+            /* 5. SPACERS */
+            /* We need to push content away from easy cut-off zones since we have 0 margins */
             .header-space { 
-                height: 120px; /* Space for logo + margins */
+                height: 120px; 
             }
             .footer-space { 
-                height: 80px; /* Space for footer + margins */
+                height: 80px; 
             }
 
             /* 6. FIXED HEADER */
@@ -173,43 +171,39 @@
                 width: 100%;
                 height: 100px;
                 background: white;
-                /* Padding simulates the margin */
                 padding: 10px 1cm; 
                 box-sizing: border-box;
                 border-bottom: 2px solid #eee;
                 z-index: 1000;
             }
 
-            /* 7. FIXED FOOTER (The one the user wants) */
+            /* 7. FIXED FOOTER */
             .print-footer-content {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 width: 100%;
-                height: 60px; /* Fixed height */
+                height: 60px;
                 background: white;
                 border-top: 1px solid #ccc;
                 
-                /* Centering */
                 display: flex !important;
                 align-items: center;
                 justify-content: center;
                 text-align: center;
                 
-                /* Margins/Padding inside the 0-margin page */
-                padding: 0 1cm 10px 1cm; /* Bottom padding gives it some lift from paper edge */
+                /* CRITICAL: Add padding to lift text above physical printer margin */
+                padding: 0 1cm 15px 1cm; 
                 box-sizing: border-box;
                 z-index: 99999;
             }
             
             /* 8. PAGE NUMBER */
-            /* We'll put it in the footer container's after pseudo-element */
-            /* Since margin is 0, we position relative to the window/paper */
             .print-footer-content::after {
                 content: counter(page);
                 position: absolute;
-                top: 10px;    /* Distancia desde el borde superior del footer */
-                right: 30px;  /* Distancia derecha */
+                top: 15px; 
+                right: 30px;
                 font-size: 10px;
                 font-weight: bold;
                 color: #000;
@@ -217,13 +211,14 @@
 
             /* 9. CONTENT STYLES */
             .content-container {
-                padding: 0 1cm; /* Side margins for the text content */
+                padding: 0 1cm; /* Manual margins since @page is 0 */
             }
             .patient-card {
                 border: 1px solid #ddd;
                 padding: 15px;
                 margin-bottom: 20px;
                 box-shadow: none !important;
+                page-break-inside: avoid;
             }
             .timeline-card {
                 border: 1px solid #ddd;
