@@ -72,9 +72,9 @@ def get_agenda_slots(
             capacity = 7
         else: duracion_slot = 15
 
-    # Definir rango horario (ej: 8:00 a 20:00)
-    hora_inicio = datetime.combine(fecha, time(8, 0))
-    hora_fin = datetime.combine(fecha, time(20, 0))
+    # Definir rango horario (ej: 7:00 a 22:00)
+    hora_inicio = datetime.combine(fecha, time(7, 0))
+    hora_fin = datetime.combine(fecha, time(22, 0))
 
     # Buscar turnos existentes para ese día
     turnos = db.query(Turno).filter(
