@@ -135,9 +135,19 @@
                 padding: 2px 5px;
             }
 
-            /* Hide everything that isn't the print table or the new footer */
-            body>*:not(#print-layout):not(#print-footer) {
+            /* Hide everything by default in print */
+            body>* {
                 display: none !important;
+            }
+
+            /* Explicitly show the print layout table */
+            body>#print-layout {
+                display: table !important;
+            }
+
+            /* Explicitly show the fixed footer */
+            body>#print-footer {
+                display: flex !important;
             }
 
             .sidebar,
