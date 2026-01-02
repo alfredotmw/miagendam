@@ -669,7 +669,7 @@
                     title = "Evolución Clínica";
                 }
 
-                const signature = (ev.medico_nombre || ev.creado_por || ev.firmado_por) ?
+                const signature = ((ev.medico_nombre || ev.creado_por || ev.firmado_por) || ev.estado === 'FIRMADO') ?
                     `<div style="margin-top:0.5rem;border-top:1px dashed #eee;padding-top:0.5rem;font-size:0.8rem">
                          <div style="color:#718096">👤 Creado por: <strong>${ev.creado_por || ev.medico_nombre}</strong></div>
                          ${ev.editado_por && ev.editado_por !== ev.creado_por ? `<div style="color:#718096">✏️ Modif. por: <strong>${ev.editado_por}</strong></div>` : ''}
