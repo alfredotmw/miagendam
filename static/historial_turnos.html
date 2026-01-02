@@ -192,19 +192,30 @@
                 z-index: 1000;
             }
 
+            /* Re-add page number, positioned relative to the footer */
+            .print-footer-content::after {
+                content: counter(page);
+                position: absolute;
+                right: 2cm;
+                bottom: 100%;
+                /* Above the footer content */
+                margin-bottom: 5px;
+                font-size: 10px;
+                color: #555;
+            }
+
             .print-footer-content {
                 position: fixed !important;
                 bottom: 0;
                 left: 0;
                 width: 100%;
                 height: auto;
-                /* Allow auto height with padding */
                 min-height: 80px;
                 background: white;
                 border-top: 1px solid #ccc;
                 display: block !important;
-                /* Add padding bottom to lift content out of printer dead-zone */
-                padding: 10px 1cm 20px 1cm;
+                /* Increased bottom padding to 30px for extra safety margin */
+                padding: 10px 1cm 30px 1cm;
                 box-sizing: border-box;
                 font-size: 9px;
                 color: black !important;
