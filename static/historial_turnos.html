@@ -98,141 +98,8 @@
             display: none;
         }
 
-        #print-footer { display: none; }
-        @media print {
-            @page {
-                size: A4;
-                margin: 0;
-            }
-
-            body {
-                background: white !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                -webkit-print-color-adjust: exact;
-                
-                print-color-adjust: exact;
-                
-            }
-
-            /* Basic Page Setup */
-            @page {
-                margin: 0;
-                size: auto;
-                counter-increment: page;
-            }
-
-            /* Hide everything by default in print */
-            body>* {
-                display: none !important;
-            }
-
-            /* Explicitly show the print layout table */
-            body>#print-layout {
-                display: table !important;
-            }
-
-            /* Explicitly show the fixed footer */
-            #print-footer {
-                display: block !important;
-            }
-
-            .sidebar,
-            .logout-btn,
-            .search-header-container,
-            .filters-card,
-            #welcome-state,
-            button,
-            .modal {
-                display: none !important;
-            }
-
-            /* Show Print Table */
-            #print-layout {
-                display: table !important;
-                width: 100%;
-                border-collapse: collapse;
-            }
-
-            #print-layout thead {
-                display: table-header-group;
-            }
-
-            #print-layout tfoot {
-                display: table-footer-group;
-            }
-
-            #print-layout tbody {
-                display: table-row-group;
-            }
-
-            .header-space {
-                height: 100px;
-            }
-
-            /* Adjusted footer space to match new footer height */
-            .footer-space {
-                height: 90px;
-            }
-
-            .print-header-content {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100px;
-                background: white;
-                padding: 10px 1cm;
-                box-sizing: border-box;
-                border-bottom: 2px solid #eee;
-                z-index: 1000;
-            }
-
-            /* Page Number: Positioned inside the footer, top right */
-            .print-footer-content::after {
-                content: counter(page);
-                position: absolute;
-                top: 5px;
-                right: 2cm;
-                font-size: 10px;
-                color: #555;
-                font-weight: bold;
-            }
-
-            .print-footer-content {
-                position: fixed !important;
-                bottom: 0px !important;
-                left: 0 !important;
-                width: 100% !important;
-                height: 60px !important; /* Slightly reduced height to ensure it fits */
-                background: white !important;
-                border-top: 1px solid #ccc;
-                display: block !important;
-                padding: 10px 1cm !important;
-                box-sizing: border-box;
-                font-size: 9px;
-                color: black !important;
-                z-index: 2147483647 !important; /* Max z-index */
-                overflow: visible !important;
-            }
-
-            .content-container {
-                padding: 1cm;
-            }
-
-            .patient-card {
-                box-shadow: none !important;
-                border: 1px solid #e2e8f0;
-                padding: 1rem;
-                margin-bottom: 2rem;
-            }
-
-            .timeline-card {
-                border: 1px solid #ddd;
-                box-shadow: none !important;
-                page-break-inside: avoid;
-            }
-        }
+        
+        
 
         .footer-col {
             flex: 1;
@@ -249,6 +116,91 @@
             color: white !important;
         }
     </style>
+
+    <style>
+        /* GLOBAL HIDE FOOTER ON SCREEN */
+        #print-footer { display: none; }
+
+        @media print {
+            /* GLOBAL PAGE RESET */
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                height: 100%;
+                /* CRITICAL: Do NOT use counter-reset: page here unless you know what you are doing. */
+            }
+
+            @page {
+                size: A4;
+                margin: 10mm; /* Standard margin */
+                counter-increment: page; /* Ensure counter increments */
+            }
+
+            /* HIDE UI ELEMENTS */
+            body > * { display: none !important; }
+            
+            /* SHOW PRINT LAYOUT */
+            #print-layout { display: table !important; width: 100%; }
+            #print-footer { display: block !important; }
+
+            /* LAYOUT VISIBILITY */
+            .sidebar, .logout-btn, .search-header-container, #welcome-state, .modal, .filters-card { display: none !important; }
+
+            /* TABLE LAYOUT */
+            #print-layout { width: 100%; border-collapse: collapse; }
+            #print-layout thead { display: table-header-group; }
+            #print-layout tfoot { display: table-footer-group; }
+            #print-layout tbody { display: table-row-group; }
+
+            /* SPACERS */
+            .header-space { height: 100px; }
+            .footer-space { height: 50px; }
+
+            /* FIXED HEADER */
+            .print-header-content {
+                position: fixed; top: 0; left: 0; width: 100%; height: 100px;
+                background: white; border-bottom: 2px solid #eee;
+                padding: 10px; box-sizing: border-box;
+            }
+
+            /* FIXED FOOTER - THE CRITICAL PART */
+            .print-footer-content {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 50px;
+                background: white;
+                border-top: 1px solid #ccc;
+                text-align: center;
+                /* Flexbox for centering text */
+                display: flex !important; 
+                align-items: center; 
+                justify-content: center;
+                z-index: 99999;
+                padding: 5px;
+                box-sizing: border-box;
+            }
+            
+            /* PAGE NUMBER */
+            .print-footer-content::after {
+                content: counter(page);
+                position: absolute;
+                right: 20px;
+                top: 15px;
+                font-size: 12px;
+                font-weight: bold;
+                color: #000;
+            }
+            
+            /* CONTENT STYLING */
+            .content-container { padding: 20px 0; }
+            .patient-card { border: 1px solid #ddd; padding: 10px; margin-bottom: 20px; box-shadow: none; }
+            .timeline-card { border: 1px solid #ddd; margin-bottom: 10px; page-break-inside: avoid; }
+        }
+    </style>
+
 </head>
 
 <body>
@@ -286,13 +238,7 @@
     <!-- Footer moved OUT of the table for reliable fixed positioning -->
     <!-- Footer moved OUT of the table for reliable fixed positioning -->
         <!-- Footer moved OUT of the table for reliable fixed positioning -->
-    <div id="print-footer" class="print-footer-content">
-        <div style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center;">
-            <p style="margin: 0; padding: 0; font-size: 10px; color: black !important; font-weight: bold;">
-                San Martín Nº 2473 - whatsapp 3794684336 y Colombia Nº 1249 - whatsapp 3794409595. Corrientes. Instagram @oncologicocorrientes
-            </p>
-        </div>
-    </div>
+    
 
     <!-- Sidebar -->
     <div class="sidebar">
@@ -903,6 +849,14 @@
             }
         }
     </script>
+
+    <!-- PRINT FOOTER -->
+    <div id="print-footer" class="print-footer-content">
+        <p style="margin: 0; padding: 0; font-size: 10px; color: black; font-family: sans-serif;">
+            San Martín Nº 2473 - whatsapp 3794684336 y Colombia Nº 1249 - whatsapp 3794409595. Corrientes. Instagram @oncologicocorrientes
+        </p>
+    </div>
+
 </body>
 
 </html>
