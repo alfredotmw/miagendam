@@ -129,10 +129,14 @@
                 content: "Hoja Foliada";
                 position: absolute;
                 right: 2cm;
+                bottom: 100%;
+                /* Position exactly above the footer border */
+                margin-bottom: 2px;
                 font-size: 10px;
                 color: #999;
                 border: 1px solid #ccc;
                 padding: 2px 5px;
+                background: white;
             }
 
             /* Hide everything by default in print */
@@ -205,11 +209,14 @@
                 bottom: 0;
                 left: 0;
                 width: 100%;
-                height: 80px;
+                height: auto;
+                /* Allow auto height with padding */
+                min-height: 80px;
                 background: white;
                 border-top: 1px solid #ccc;
                 display: block !important;
-                padding: 10px 1cm;
+                /* Add padding bottom to lift content out of printer dead-zone */
+                padding: 10px 1cm 20px 1cm;
                 box-sizing: border-box;
                 font-size: 9px;
                 color: black !important;
