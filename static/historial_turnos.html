@@ -98,6 +98,7 @@
             display: none;
         }
 
+        #print-footer { display: none; }
         @media print {
             @page {
                 size: A4;
@@ -109,9 +110,9 @@
                 margin: 0 !important;
                 padding: 0 !important;
                 -webkit-print-color-adjust: exact;
-                counter-reset: page 0;
+                
                 print-color-adjust: exact;
-                counter-reset: page 0;
+                
             }
 
             /* Basic Page Setup */
