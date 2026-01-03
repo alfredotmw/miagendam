@@ -133,8 +133,7 @@
             /* 1. RESTORE STANDARD MARGINS - This brings back browser headers but ensures content prints */
             @page {
                 size: A4;
-                margin: 1cm;
-
+                margin: 0.5cm;
             }
 
             /* 2. BODY SETUP */
@@ -203,6 +202,7 @@
 
             /* 6. FIXED HEADER */
             .print-header-content {
+                display: block !important;
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -217,9 +217,10 @@
 
             /* 7. FIXED FOOTER */
             .print-footer-content {
+                display: block !important;
                 position: fixed;
-                bottom: 0px !important;
-                left: 0px !important;
+                bottom: 0;
+                left: 0;
                 width: 100%;
                 background: white;
                 border-top: 1px solid #ccc;
