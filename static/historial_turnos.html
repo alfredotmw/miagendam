@@ -141,8 +141,8 @@
             html,
             body {
                 margin: 0 !important;
-                /* Manual Padding: Top 10mm, Right 10mm, Bottom 40mm (for footer), Left 10mm */
-                padding: 10mm 10mm 40mm 10mm !important;
+                /* Manual Padding: Top 5mm (Raised Header), Right 10mm, Bottom 50mm (Raised Footer), Left 10mm */
+                padding: 5mm 10mm 50mm 10mm !important;
                 background: white !important;
                 min-height: 100vh;
                 box-sizing: border-box;
@@ -219,16 +219,14 @@
             .print-footer-content {
                 display: block !important;
                 position: fixed;
-                bottom: 0 !important;
-                /* Bottom of the physical page */
+                bottom: 15mm !important;
+                /* Raised footer by 15mm */
                 left: 0;
                 right: 0;
                 width: 100%;
                 background: transparent;
-                /* Changed to transparent to avoid blocking if overlapping slightly */
                 z-index: 2147483647;
-                padding-bottom: 5mm;
-                /* Visual padding from edge */
+                padding-bottom: 0;
                 height: auto !important;
                 border: none !important;
                 visibility: visible !important;
