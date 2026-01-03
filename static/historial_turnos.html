@@ -125,28 +125,16 @@
 
         .print-header-content,
         .print-footer-content {
-                display: block !important;
-                position: fixed;
-                bottom: 0 !important; /* Bottom of the physical page */
-                left: 0;
-                right: 0;
-                width: 100%;
-                background: transparent; /* Changed to transparent to avoid blocking if overlapping slightly */
-                z-index: 2147483647;
-                padding-bottom: 5mm; /* Visual padding from edge */
-                height: auto !important;
-                border: none !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-                text-align: center;
-            }
+            display: none !important;
+        }
 
         @media print {
 
             /* 1. RESTORE STANDARD MARGINS - This brings back browser headers but ensures content prints */
             @page {
                 size: A4;
-                margin: 0; /* DISABLE BROWSER MARGINS */
+                margin: 0;
+                /* DISABLE BROWSER MARGINS */
             }
 
             /* 2. BODY SETUP */
@@ -231,13 +219,16 @@
             .print-footer-content {
                 display: block !important;
                 position: fixed;
-                bottom: 0 !important; /* Bottom of the physical page */
+                bottom: 0 !important;
+                /* Bottom of the physical page */
                 left: 0;
                 right: 0;
                 width: 100%;
-                background: transparent; /* Changed to transparent to avoid blocking if overlapping slightly */
+                background: transparent;
+                /* Changed to transparent to avoid blocking if overlapping slightly */
                 z-index: 2147483647;
-                padding-bottom: 5mm; /* Visual padding from edge */
+                padding-bottom: 5mm;
+                /* Visual padding from edge */
                 height: auto !important;
                 border: none !important;
                 visibility: visible !important;
