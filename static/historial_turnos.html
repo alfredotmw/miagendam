@@ -346,57 +346,63 @@
         </tbody>
         <tfoot>
             <tr>
-                <td>
-                    <!-- Space reservation to prevent content overlaps with fixed footer -->
-                    <div class="footer-space">&nbsp;</div>
+                <td style="border: none; padding: 0;">
+                    <div class="footer-space"
+                        style="height: 60px; display: flex; align-items: end; justify-content: center;">
+                        <!-- Footer Content -->
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid #ccc; padding-top: 5px; background: white;">
+                            <!-- Left: Addresses & WhatsApp -->
+                            <div style="display: flex; gap: 20px; align-items: center;">
+                                <!-- San Martin -->
+                                <div
+                                    style="display: flex; align-items: center; gap: 5px; font-size: 10pt; color: #4a5568;">
+                                    <span>📍 San Martín 2473</span>
+                                    <span
+                                        style="display: flex; align-items: center; gap: 3px; font-weight: 600; color: #25D366;">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                            <path
+                                                d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.809.891 2.796.891 3.181 0 5.767-2.587 5.767-5.766.001-3.186-2.575-5.778-5.767-5.778z" />
+                                        </svg>
+                                        3794684336
+                                    </span>
+                                </div>
+                                <!-- Colombia -->
+                                <div
+                                    style="display: flex; align-items: center; gap: 5px; font-size: 10pt; color: #4a5568;">
+                                    <span>📍 Colombia 1249</span>
+                                    <span
+                                        style="display: flex; align-items: center; gap: 3px; font-weight: 600; color: #25D366;">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                                            <path
+                                                d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.809.891 2.796.891 3.181 0 5.767-2.587 5.767-5.766.001-3.186-2.575-5.778-5.767-5.778z" />
+                                        </svg>
+                                        3794409595
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Right: Instagram & Location -->
+                            <div
+                                style="display: flex; gap: 15px; align-items: center; font-size: 10pt; color: #4a5568;">
+                                <div style="display: flex; align-items: center; gap: 5px;">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
+                                        style="color: #E1306C;">
+                                        <path
+                                            d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                                    </svg>
+                                    oncologicocorrientes
+                                </div>
+                                <div>Corrientes, Capital</div>
+                            </div>
+                        </div>
+                    </div>
                 </td>
             </tr>
         </tfoot>
     </table>
 
-    <!-- Footer moved OUT of the table for reliable fixed positioning -->
-    <div id="print-footer" class="print-footer-content" style="bottom: 40px !important;">
-        <div
-            style="display: flex; justify-content: space-between; align-items: center; width: 100%; height: 100%; border-top: 1px solid #ccc; padding-top: 5px;">
-            <!-- Left: Addresses & WhatsApp -->
-            <div style="display: flex; gap: 20px; align-items: center;">
-                <!-- San Martin -->
-                <div style="display: flex; align-items: center; gap: 5px; font-size: 10pt; color: #4a5568;">
-                    <span>📍 San Martín 2473</span>
-                    <span style="display: flex; align-items: center; gap: 3px; font-weight: 600; color: #25D366;">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                            <path
-                                d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.809.891 2.796.891 3.181 0 5.767-2.587 5.767-5.766.001-3.186-2.575-5.778-5.767-5.778z" />
-                        </svg>
-                        3794684336
-                    </span>
-                </div>
-                <!-- Colombia -->
-                <div style="display: flex; align-items: center; gap: 5px; font-size: 10pt; color: #4a5568;">
-                    <span>📍 Colombia 1249</span>
-                    <span style="display: flex; align-items: center; gap: 3px; font-weight: 600; color: #25D366;">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                            <path
-                                d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.809.891 2.796.891 3.181 0 5.767-2.587 5.767-5.766.001-3.186-2.575-5.778-5.767-5.778z" />
-                        </svg>
-                        3794409595
-                    </span>
-                </div>
-            </div>
 
-            <!-- Right: Instagram & Location -->
-            <div style="display: flex; gap: 15px; align-items: center; font-size: 10pt; color: #4a5568;">
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="color: #E1306C;">
-                        <path
-                            d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                    </svg>
-                    oncologicocorrientes
-                </div>
-                <div>Corrientes, Capital</div>
-            </div>
-        </div>
-    </div>
 
 
     <!-- Sidebar -->
