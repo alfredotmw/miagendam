@@ -141,8 +141,8 @@
             html,
             body {
                 margin: 0 !important;
-                /* Manual Padding: Top 5mm (Raised Header), Right 10mm, Bottom 50mm (Raised Footer), Left 10mm */
-                padding: 5mm 10mm 50mm 10mm !important;
+                /* Manual Padding: Top 5mm, Right 10mm, Bottom 60mm (Raised Footer), Left 10mm */
+                padding: 5mm 10mm 60mm 10mm !important;
                 background: white !important;
                 min-height: 100vh;
                 box-sizing: border-box;
@@ -216,11 +216,11 @@
             }
 
             /* 7. FIXED FOOTER */
-            .print-footer-content {
+            html body .print-footer-content {
                 display: block !important;
                 position: fixed;
-                bottom: 15mm !important;
-                /* Raised footer by 15mm */
+                bottom: 30mm !important;
+                /* Raised to 30mm */
                 left: 0;
                 right: 0;
                 width: 100%;
