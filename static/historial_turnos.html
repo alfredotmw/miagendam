@@ -125,7 +125,7 @@
             /* 1. RESTORE STANDARD MARGINS - This brings back browser headers but ensures content prints */
             @page {
                 size: A4;
-                margin: 1cm 1cm 3.5cm 1cm; 
+                margin: 1cm; 
                 
             }
 
@@ -133,7 +133,9 @@
             html, body {
                 margin: 0 !important;
                 padding: 0 !important;
+                padding-bottom: 2cm !important; /* Reserve 2cm at bottom for footer */
                 background: white !important;
+                height: 100%; /* Ensure body fills page for footer positioning */
             }
 
             /* 3. BASIC VISIBILITY */
@@ -178,16 +180,14 @@
             /* 7. FIXED FOOTER */
             .print-footer-content {
                 position: fixed;
-                bottom: 0;
-                left: 0;
+                bottom: 0px !important;
+                left: 0px !important;
                 width: 100%;
-                /* Height auto to fit content, or fixed? */
-                /* Let's use auto/fit-content but ensure it references bottom */
                 background: white;
                 border-top: 1px solid #ccc;
                 display: block !important;
-                padding: 0; 
-                z-index: 999999;
+                z-index: 2147483647; /* Max Z-Index */
+                padding-bottom: 5px;
             }
             
             /* Ensure SVGs print correctly */
