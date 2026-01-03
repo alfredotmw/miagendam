@@ -133,7 +133,10 @@
             /* 1. RESTORE STANDARD MARGINS - This brings back browser headers but ensures content prints */
             @page {
                 size: A4;
-                margin: 0.5cm;
+                margin-top: 10mm;
+                margin-bottom: 20mm;
+                margin-left: 10mm;
+                margin-right: 10mm;
             }
 
             /* 2. BODY SETUP */
@@ -221,12 +224,12 @@
                 position: fixed;
                 bottom: 0;
                 left: 0;
+                right: 0;
                 width: 100%;
                 background: white;
                 border-top: 1px solid #ccc;
                 display: block !important;
                 z-index: 2147483647;
-                /* Max Z-Index */
                 padding-bottom: 5px;
                 height: 50px;
                 /* Force height */
