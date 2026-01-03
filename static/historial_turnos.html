@@ -133,8 +133,8 @@
             /* 1. RESTORE STANDARD MARGINS - This brings back browser headers but ensures content prints */
             @page {
                 size: A4;
-                margin-top: 10mm;
-                margin-bottom: 20mm;
+                margin-top: 5mm;
+                margin-bottom: 25mm;
                 margin-left: 10mm;
                 margin-right: 10mm;
             }
@@ -144,11 +144,7 @@
             body {
                 margin: 0 !important;
                 padding: 0 !important;
-                padding-bottom: 2cm !important;
-                /* Reserve 2cm at bottom for footer */
                 background: white !important;
-                height: 100%;
-                /* Ensure body fills page for footer positioning */
             }
 
             /* 3. BASIC VISIBILITY */
@@ -367,8 +363,8 @@
 
     <div class="print-footer-content">
         <div
-            style="width: 100%; display: flex; justify-content: center; align-items: center; background: white; padding-top: 5px; border-top: 1px solid #ccc;">
-            <img src="/static/footer_print.jpg" alt="Footer" style="max-width: 90%; height: auto; display: block;">
+            style="width: 100%; display: flex; justify-content: flex-end; align-items: flex-end; background: white; padding-top: 5px;">
+            <img src="/static/footer_print.jpg" alt="Footer" style="max-width: 95%; height: auto; display: block;">
         </div>
     </div>
 
