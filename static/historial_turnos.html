@@ -134,7 +134,8 @@
             @page {
                 size: A4;
                 margin-top: 5mm;
-                margin-bottom: 25mm;
+                margin-top: 5mm;
+                margin-bottom: 30mm;
                 margin-left: 10mm;
                 margin-right: 10mm;
             }
@@ -218,17 +219,16 @@
             .print-footer-content {
                 display: block !important;
                 position: fixed;
-                bottom: 0;
+                bottom: 0 !important;
+                top: auto !important;
                 left: 0;
                 right: 0;
                 width: 100%;
                 background: white;
-                border-top: 1px solid #ccc;
-                display: block !important;
                 z-index: 2147483647;
-                padding-bottom: 5px;
-                height: 50px;
-                /* Force height */
+                padding-bottom: 0;
+                height: auto !important;
+                border: none !important;
             }
 
             /* COMPACT HEADER FOR PRINT */
