@@ -219,7 +219,7 @@
             .print-footer-content {
                 display: block !important;
                 position: fixed;
-                bottom: 0 !important;
+                bottom: 5mm !important;
                 top: auto !important;
                 left: 0;
                 right: 0;
@@ -229,6 +229,8 @@
                 padding-bottom: 0;
                 height: auto !important;
                 border: none !important;
+                visibility: visible !important;
+                opacity: 1 !important;
             }
 
             /* COMPACT HEADER FOR PRINT */
@@ -361,12 +363,7 @@
         </tfoot>
     </table>
 
-    <div class="print-footer-content">
-        <div
-            style="width: 100%; display: flex; justify-content: flex-end; align-items: flex-end; background: white; padding-top: 5px;">
-            <img src="/static/footer_print.jpg" alt="Footer" style="max-width: 95%; height: auto; display: block;">
-        </div>
-    </div>
+
 
 
 
@@ -1043,6 +1040,12 @@
         </table>
     </div>
 
+    <div class="print-footer-content">
+        <div style="text-align: center; background: white; padding-top: 5px;">
+            <img src="https://miagendam.onrender.com/static/footer_print.jpg" alt="Footer"
+                style="max-width: 95%; height: auto; display: inline-block;">
+        </div>
+    </div>
 </body>
 
 </html>
