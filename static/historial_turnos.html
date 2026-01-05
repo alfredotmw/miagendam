@@ -466,7 +466,11 @@
                     ➕ Nueva Evolución
                 </button>
                 <button onclick="handlePrint()" class="btn-primary" style="width: 100%; margin-top: 1rem;">
-                    🖨️ Imprimir Historia
+                    🖨️ Imprimir (Navegador)
+                </button>
+                <button onclick="downloadWord(event)" class="btn-primary"
+                    style="width: 100%; margin-top: 0.5rem; background-color: #2b6cb0;">
+                    📄 Descargar a Word
                 </button>
             </div>
 
@@ -803,14 +807,53 @@
                         <div class="timeline-date">${dateStr} ${!isPlan ? timeStr : ''}</div>
                     </div>
                     <div class="timeline-body">${content}</div>
-                    <div style="margin-top:0.5rem">
-                         ${ev.servicio ? `<span class="timeline-badge">${ev.servicio}</span>` : ''}
-                         <span class="timeline-badge" style="background:${getStatusColor(ev.estado)};color:white">${ev.estado || '-'}</span>
-                    </div>
                     ${signature}
                 </div>`;
             }).join('');
         }
+
+        async function downloadWord(event) {
+            if (!currentDni) return;
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = "⏳ Generando...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/historia-clinica/word/${currentDni}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    const error = await res.json().catch(() => ({}));
+                    throw new Error(error.detail || "Error al generar documento");
+                }
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const contentDisposition = res.headers.get('Content-Disposition');
+                let fileName = `Historia_${currentDni}.docx`;
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                    if (match && match[1]) fileName = match[1];
+                }
+
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
+            } catch (e) {
+                console.error(e);
+                alert("Error al descargar: " + e.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
 
         function getStatusColor(s) {
             if (!s) return '#a0aec0';
@@ -897,10 +940,10 @@
                 texto: "Nota",
                 accion: action
             };
-            const url = currentNoteId ? `/historia-clinica/${currentNoteId}` : '/historia-clinica/';
+            const url = currentNoteId ? `/ historia - clinica / ${currentNoteId} ` : '/historia-clinica/';
             const method = currentNoteId ? 'PUT' : 'POST';
             try {
-                const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
+                const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token} ` }, body: JSON.stringify(payload) });
                 if (res.ok) { closeNoteModal(); fetchAndRender(currentDni); }
                 else { const e = await res.json(); alert(e.detail); }
             } catch (e) { alert("Error"); }
@@ -921,7 +964,7 @@
                 const token = localStorage.getItem('token');
                 if (!token) return;
                 const res = await fetch('/plantillas/', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${token} ` }
                 });
                 if (res.ok) {
                     const templates = await res.json();

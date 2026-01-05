@@ -10,6 +10,13 @@ from auth.jwt import get_current_user
 from typing import List, Optional
 from datetime import date, datetime, timedelta
 from sqlalchemy import desc
+import io
+from fastapi.responses import StreamingResponse
+from docx import Document
+from docx.shared import Cm, Pt, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 
 router = APIRouter(
     prefix="/historia-clinica",
@@ -472,3 +479,171 @@ def get_timeline_by_dni(
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
     
     return get_timeline(paciente.id, start_date, end_date, db, current_user)
+
+@router.get("/word/{dni}")
+def export_historia_word(
+    dni: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    # 1. Reuse existing logic to get data
+    paciente_res = db.query(Paciente).filter(Paciente.dni == dni).first()
+    if not paciente_res:
+         raise HTTPException(status_code=404, detail="Paciente no encontrado")
+    
+    # Get complete timeline (no date filters by default for full history)
+    data = get_timeline(paciente_res.id, None, None, db, current_user)
+    
+    # 2. Create Document
+    doc = Document()
+    
+    # --- STYLES ---
+    style = doc.styles['Normal']
+    font = style.font
+    font.name = 'Calibri'
+    font.size = Pt(11)
+    
+    # Helper to clean XML for compatibility
+    def set_cell_margins(cell, top=0, bottom=0, start=0, end=0):
+        tc = cell._tc
+        tcPr = tc.get_or_add_tcPr()
+        tcMar = OxmlElement('w:tcMar')
+        for name, val in [("top", top), ("bottom", bottom), ("left", start), ("right", end)]:
+            node = OxmlElement(f'w:{name}')
+            node.set(qn('w:w'), str(val))
+            node.set(qn('w:type'), 'dxa')
+            tcMar.append(node)
+        tcPr.append(tcMar)
+
+    # --- HEADER with Logo ---
+    # We'll use a table for header layout
+    section = doc.sections[0]
+    header = section.header
+    htable = header.add_table(1, 2, width=Cm(16))
+    htable.autofit = False
+    htable.columns[0].width = Cm(12)
+    htable.columns[1].width = Cm(4)
+    
+    # Left: Institution Info
+    hcell = htable.cell(0, 0)
+    p = hcell.paragraphs[0]
+    p.add_run("Centro Oncológico Corrientes\n").bold = True
+    p.add_run("Historia Clínica Integral").italic = True
+    
+    # Right: Logo (Placeholder if file not found)
+    hcell2 = htable.cell(0, 1)
+    p2 = hcell2.paragraphs[0]
+    p2.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    try:
+        # Assuming run from root
+        p2.add_run().add_picture('static/logo_ccm_coc.jpg', width=Cm(1.5))
+    except:
+        p2.add_run("[Logo]")
+
+    # --- FOOTER (Fixed on every page) ---
+    footer = section.footer
+    f_para = footer.paragraphs[0]
+    f_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    f_run = f_para.add_run("San Martín Nº 2473 | Colombia Nº 1249 | Corrientes, Capital\n")
+    f_run.font.size = Pt(8)
+    f_run.font.color.rgb = RGBColor(100, 100, 100)
+    
+    f_run2 = f_para.add_run("WhatsApp: 3794-684336 | 3794-409595  -  Instagram: @oncologicocorrientes")
+    f_run2.font.size = Pt(8)
+    f_run2.font.color.rgb = RGBColor(100, 100, 100)
+
+    # --- PATIENT CARD ---
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(f"{paciente_res.apellido.upper()}, {paciente_res.nombre}")
+    run.bold = True
+    run.font.size = Pt(16)
+    
+    # Detail Table
+    table = doc.add_table(rows=1, cols=3)
+    table.style = 'Table Grid'
+    row = table.rows[0]
+    row.cells[0].text = f"DNI: {paciente_res.dni}"
+    row.cells[1].text = f"Edad: {paciente_res.edad} años"
+    row.cells[2].text = f"Obra Social: {paciente_res.obra_social.nombre if paciente_res.obra_social else '-'}"
+    
+    doc.add_paragraph() # Spacer
+
+    # --- TIMELINE ---
+    doc.add_heading('Línea de Tiempo', level=2)
+
+    for event in data.timeline:
+        # Event Container (Keep together)
+        p = doc.add_paragraph()
+        p.paragraph_format.keep_with_next = True
+        p.paragraph_format.space_before = Pt(12)
+        
+        # Title Line
+        title_run = p.add_run(f"[{event.fecha.strftime('%d/%m/%Y')}] {event.descripcion}")
+        title_run.bold = True
+        title_run.font.size = Pt(12)
+        title_run.font.color.rgb = RGBColor(0, 50, 100) # Dark Blue
+
+        # Content Box
+        # Using a single cell table for box effect if 'Nota'
+        if event.tipo == "NOTA":
+            # P1 Special Box
+            sc = event.structured_content
+            if sc and (sc.get('ecog') or sc.get('tnm') or sc.get('estadio') or sc.get('toxicidad')):
+                p_onco = doc.add_paragraph()
+                p_onco.paragraph_format.left_indent = Cm(0.5)
+                run_onco = p_onco.add_run(f"📊 Resumen Oncológico: ECOG {sc.get('ecog') or '-'} | TNM {sc.get('tnm') or '-'} | Estadio {sc.get('estadio') or '-'} | Tox: {sc.get('toxicidad') or '-'}")
+                run_onco.bold = True
+                run_onco.font.color.rgb = RGBColor(44, 82, 130) # Blueish
+
+            # Body
+            content_text = event.detalle or ""
+            if sc and (sc.get('motivo') or sc.get('evolucion')):
+                lines = []
+                if sc.get('motivo'): lines.append(f"Motivo: {sc.get('motivo')}")
+                if sc.get('antecedentes'): lines.append(f"Antecedentes: {sc.get('antecedentes')}")
+                if sc.get('examen'): lines.append(f"Examen: {sc.get('examen')}")
+                if sc.get('plan'): lines.append(f"Plan: {sc.get('plan')}")
+                if sc.get('tratamiento'): lines.append(f"Tratamiento: {sc.get('tratamiento')}")
+                if sc.get('evolucion'): lines.append(f"Evolución: {sc.get('evolucion')}")
+                content_text = "\n".join(lines)
+            
+            p_content = doc.add_paragraph(content_text)
+            p_content.paragraph_format.left_indent = Cm(0.5)
+            
+            # Signature
+            if event.firmado_por or event.medico_nombre:
+                p_sig = doc.add_paragraph()
+                p_sig.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                signer = event.firmado_por or event.medico_nombre
+                run_sig = p_sig.add_run(f"Dr/a. {signer}")
+                run_sig.italic = True
+                run_sig.font.size = Pt(9)
+                
+                if event.medico_matricula:
+                    p_sig.add_run(f" (MP {event.medico_matricula})").font.size = Pt(8)
+
+        else:
+            # Simple Event (Turno/Plan)
+            p_desc = doc.add_paragraph(event.detalle or "")
+            p_desc.paragraph_format.left_indent = Cm(0.5)
+            p_desc.paragraph_format.space_after = Pt(12)
+
+        # Divider
+        p_div = doc.add_paragraph("_" * 60)
+        p_div.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_div.paragraph_format.space_after = Pt(6)
+        p_div.runs[0].font.color.rgb = RGBColor(200, 200, 200)
+
+    # 3. Save to memory
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    
+    filename = f"HistoriaClinica_{paciente_res.apellido}_{paciente_res.nombre}_{date.today()}.docx"
+    
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
