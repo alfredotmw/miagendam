@@ -156,7 +156,9 @@
                 padding-bottom: 90px !important;
                 /* Footer Space */
                 background: white !important;
-                min-height: 100vh;
+                min-height: auto !important;
+                /* Disable min-height to allow breaks */
+                height: auto !important;
                 box-sizing: border-box;
             }
 
@@ -253,7 +255,10 @@
                 margin-bottom: 1rem !important;
                 border: none !important;
                 border-bottom: 1px solid #000 !important;
-                /* Stronger divider */
+                /* KEY FIX: Disable sticky positioning in print */
+                position: static !important;
+                width: auto !important;
+                top: auto !important;
             }
 
             .patient-info-grid {
