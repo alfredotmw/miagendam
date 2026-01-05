@@ -93,6 +93,14 @@
             padding: 1rem;
         }
 
+        @media print {
+            .timeline-section {
+                background: white !important;
+                min-height: auto !important;
+                padding: 0 !important;
+            }
+        }
+
         /* Table Print Layout Styles */
         #print-layout {
             display: none;
@@ -141,24 +149,48 @@
             html,
             body {
                 margin: 0 !important;
-                /* Manual Padding: Top 5mm, Right 10mm, Bottom 60mm (Raised Footer), Left 10mm */
-                padding: 5mm 10mm 60mm 10mm !important;
+                /* Manual Padding: Top 2mm, Right 10mm, Bottom 25mm, Left 10mm */
+                padding: 2mm 10mm 25mm 10mm !important;
+                /* Reduced top padding to move info up */
                 background: white !important;
                 min-height: 100vh;
                 box-sizing: border-box;
             }
 
-            /* Ensure Footer is visible and on top */
+            /* Ensure Footer is visible, high contrast, on top */
             html body .print-footer-content {
                 display: block !important;
                 position: fixed;
-                bottom: 25mm !important;
+                bottom: 0 !important;
+                /* Fixed at absolute bottom of page sheet */
                 left: 0;
                 right: 0;
                 width: 100%;
                 background-color: white !important;
-                z-index: 999999 !important;
+                z-index: 9999999 !important;
                 text-align: center;
+                color: #000 !important;
+                /* Force black text */
+                padding-bottom: 5mm;
+                /* Add some padding from bottom edge */
+            }
+
+            /* Force White Backgrounds & Remove Shadows */
+            .timeline-section,
+            .patient-card,
+            .timeline-card,
+            .history-grid,
+            #history-content {
+                background: white !important;
+                box-shadow: none !important;
+                border: 1px solid #eee !important;
+                /* Keep light border for structure if needed, or remove */
+            }
+
+            /* Remove gray background from oncology box in print */
+            div[style*="background:#ebf8ff"] {
+                background: white !important;
+                border: 1px solid #ccc !important;
             }
 
             /* Remove Flex from footer for print stability */
@@ -246,19 +278,18 @@
             .patient-avatar-large {
                 width: 60px !important;
                 height: 60px !important;
-                margin-bottom: 0.5rem !important;
-            }
-
-            .patient-name-large {
-                font-size: 1.1rem !important;
-                margin-bottom: 0.25rem !important;
+                margin-bottom: 0.2rem !important;
             }
 
             .patient-card {
-                padding: 1rem !important;
+                padding: 0.5rem !important;
+                /* Compact padding */
+                margin-top: 0 !important;
+                /* Ensure no extra top margin */
                 margin-bottom: 1rem !important;
                 border: none !important;
-                border-bottom: 1px solid #eee !important;
+                border-bottom: 1px solid #000 !important;
+                /* Stronger divider */
             }
 
             .patient-info-grid {
