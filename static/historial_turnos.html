@@ -157,8 +157,8 @@
                 box-sizing: border-box;
             }
 
-            /* Enable fixed footer overlay for hybrid print strategy */
-            html body .print-footer-fixed-overlay {
+            /* Enable fixed footer outside table */
+            #print-footer-fixed {
                 display: block !important;
                 position: fixed;
                 bottom: 0;
@@ -166,6 +166,8 @@
                 right: 0;
                 width: 100%;
                 z-index: 9999999;
+                background: white;
+                border-top: 1px solid #ccc;
             }
 
             /* Force White Backgrounds & Remove Shadows */
@@ -385,424 +387,417 @@
             </tr>
         </tbody>
         <tfoot>
-            <!-- HYBRID FOOTER STRATEGY (INTERNAL): Reserved Space + Fixed Content -->
+            <!-- HYBRID FOOTER STRATEGY (SPACER ONLY): Reserved Space in Flow -->
             <tr>
                 <td style="border: none; padding: 0;">
-                    <!-- 1. Reserved Space in Flow (Keeps text away from bottom) -->
-                    <div class="footer-space" style="height: 60px;">&nbsp;</div>
-
-                    <!-- 2. Fixed Content (Snaps to bottom of page, but lives inside visible table) -->
-                    <div class="footer-content-fixed"
-                        style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; z-index: 9999; background: white; border-top: 1px solid #ccc; padding-bottom: 5mm;">
-                        <div
-                            style="text-align: center; font-family: sans-serif; font-size: 9px; color: #333; padding: 10px 0;">
-                            <!-- Line 1: Addresses and City -->
-                            <div style="margin-bottom: 5px; font-weight: bold;">
-                                San Martín Nº 2473 &nbsp;|&nbsp; Colombia Nº 1249 &nbsp;|&nbsp; Corrientes, Capital
-                            </div>
-                            <!-- Line 2: Contact with SVGs (No Flex) -->
-                            <div class="footer-contact-row">
-                                <!-- WhatsApp 1 -->
-                                <span class="footer-contact-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16"
-                                        fill="#25D366" style="vertical-align: middle; margin-right: 3px;">
-                                        <path
-                                            d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" />
-                                    </svg>
-                                    3794-684336
-                                </span>
-                                <!-- WhatsApp 2 -->
-                                <span class="footer-contact-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16"
-                                        fill="#25D366" style="vertical-align: middle; margin-right: 3px;">
-                                        <path
-                                            d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" />
-                                    </svg>
-                                    3794-409595
-                                </span>
-                                <!-- Instagram -->
-                                <span class="footer-contact-item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16"
-                                        fill="#E1306C" style="vertical-align: middle; margin-right: 3px;">
-                                        <path
-                                            d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.282.11-.705.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.486-.276a2.478 2.478 0 0 1-.919-.598 2.48 2.48 0 0 1-.599-.919c-.11-.281-.24-.705-.275-1.485-.038-.843-.047-1.096-.047-3.232 0-2.136.009-2.388.047-3.231.036-.78.166-1.204.275-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z" />
-                                    </svg>
-                                    @oncologicocorrientes
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Reserved Space in Flow (Keeps text away from bottom area) -->
+                    <div class="footer-space" style="height: 100px;">&nbsp;</div>
                 </td>
             </tr>
+        </tfoot>
+    </table>
 
+    <!-- FIXED FOOTER CONTENT (OUTSIDE TABLE) -->
+    <div id="print-footer-fixed">
+        <div style="text-align: center; font-family: sans-serif; font-size: 9px; color: #333; padding: 10px 0;">
+            <!-- Line 1: Addresses and City -->
+            <div style="margin-bottom: 5px; font-weight: bold;">
+                San Martín Nº 2473 &nbsp;|&nbsp; Colombia Nº 1249 &nbsp;|&nbsp; Corrientes, Capital
+            </div>
+            <!-- Line 2: Contact with SVGs (No Flex) -->
+            <div class="footer-contact-row">
+                <!-- WhatsApp 1 -->
+                <span class="footer-contact-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="#25D366"
+                        style="vertical-align: middle; margin-right: 3px;">
+                        <path
+                            d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" />
+                    </svg>
+                    3794-684336
+                </span>
+                <!-- WhatsApp 2 -->
+                <span class="footer-contact-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="#25D366"
+                        style="vertical-align: middle; margin-right: 3px;">
+                        <path
+                            d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" />
+                    </svg>
+                    3794-409595
+                </span>
+                <!-- Instagram -->
+                <span class="footer-contact-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="#E1306C"
+                        style="vertical-align: middle; margin-right: 3px;">
+                        <path
+                            d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.282.11-.705.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.486-.276a2.478 2.478 0 0 1-.919-.598 2.48 2.48 0 0 1-.599-.919c-.11-.281-.24-.705-.275-1.485-.038-.843-.047-1.096-.047-3.232 0-2.136.009-2.388.047-3.231.036-.78.166-1.204.275-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z" />
+                    </svg>
+                    @oncologicocorrientes
+                </span>
+            </div>
+        </div>
+    </div>
 
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
+            <h3>Agenda Médica</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/static/dashboard.html" class="nav-item">Dashboard</a>
+            <a href="/static/radioterapia.html" class="nav-item">☢️ Radioterapia</a>
+            <a href="/static/agendas.html" class="nav-item">Agendas</a>
+            <a href="/static/nuevo_turno.html" class="nav-item">Nuevo Turno</a>
+            <a href="/static/historial_turnos.html" class="nav-item active">Historia Clínica</a>
+            <a href="/static/reporte_notificaciones.html" class="nav-item">Notificaciones</a>
 
+            <!-- Admin Only Links -->
+            <div id="admin-links"
+                style="display: none; border-top: 1px solid #4a5568; margin-top: 1rem; padding-top: 1rem;">
+                <a href="/static/admin_users.html" class="nav-item">Usuarios</a>
+                <a href="/static/admin_agendas.html" class="nav-item">Agendas</a>
+                <a href="/static/admin_practicas.html" class="nav-item">Prácticas</a>
+            </div>
+        </nav>
+        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+    </div>
 
-
-
-
-            <!-- Sidebar -->
-            <div class="sidebar">
-                <div class="sidebar-header">
-                    <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
-                    <h3>Agenda Médica</h3>
+    <div class="main-content">
+        <header class="top-header search-header-container">
+            <h1 class="page-title">Historia Clínica Integral</h1>
+            <div class="search-container"
+                style="flex: 1; max-width: 600px; margin-left: 2rem; display: flex; gap: 0.5rem;">
+                <div class="search-group" style="flex: 1;">
+                    <input type="text" id="search-dni" placeholder="🔍 Buscar por DNI o Apellido..."
+                        onkeypress="handleEnter(event)" style="height: 3rem; font-size: 1.1rem; width: 100%;">
                 </div>
-                <nav class="sidebar-nav">
-                    <a href="/static/dashboard.html" class="nav-item">Dashboard</a>
-                    <a href="/static/radioterapia.html" class="nav-item">☢️ Radioterapia</a>
-                    <a href="/static/agendas.html" class="nav-item">Agendas</a>
-                    <a href="/static/nuevo_turno.html" class="nav-item">Nuevo Turno</a>
-                    <a href="/static/historial_turnos.html" class="nav-item active">Historia Clínica</a>
-                    <a href="/static/reporte_notificaciones.html" class="nav-item">Notificaciones</a>
+                <button class="btn-primary" onclick="searchHistory()"
+                    style="width: auto; padding: 0 1.5rem; height: 3rem;">Buscar</button>
+            </div>
+        </header>
 
-                    <!-- Admin Only Links -->
-                    <div id="admin-links"
-                        style="display: none; border-top: 1px solid #4a5568; margin-top: 1rem; padding-top: 1rem;">
-                        <a href="/static/admin_users.html" class="nav-item">Usuarios</a>
-                        <a href="/static/admin_agendas.html" class="nav-item">Agendas</a>
-                        <a href="/static/admin_practicas.html" class="nav-item">Prácticas</a>
+        <div id="welcome-state" style="text-align: center; padding: 4rem; color: #a0aec0;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">👨‍⚕️</div>
+            <h2>Ingrese el DNI o Apellido del paciente para ver su historia clínica.</h2>
+        </div>
+
+        <div id="history-content" class="history-grid" style="display: none;">
+            <!-- Left: Patient Card -->
+            <div class="patient-card">
+                <div class="patient-avatar-large">
+                    <svg fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
+                        <path
+                            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                </div>
+                <h2 class="patient-name-large" id="p-nombre">Nombre Paciente</h2>
+
+                <div class="patient-info-grid">
+                    <div class="info-item">
+                        <span class="info-label">DNI</span>
+                        <span class="info-value" id="p-dni">-</span>
                     </div>
-                </nav>
-                <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+                    <div class="info-item">
+                        <span class="info-label">Edad</span>
+                        <span class="info-value" id="p-edad">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Obra Social</span>
+                        <span class="info-value" id="p-obra-social">-</span>
+                    </div>
+                </div>
+
+                <button onclick="openNoteModal()" class="btn-primary"
+                    style="width: 100%; margin-top: 2rem; background-color: #48bb78;">
+                    ➕ Nueva Evolución
+                </button>
+                <button onclick="handlePrint()" class="btn-primary" style="width: 100%; margin-top: 1rem;">
+                    🖨️ Imprimir Historia
+                </button>
             </div>
 
-            <div class="main-content">
-                <header class="top-header search-header-container">
-                    <h1 class="page-title">Historia Clínica Integral</h1>
-                    <div class="search-container"
-                        style="flex: 1; max-width: 600px; margin-left: 2rem; display: flex; gap: 0.5rem;">
-                        <div class="search-group" style="flex: 1;">
-                            <input type="text" id="search-dni" placeholder="🔍 Buscar por DNI o Apellido..."
-                                onkeypress="handleEnter(event)" style="height: 3rem; font-size: 1.1rem; width: 100%;">
-                        </div>
-                        <button class="btn-primary" onclick="searchHistory()"
-                            style="width: auto; padding: 0 1.5rem; height: 3rem;">Buscar</button>
+            <!-- Right: Filters & Timeline -->
+            <div class="history-main">
+                <div class="filters-card">
+                    <div class="form-group" style="margin: 0; flex: 1;">
+                        <label>Desde</label>
+                        <input type="date" id="filter-start" class="form-input">
                     </div>
-                </header>
-
-                <div id="welcome-state" style="text-align: center; padding: 4rem; color: #a0aec0;">
-                    <div style="font-size: 4rem; margin-bottom: 1rem;">👨‍⚕️</div>
-                    <h2>Ingrese el DNI o Apellido del paciente para ver su historia clínica.</h2>
+                    <div class="form-group" style="margin: 0; flex: 1;">
+                        <label>Hasta</label>
+                        <input type="date" id="filter-end" class="form-input">
+                    </div>
+                    <button class="btn-secondary" onclick="applyFilters()">Filtrar</button>
                 </div>
 
-                <div id="history-content" class="history-grid" style="display: none;">
-                    <!-- Left: Patient Card -->
-                    <div class="patient-card">
-                        <div class="patient-avatar-large">
-                            <svg fill="currentColor" viewBox="0 0 24 24" width="48" height="48">
-                                <path
-                                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                            </svg>
-                        </div>
-                        <h2 class="patient-name-large" id="p-nombre">Nombre Paciente</h2>
-
-                        <div class="patient-info-grid">
-                            <div class="info-item">
-                                <span class="info-label">DNI</span>
-                                <span class="info-value" id="p-dni">-</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Edad</span>
-                                <span class="info-value" id="p-edad">-</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Obra Social</span>
-                                <span class="info-value" id="p-obra-social">-</span>
-                            </div>
-                        </div>
-
-                        <button onclick="openNoteModal()" class="btn-primary"
-                            style="width: 100%; margin-top: 2rem; background-color: #48bb78;">
-                            ➕ Nueva Evolución
-                        </button>
-                        <button onclick="handlePrint()" class="btn-primary" style="width: 100%; margin-top: 1rem;">
-                            🖨️ Imprimir Historia
-                        </button>
-                    </div>
-
-                    <!-- Right: Filters & Timeline -->
-                    <div class="history-main">
-                        <div class="filters-card">
-                            <div class="form-group" style="margin: 0; flex: 1;">
-                                <label>Desde</label>
-                                <input type="date" id="filter-start" class="form-input">
-                            </div>
-                            <div class="form-group" style="margin: 0; flex: 1;">
-                                <label>Hasta</label>
-                                <input type="date" id="filter-end" class="form-input">
-                            </div>
-                            <button class="btn-secondary" onclick="applyFilters()">Filtrar</button>
-                        </div>
-
-                        <div class="timeline-section">
-                            <h3 style="margin-bottom: 1.5rem; color: #4a5568;">Línea de Tiempo</h3>
-                            <div id="timeline-container" class="timeline-container-premium">
-                                <!-- Loaded JS -->
-                            </div>
-                        </div>
+                <div class="timeline-section">
+                    <h3 style="margin-bottom: 1.5rem; color: #4a5568;">Línea de Tiempo</h3>
+                    <div id="timeline-container" class="timeline-container-premium">
+                        <!-- Loaded JS -->
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Patient Selection Modal -->
-            <div id="patientModal" class="modal">
-                <div class="modal-content" style="max-width: 600px;">
-                    <div class="modal-header">
-                        <h3>Seleccionar Paciente</h3>
-                        <span class="close-modal" onclick="closeModal()">&times;</span>
-                    </div>
-                    <div id="patientList" style="max-height: 400px; overflow-y: auto;">
-                    </div>
-                </div>
+    <!-- Patient Selection Modal -->
+    <div id="patientModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Seleccionar Paciente</h3>
+                <span class="close-modal" onclick="closeModal()">&times;</span>
             </div>
-
-            <!-- Note Modal -->
-            <div id="noteModal" class="modal">
-                <div class="modal-content" style="max-width: 800px;">
-                    <div class="modal-header">
-                        <h3 class="modal-title">Nueva Evolución</h3>
-                        <span class="close-modal" onclick="closeNoteModal()">&times;</span>
-                    </div>
-                    <form id="noteForm">
-                        <div class="form-grid">
-                            <!-- P1: Oncology Section -->
-                            <div
-                                style="grid-column: 1 / -1; background: #ebf8ff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-                                <h4 style="margin: 0 0 0.5rem 0; color: #2b6cb0;">📊 Estado Oncológico (P1)</h4>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                                    <div class="form-group">
-                                        <label>ECOG (0-5)</label>
-                                        <select id="note-ecog" class="form-input">
-                                            <option value="">-</option>
-                                            <option value="0">0 - Activo</option>
-                                            <option value="1">1 - Restringido</option>
-                                            <option value="2">2 - Incapaz laboral</option>
-                                            <option value="3">3 - Capaz autocuidado</option>
-                                            <option value="4">4 - Incapaz autocuidado</option>
-                                            <option value="5">5 - Fallecido</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>TNM</label>
-                                        <input type="text" id="note-tnm" class="form-input" placeholder="ej. T2N0M0">
-                                    </div>
-                                    <div class="form-group">
-                                        <label>Estadio</label>
-                                        <select id="note-estadio" class="form-input">
-                                            <option value="">-</option>
-                                            <option value="IA">IA</option>
-                                            <option value="IB">IB</option>
-                                            <option value="IIA">IIA</option>
-                                            <option value="IIB">IIB</option>
-                                            <option value="IIIA">IIIA</option>
-                                            <option value="IIIB">IIIB</option>
-                                            <option value="IIIC">IIIC</option>
-                                            <option value="IV">IV</option>
-                                            <option value="IVA">IVA</option>
-                                            <option value="IVB">IVB</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group" style="margin-top: 0.5rem;">
-                                    <label>Toxicidad (CTCAE)</label>
-                                    <input type="text" id="note-toxicidad" class="form-input"
-                                        placeholder="ej. Neutropenia G2">
-                                </div>
-                                <div class="form-group"
-                                    style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; background: #fffbe6; padding: 0.5rem; border: 1px solid #fefcbf; border-radius: 4px;">
-                                    <input type="checkbox" id="note-radio-check" style="width: 1.2rem; height: 1.2rem;">
-                                    <label for="note-radio-check"
-                                        style="font-weight: 700; color: #b7791f; margin: 0; cursor: pointer;">☢️ Indicar
-                                        Radioterapia (Crear registro automático)</label>
-                                </div>
-                            </div>
-
-                            <div class="form-group" style="grid-column: 1 / -1; margin-top: 1rem;">
-                                <label style="font-weight: 600; color: #2d3748;">Patología (Diagnóstico
-                                    Principal)</label>
-                                <input type="text" id="note-patologia" class="form-input" list="cancer-types-list"
-                                    placeholder="Escriba para buscar o ingrese una nueva..." style="width: 100%;">
-                            </div>
-
-                            <div class="form-group" style="grid-column: 1 / -1;">
-                                <label>Motivo de Consulta</label>
-                                <textarea id="note-motivo" class="form-input" rows="2" style="width:100%"></textarea>
-                            </div>
-                            <div class="form-group"><label>Antecedentes</label><textarea id="note-antecedentes"
-                                    class="form-input" rows="3"></textarea></div>
-                            <div class="form-group"><label>Examen Físico</label><textarea id="note-examen"
-                                    class="form-input" rows="3"></textarea></div>
-                            <div class="form-group"><label>Diagnóstico Diferencial</label><textarea
-                                    id="note-diagnostico" class="form-input" rows="3"></textarea></div>
-                            <div class="form-group"><label>Plan de Estudio</label><textarea id="note-plan"
-                                    class="form-input" rows="3"></textarea></div>
-                            <div class="form-group"><label>Tratamiento</label><textarea id="note-tratamiento"
-                                    class="form-input" rows="3"></textarea></div>
-                        </div>
-                        <div class="modal-actions">
-                            <button type="button" class="btn-cancel" onclick="closeNoteModal()">Cancelar</button>
-                            <button type="button" class="btn-secondary" onclick="submitNote('GUARDAR')"
-                                style="width: auto;">Guardar Borrador</button>
-                            <button type="button" class="btn-primary" onclick="submitNote('FIRMAR')"
-                                style="width: auto; background-color: #e53e3e;">Firmar y Guardar</button>
-                        </div>
-                    </form>
-                </div>
+            <div id="patientList" style="max-height: 400px; overflow-y: auto;">
             </div>
+        </div>
+    </div>
 
-            <datalist id="cancer-types-list">
-                <!-- Javascript will populate this -->
-            </datalist>
+    <!-- Note Modal -->
+    <div id="noteModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Nueva Evolución</h3>
+                <span class="close-modal" onclick="closeNoteModal()">&times;</span>
+            </div>
+            <form id="noteForm">
+                <div class="form-grid">
+                    <!-- P1: Oncology Section -->
+                    <div
+                        style="grid-column: 1 / -1; background: #ebf8ff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #2b6cb0;">📊 Estado Oncológico (P1)</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                            <div class="form-group">
+                                <label>ECOG (0-5)</label>
+                                <select id="note-ecog" class="form-input">
+                                    <option value="">-</option>
+                                    <option value="0">0 - Activo</option>
+                                    <option value="1">1 - Restringido</option>
+                                    <option value="2">2 - Incapaz laboral</option>
+                                    <option value="3">3 - Capaz autocuidado</option>
+                                    <option value="4">4 - Incapaz autocuidado</option>
+                                    <option value="5">5 - Fallecido</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>TNM</label>
+                                <input type="text" id="note-tnm" class="form-input" placeholder="ej. T2N0M0">
+                            </div>
+                            <div class="form-group">
+                                <label>Estadio</label>
+                                <select id="note-estadio" class="form-input">
+                                    <option value="">-</option>
+                                    <option value="IA">IA</option>
+                                    <option value="IB">IB</option>
+                                    <option value="IIA">IIA</option>
+                                    <option value="IIB">IIB</option>
+                                    <option value="IIIA">IIIA</option>
+                                    <option value="IIIB">IIIB</option>
+                                    <option value="IIIC">IIIC</option>
+                                    <option value="IV">IV</option>
+                                    <option value="IVA">IVA</option>
+                                    <option value="IVB">IVB</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 0.5rem;">
+                            <label>Toxicidad (CTCAE)</label>
+                            <input type="text" id="note-toxicidad" class="form-input" placeholder="ej. Neutropenia G2">
+                        </div>
+                        <div class="form-group"
+                            style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; background: #fffbe6; padding: 0.5rem; border: 1px solid #fefcbf; border-radius: 4px;">
+                            <input type="checkbox" id="note-radio-check" style="width: 1.2rem; height: 1.2rem;">
+                            <label for="note-radio-check"
+                                style="font-weight: 700; color: #b7791f; margin: 0; cursor: pointer;">☢️ Indicar
+                                Radioterapia (Crear registro automático)</label>
+                        </div>
+                    </div>
 
-            <script>
-                const token = localStorage.getItem('token');
-                if (!token) window.location.href = '/static/login.html';
+                    <div class="form-group" style="grid-column: 1 / -1; margin-top: 1rem;">
+                        <label style="font-weight: 600; color: #2d3748;">Patología (Diagnóstico
+                            Principal)</label>
+                        <input type="text" id="note-patologia" class="form-input" list="cancer-types-list"
+                            placeholder="Escriba para buscar o ingrese una nueva..." style="width: 100%;">
+                    </div>
 
-                // Load Patologias
-                fetch('/common/patologias', { headers: { 'Authorization': `Bearer ${token}` } })
-                    .then(r => r.json())
-                    .then(data => {
-                        const dl = document.getElementById('cancer-types-list');
-                        dl.innerHTML = '';
-                        data.forEach(item => {
-                            const op = document.createElement('option');
-                            op.value = item;
-                            dl.appendChild(op);
-                        });
-                    })
-                    .catch(e => console.error("Could not load pathologies", e));
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Motivo de Consulta</label>
+                        <textarea id="note-motivo" class="form-input" rows="2" style="width:100%"></textarea>
+                    </div>
+                    <div class="form-group"><label>Antecedentes</label><textarea id="note-antecedentes"
+                            class="form-input" rows="3"></textarea></div>
+                    <div class="form-group"><label>Examen Físico</label><textarea id="note-examen" class="form-input"
+                            rows="3"></textarea></div>
+                    <div class="form-group"><label>Diagnóstico Diferencial</label><textarea id="note-diagnostico"
+                            class="form-input" rows="3"></textarea></div>
+                    <div class="form-group"><label>Plan de Estudio</label><textarea id="note-plan" class="form-input"
+                            rows="3"></textarea></div>
+                    <div class="form-group"><label>Tratamiento</label><textarea id="note-tratamiento" class="form-input"
+                            rows="3"></textarea></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeNoteModal()">Cancelar</button>
+                    <button type="button" class="btn-secondary" onclick="submitNote('GUARDAR')"
+                        style="width: auto;">Guardar Borrador</button>
+                    <button type="button" class="btn-primary" onclick="submitNote('FIRMAR')"
+                        style="width: auto; background-color: #e53e3e;">Firmar y Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-                // Check Admin
-                fetch('/users/me', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()).then(u => {
-                    if (u.role === 'ADMIN') {
-                        const al = document.getElementById('admin-links');
-                        if (al) al.style.display = 'block';
-                    }
-                }).catch(e => { });
+    <datalist id="cancer-types-list">
+        <!-- Javascript will populate this -->
+    </datalist>
 
-                let currentDni = null;
-                let currentPatientId = null;
-                let currentNoteId = null;
-                let eventsMap = {}; // Map to store events by ID for easy access
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/static/login.html';
 
-                function handleEnter(e) { if (e.key === 'Enter') searchHistory(); }
-                function logout() { localStorage.removeItem('token'); window.location.href = '/static/login.html'; }
+        // Load Patologias
+        fetch('/common/patologias', { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(data => {
+                const dl = document.getElementById('cancer-types-list');
+                dl.innerHTML = '';
+                data.forEach(item => {
+                    const op = document.createElement('option');
+                    op.value = item;
+                    dl.appendChild(op);
+                });
+            })
+            .catch(e => console.error("Could not load pathologies", e));
 
-                async function searchHistory() {
-                    const input = document.getElementById('search-dni').value.trim();
-                    if (!input) { alert("Ingrese un DNI o Apellido"); return; }
-                    const btn = document.querySelector('.search-container button');
-                    const originalText = btn.textContent;
-                    btn.textContent = '...'; btn.disabled = true;
+        // Check Admin
+        fetch('/users/me', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()).then(u => {
+            if (u.role === 'ADMIN') {
+                const al = document.getElementById('admin-links');
+                if (al) al.style.display = 'block';
+            }
+        }).catch(e => { });
 
-                    try {
-                        const isDni = /^\d+$/.test(input) && input.length > 5;
-                        if (isDni) {
-                            currentDni = input;
-                            await fetchAndRender(input);
-                        } else {
-                            const res = await fetch(`/pacientes/?q=${encodeURIComponent(input)}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                            if (!res.ok) throw new Error("Error");
-                            const patients = await res.json();
-                            if (patients.length === 0) alert("No se encontraron pacientes.");
-                            else if (patients.length === 1) { currentDni = patients[0].dni; await fetchAndRender(patients[0].dni); }
-                            else showPatientModal(patients);
-                        }
-                    } catch (error) { console.error(error); alert('Error al buscar paciente'); }
-                    finally { btn.textContent = originalText; btn.disabled = false; }
+        let currentDni = null;
+        let currentPatientId = null;
+        let currentNoteId = null;
+        let eventsMap = {}; // Map to store events by ID for easy access
+
+        function handleEnter(e) { if (e.key === 'Enter') searchHistory(); }
+        function logout() { localStorage.removeItem('token'); window.location.href = '/static/login.html'; }
+
+        async function searchHistory() {
+            const input = document.getElementById('search-dni').value.trim();
+            if (!input) { alert("Ingrese un DNI o Apellido"); return; }
+            const btn = document.querySelector('.search-container button');
+            const originalText = btn.textContent;
+            btn.textContent = '...'; btn.disabled = true;
+
+            try {
+                const isDni = /^\d+$/.test(input) && input.length > 5;
+                if (isDni) {
+                    currentDni = input;
+                    await fetchAndRender(input);
+                } else {
+                    const res = await fetch(`/pacientes/?q=${encodeURIComponent(input)}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!res.ok) throw new Error("Error");
+                    const patients = await res.json();
+                    if (patients.length === 0) alert("No se encontraron pacientes.");
+                    else if (patients.length === 1) { currentDni = patients[0].dni; await fetchAndRender(patients[0].dni); }
+                    else showPatientModal(patients);
+                }
+            } catch (error) { console.error(error); alert('Error al buscar paciente'); }
+            finally { btn.textContent = originalText; btn.disabled = false; }
+        }
+
+        function showPatientModal(patients) {
+            const list = document.getElementById('patientList');
+            list.innerHTML = '';
+            patients.forEach(p => {
+                const div = document.createElement('div');
+                div.style.padding = '1rem'; div.style.borderBottom = '1px solid #eee'; div.style.cursor = 'pointer';
+                div.innerHTML = `<strong>${p.apellido}, ${p.nombre}</strong><br><small>DNI: ${p.dni}</small>`;
+                div.onclick = () => { currentDni = p.dni; fetchAndRender(p.dni); closeModal(); };
+                list.appendChild(div);
+            });
+            document.getElementById('patientModal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('patientModal').style.display = 'none'; }
+        window.onclick = function (e) { if (e.target == document.getElementById('patientModal')) closeModal(); }
+
+        async function applyFilters() {
+            if (!currentDni) return;
+            await fetchAndRender(currentDni, document.getElementById('filter-start').value, document.getElementById('filter-end').value);
+        }
+
+        async function fetchAndRender(dni, start = null, end = null) {
+            let url = `/historia-clinica/dni/${dni}/timeline`;
+            const params = new URLSearchParams();
+            if (start) params.append('start_date', start);
+            if (end) params.append('end_date', end);
+            if (params.toString()) url += `?${params.toString()}`;
+
+            try {
+                const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.status === 404) { alert("Paciente no encontrado"); return; }
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({ detail: res.statusText }));
+                    throw new Error(`${res.status}: ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
+                }
+                const data = await res.json();
+                renderPage(data);
+            } catch (e) {
+                console.error(e);
+                alert("Error al cargar la historia: " + e.message);
+            }
+        }
+
+        function renderPage(data) {
+            document.getElementById('welcome-state').style.display = 'none';
+            document.getElementById('history-content').style.display = 'grid';
+            const p = data.paciente;
+            currentPatientId = p.id;
+            document.getElementById('p-nombre').textContent = `${p.apellido}, ${p.nombre}`;
+            document.getElementById('p-dni').textContent = p.dni;
+            document.getElementById('p-edad').textContent = p.edad ? `${p.edad} años` : '-';
+            document.getElementById('p-obra-social').textContent = p.obra_social ? p.obra_social.nombre : '-';
+            renderTimeline(data.timeline);
+        }
+
+        function renderTimeline(events) {
+            const container = document.getElementById('timeline-container');
+            eventsMap = {}; // Reset
+
+            if (!events || events.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:2rem;color:#a0aec0">No hay registros.</div>';
+                return;
+            }
+
+            container.innerHTML = events.map(ev => {
+                if (ev.id_referencia) eventsMap[ev.id_referencia] = ev; // Index for editing
+
+                const isNota = ev.tipo === 'NOTA';
+                const isPlan = ev.tipo === 'PLAN_TRATAMIENTO';
+                let icon = '📝'; let typeClass = 'type-nota'; let title = ev.descripcion;
+
+                if (isPlan) { icon = '📅'; typeClass = 'type-plan'; }
+                else if (!isNota) {
+                    if (ev.descripcion.includes('QUIMIO')) { icon = '💧'; typeClass = 'type-quimio'; }
+                    else if (ev.descripcion.includes('TOMO')) { icon = '☢️'; typeClass = 'type-tomo'; }
+                    else { icon = '🏥'; typeClass = 'type-consult'; }
                 }
 
-                function showPatientModal(patients) {
-                    const list = document.getElementById('patientList');
-                    list.innerHTML = '';
-                    patients.forEach(p => {
-                        const div = document.createElement('div');
-                        div.style.padding = '1rem'; div.style.borderBottom = '1px solid #eee'; div.style.cursor = 'pointer';
-                        div.innerHTML = `<strong>${p.apellido}, ${p.nombre}</strong><br><small>DNI: ${p.dni}</small>`;
-                        div.onclick = () => { currentDni = p.dni; fetchAndRender(p.dni); closeModal(); };
-                        list.appendChild(div);
-                    });
-                    document.getElementById('patientModal').style.display = 'flex';
-                }
+                if (isNota) title = "Nota de Evolución";
 
-                function closeModal() { document.getElementById('patientModal').style.display = 'none'; }
-                window.onclick = function (e) { if (e.target == document.getElementById('patientModal')) closeModal(); }
+                const dateStr = new Date(ev.fecha).toLocaleDateString('es-AR');
+                const timeStr = new Date(ev.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
-                async function applyFilters() {
-                    if (!currentDni) return;
-                    await fetchAndRender(currentDni, document.getElementById('filter-start').value, document.getElementById('filter-end').value);
-                }
+                let content = ev.detalle;
+                if (ev.structured_content && (ev.structured_content.motivo || ev.structured_content.evolucion)) {
+                    const sc = ev.structured_content;
 
-                async function fetchAndRender(dni, start = null, end = null) {
-                    let url = `/historia-clinica/dni/${dni}/timeline`;
-                    const params = new URLSearchParams();
-                    if (start) params.append('start_date', start);
-                    if (end) params.append('end_date', end);
-                    if (params.toString()) url += `?${params.toString()}`;
-
-                    try {
-                        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-                        if (res.status === 404) { alert("Paciente no encontrado"); return; }
-                        if (!res.ok) {
-                            const errorData = await res.json().catch(() => ({ detail: res.statusText }));
-                            throw new Error(`${res.status}: ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
-                        }
-                        const data = await res.json();
-                        renderPage(data);
-                    } catch (e) {
-                        console.error(e);
-                        alert("Error al cargar la historia: " + e.message);
-                    }
-                }
-
-                function renderPage(data) {
-                    document.getElementById('welcome-state').style.display = 'none';
-                    document.getElementById('history-content').style.display = 'grid';
-                    const p = data.paciente;
-                    currentPatientId = p.id;
-                    document.getElementById('p-nombre').textContent = `${p.apellido}, ${p.nombre}`;
-                    document.getElementById('p-dni').textContent = p.dni;
-                    document.getElementById('p-edad').textContent = p.edad ? `${p.edad} años` : '-';
-                    document.getElementById('p-obra-social').textContent = p.obra_social ? p.obra_social.nombre : '-';
-                    renderTimeline(data.timeline);
-                }
-
-                function renderTimeline(events) {
-                    const container = document.getElementById('timeline-container');
-                    eventsMap = {}; // Reset
-
-                    if (!events || events.length === 0) {
-                        container.innerHTML = '<div style="text-align:center;padding:2rem;color:#a0aec0">No hay registros.</div>';
-                        return;
-                    }
-
-                    container.innerHTML = events.map(ev => {
-                        if (ev.id_referencia) eventsMap[ev.id_referencia] = ev; // Index for editing
-
-                        const isNota = ev.tipo === 'NOTA';
-                        const isPlan = ev.tipo === 'PLAN_TRATAMIENTO';
-                        let icon = '📝'; let typeClass = 'type-nota'; let title = ev.descripcion;
-
-                        if (isPlan) { icon = '📅'; typeClass = 'type-plan'; }
-                        else if (!isNota) {
-                            if (ev.descripcion.includes('QUIMIO')) { icon = '💧'; typeClass = 'type-quimio'; }
-                            else if (ev.descripcion.includes('TOMO')) { icon = '☢️'; typeClass = 'type-tomo'; }
-                            else { icon = '🏥'; typeClass = 'type-consult'; }
-                        }
-
-                        if (isNota) title = "Nota de Evolución";
-
-                        const dateStr = new Date(ev.fecha).toLocaleDateString('es-AR');
-                        const timeStr = new Date(ev.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-
-                        let content = ev.detalle;
-                        if (ev.structured_content && (ev.structured_content.motivo || ev.structured_content.evolucion)) {
-                            const sc = ev.structured_content;
-
-                            // P1: Oncology Box
-                            let oncoBox = '';
-                            if (sc.ecog != null || sc.tnm || sc.estadio || sc.toxicidad) {
-                                oncoBox = `
+                    // P1: Oncology Box
+                    let oncoBox = '';
+                    if (sc.ecog != null || sc.tnm || sc.estadio || sc.toxicidad) {
+                        oncoBox = `
                         <div style="background:#ebf8ff; border-left:4px solid #4299e1; padding:0.5rem; margin-bottom:0.75rem; border-radius:4px; font-size:0.85rem; color:#2c5282;">
                             <div style="font-weight:700; border-bottom:1px solid #bee3f8; padding-bottom:2px; margin-bottom:4px;">📊 Resumen Oncológico</div>
                             <div style="display:flex; gap:1rem; flex-wrap:wrap;">
@@ -812,9 +807,9 @@
                                 ${sc.toxicidad ? `<span style="color:#e53e3e;"><b>Toxicidad:</b> ${sc.toxicidad}</span>` : ''}
                             </div>
                         </div>`;
-                            }
+                    }
 
-                            content = `${oncoBox}
+                    content = `${oncoBox}
                     <div style="display:grid;gap:0.5rem;font-size:0.9rem;">
                         ${sc.motivo ? `<div><strong>Motivo:</strong> ${sc.motivo}</div>` : ''}
                         ${sc.antecedentes ? `<div><strong>Ant:</strong> ${sc.antecedentes}</div>` : ''}
@@ -824,29 +819,29 @@
                         ${sc.tratamiento ? `<div><strong>Tto:</strong> ${sc.tratamiento}</div>` : ''}
                         ${sc.evolucion ? `<div><strong>Evolución:</strong> ${sc.evolucion}</div>` : ''}
                     </div>`;
-                            title = "Evolución Clínica";
-                        }
+                    title = "Evolución Clínica";
+                }
 
-                        const signature = ((ev.medico_nombre || ev.creado_por || ev.firmado_por) || ev.estado === 'FIRMADO') ?
-                            `<div style="margin-top:0.5rem;border-top:1px dashed #eee;padding-top:0.5rem;font-size:0.8rem">
+                const signature = ((ev.medico_nombre || ev.creado_por || ev.firmado_por) || ev.estado === 'FIRMADO') ?
+                    `<div style="margin-top:0.5rem;border-top:1px dashed #eee;padding-top:0.5rem;font-size:0.8rem">
                          <div style="color:#718096">👤 Creado por: <strong>${ev.creado_por || ev.medico_nombre}</strong></div>
                          ${ev.editado_por && ev.editado_por !== ev.creado_por ? `<div style="color:#718096">✏️ Modif. por: <strong>${ev.editado_por}</strong></div>` : ''}
                          ${ev.firmado_por ? `<div style="color:#2f855a">🔒 Firmado por: <strong>${ev.firmado_por}</strong> ${ev.medico_matricula ? `<span style="color:#276749; font-weight:normal;">(Mat. ${ev.medico_matricula})</span>` : ''}</div>` : ''}
                      </div>` : '';
 
-                        // Edit Button for Drafts OR View for Signed
-                        let actions = '';
-                        if (isNota) {
-                            if (ev.estado === 'BORRADOR') {
-                                actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}], false)" 
+                // Edit Button for Drafts OR View for Signed
+                let actions = '';
+                if (isNota) {
+                    if (ev.estado === 'BORRADOR') {
+                        actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}], false)" 
                          style="float:right;background:none;border:none;color:#4299e1;cursor:pointer;font-size:0.85rem">✏️ Editar</button>`;
-                            } else {
-                                actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}], true)" 
+                    } else {
+                        actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}], true)" 
                          style="float:right;background:none;border:none;color:#2b6cb0;cursor:pointer;font-size:0.85rem">👁️ Ver Detalle</button>`;
-                            }
-                        }
+                    }
+                }
 
-                        return `
+                return `
                 <div class="timeline-card">
                     <div class="timeline-icon ${typeClass}">${icon}</div>
                     <div class="timeline-header-row">
@@ -860,214 +855,198 @@
                     </div>
                     ${signature}
                 </div>`;
-                    }).join('');
+            }).join('');
+        }
+
+        function getStatusColor(s) {
+            if (!s) return '#a0aec0';
+            s = s.toUpperCase();
+            if (['COMPLETADO', 'REALIZADO', 'FIRMADO', 'ASISTIÓ'].includes(s)) return '#48bb78';
+            if (['BORRADOR', 'PENDIENTE'].includes(s)) return '#a0aec0';
+            if (s === 'EN_CURSO') return '#4299e1';
+            if (['AUSENTE', 'CANCELADO', 'ANULADO'].includes(s)) return '#f56565';
+            return '#a0aec0';
+        }
+
+        function openNoteModal(note = null, readOnly = false) {
+            if (!currentDni && !note) { alert("Seleccione paciente"); return; }
+            document.getElementById('noteModal').classList.add('active');
+
+            // Reset state
+            const form = document.getElementById('noteForm');
+            const elements = form.querySelectorAll('input, textarea, select');
+            elements.forEach(el => el.disabled = readOnly);
+
+            // Toggle Buttons
+            const actions = document.querySelector('.modal-actions');
+            if (readOnly) {
+                actions.style.display = 'none';
+                document.querySelector('.modal-title').textContent = "Detalle de Evolución";
+            } else {
+                actions.style.display = 'flex';
+                document.querySelector('.modal-title').textContent = note ? "Editar Borrador" : "Nueva Evolución";
+            }
+
+            if (note) {
+                currentNoteId = note.id_referencia;
+                const sc = note.structured_content || {};
+
+                // Fields
+                document.getElementById('note-ecog').value = sc.ecog || '';
+                document.getElementById('note-tnm').value = sc.tnm || '';
+                document.getElementById('note-estadio').value = sc.estadio || '';
+                document.getElementById('note-toxicidad').value = sc.toxicidad || '';
+                document.getElementById('note-radio-check').checked = sc.requiere_radioterapia || false;
+
+                document.getElementById('note-patologia').value = sc.patologia || '';
+
+                document.getElementById('note-motivo').value = sc.motivo || '';
+                document.getElementById('note-antecedentes').value = sc.antecedentes || '';
+                document.getElementById('note-examen').value = sc.examen || '';
+                document.getElementById('note-diagnostico').value = sc.dx_dif || '';
+                document.getElementById('note-plan').value = sc.plan || '';
+                document.getElementById('note-tratamiento').value = sc.tratamiento || '';
+            } else {
+                currentNoteId = null;
+                form.reset();
+            }
+        }
+        function closeNoteModal() {
+            document.getElementById('noteModal').classList.remove('active');
+            document.getElementById('noteForm').reset();
+            currentNoteId = null;
+            // Reset disabled state
+            const form = document.getElementById('noteForm');
+            const elements = form.querySelectorAll('input, textarea, select');
+            elements.forEach(el => el.disabled = false);
+            document.querySelector('.modal-actions').style.display = 'flex';
+        }
+
+        async function submitNote(action) {
+            if (action === 'FIRMAR' && !confirm("¿Firmar nota? No se podrá editar.")) return;
+            const payload = {
+                paciente_id: currentPatientId,
+                servicio: "CONSULTA ONC.",
+                ecog: document.getElementById('note-ecog').value || null,
+                tnm: document.getElementById('note-tnm').value,
+                estadio: document.getElementById('note-estadio').value,
+                toxicidad: document.getElementById('note-toxicidad').value,
+                motivo_consulta: document.getElementById('note-motivo').value,
+                antecedentes: document.getElementById('note-antecedentes').value,
+                examen_clinico: document.getElementById('note-examen').value,
+                diagnostico_diferencial: document.getElementById('note-diagnostico').value,
+                plan_estudio: document.getElementById('note-plan').value,
+                tratamiento: document.getElementById('note-tratamiento').value,
+                tratamiento: document.getElementById('note-tratamiento').value,
+                requiere_radioterapia: document.getElementById('note-radio-check').checked,
+                patologia: document.getElementById('note-patologia').value,
+                texto: "Nota",
+                accion: action
+            };
+            const url = currentNoteId ? `/historia-clinica/${currentNoteId}` : '/historia-clinica/';
+            const method = currentNoteId ? 'PUT' : 'POST';
+            try {
+                const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
+                if (res.ok) { closeNoteModal(); fetchAndRender(currentDni); }
+                else { const e = await res.json(); alert(e.detail); }
+            } catch (e) { alert("Error"); }
+        }
+        document.getElementById('noteForm').addEventListener('submit', e => e.preventDefault());
+
+        function handlePrint() {
+            const pCard = document.querySelector('.patient-card').cloneNode(true);
+            const timeline = document.querySelector('.timeline-section').cloneNode(true);
+            pCard.querySelector('button')?.remove(); pCard.querySelector('button')?.remove();
+            const pl = document.getElementById('print-content-placeholder');
+            pl.innerHTML = ''; pl.appendChild(pCard); pl.appendChild(timeline);
+            window.print();
+        }
+        window.onafterprint = () => document.getElementById('print-content-placeholder').innerHTML = '';
+        async function loadTemplates() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) return;
+                const res = await fetch('/plantillas/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const templates = await res.json();
+                    const sel = document.getElementById('template-selector');
+                    sel.innerHTML = '<option value="">Seleccionar plantilla...</option>';
+                    templates.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.contenido; // Storing content in value for simplicity
+                        opt.textContent = t.titulo;
+                        sel.appendChild(opt);
+                    });
                 }
+            } catch (e) { console.error("Error loading templates", e); }
+        }
 
-                function getStatusColor(s) {
-                    if (!s) return '#a0aec0';
-                    s = s.toUpperCase();
-                    if (['COMPLETADO', 'REALIZADO', 'FIRMADO', 'ASISTIÓ'].includes(s)) return '#48bb78';
-                    if (['BORRADOR', 'PENDIENTE'].includes(s)) return '#a0aec0';
-                    if (s === 'EN_CURSO') return '#4299e1';
-                    if (['AUSENTE', 'CANCELADO', 'ANULADO'].includes(s)) return '#f56565';
-                    return '#a0aec0';
+
+        function applyTemplate() {
+            const content = document.getElementById('template-selector').value;
+            if (!content) {
+                alert("Por favor seleccione una plantilla primero.");
+                return;
+            }
+            const target = document.getElementById('note-evolucion');
+            target.value = (target.value ? target.value + '\n\n' : '') + content;
+            // Feedback visual opcional
+            const btn = document.querySelector('button[onclick="applyTemplate()"]');
+            const originalText = btn.textContent;
+            btn.textContent = "✅ Insertado";
+            setTimeout(() => btn.textContent = originalText, 1000);
+        }
+
+        // Template Creation Logic
+        function openNewTemplateModal() {
+            document.getElementById('newTemplateModal').style.display = 'flex';
+            document.getElementById('new-template-title').value = '';
+            document.getElementById('new-template-content').value = '';
+        }
+
+        function closeNewTemplateModal() {
+            document.getElementById('newTemplateModal').style.display = 'none';
+        }
+
+        async function saveTemplate() {
+            const title = document.getElementById('new-template-title').value.trim();
+            const content = document.getElementById('new-template-content').value.trim();
+
+            if (!title || !content) {
+                alert("Por favor complete título y contenido.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/plantillas/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        titulo: title,
+                        contenido: content,
+                        servicio: "CONSULTA ONC." // Default service
+                    })
+                });
+
+                if (res.ok) {
+                    alert("Plantilla creada exitosamente.");
+                    closeNewTemplateModal();
+                    loadTemplates(); // Refresh the list
+                } else {
+                    const err = await res.json();
+                    alert("Error al crear plantilla: " + (err.detail || "Desconocido"));
                 }
-
-                function openNoteModal(note = null, readOnly = false) {
-                    if (!currentDni && !note) { alert("Seleccione paciente"); return; }
-                    document.getElementById('noteModal').classList.add('active');
-
-                    // Reset state
-                    const form = document.getElementById('noteForm');
-                    const elements = form.querySelectorAll('input, textarea, select');
-                    elements.forEach(el => el.disabled = readOnly);
-
-                    // Toggle Buttons
-                    const actions = document.querySelector('.modal-actions');
-                    if (readOnly) {
-                        actions.style.display = 'none';
-                        document.querySelector('.modal-title').textContent = "Detalle de Evolución";
-                    } else {
-                        actions.style.display = 'flex';
-                        document.querySelector('.modal-title').textContent = note ? "Editar Borrador" : "Nueva Evolución";
-                    }
-
-                    if (note) {
-                        currentNoteId = note.id_referencia;
-                        const sc = note.structured_content || {};
-
-                        // Fields
-                        document.getElementById('note-ecog').value = sc.ecog || '';
-                        document.getElementById('note-tnm').value = sc.tnm || '';
-                        document.getElementById('note-estadio').value = sc.estadio || '';
-                        document.getElementById('note-toxicidad').value = sc.toxicidad || '';
-                        document.getElementById('note-radio-check').checked = sc.requiere_radioterapia || false;
-
-                        document.getElementById('note-patologia').value = sc.patologia || '';
-
-                        document.getElementById('note-motivo').value = sc.motivo || '';
-                        document.getElementById('note-antecedentes').value = sc.antecedentes || '';
-                        document.getElementById('note-examen').value = sc.examen || '';
-                        document.getElementById('note-diagnostico').value = sc.dx_dif || '';
-                        document.getElementById('note-plan').value = sc.plan || '';
-                        document.getElementById('note-tratamiento').value = sc.tratamiento || '';
-                    } else {
-                        currentNoteId = null;
-                        form.reset();
-                    }
-                }
-                function closeNoteModal() {
-                    document.getElementById('noteModal').classList.remove('active');
-                    document.getElementById('noteForm').reset();
-                    currentNoteId = null;
-                    // Reset disabled state
-                    const form = document.getElementById('noteForm');
-                    const elements = form.querySelectorAll('input, textarea, select');
-                    elements.forEach(el => el.disabled = false);
-                    document.querySelector('.modal-actions').style.display = 'flex';
-                }
-
-                async function submitNote(action) {
-                    if (action === 'FIRMAR' && !confirm("¿Firmar nota? No se podrá editar.")) return;
-                    const payload = {
-                        paciente_id: currentPatientId,
-                        servicio: "CONSULTA ONC.",
-                        ecog: document.getElementById('note-ecog').value || null,
-                        tnm: document.getElementById('note-tnm').value,
-                        estadio: document.getElementById('note-estadio').value,
-                        toxicidad: document.getElementById('note-toxicidad').value,
-                        motivo_consulta: document.getElementById('note-motivo').value,
-                        antecedentes: document.getElementById('note-antecedentes').value,
-                        examen_clinico: document.getElementById('note-examen').value,
-                        diagnostico_diferencial: document.getElementById('note-diagnostico').value,
-                        plan_estudio: document.getElementById('note-plan').value,
-                        tratamiento: document.getElementById('note-tratamiento').value,
-                        tratamiento: document.getElementById('note-tratamiento').value,
-                        requiere_radioterapia: document.getElementById('note-radio-check').checked,
-                        patologia: document.getElementById('note-patologia').value,
-                        texto: "Nota",
-                        accion: action
-                    };
-                    const url = currentNoteId ? `/historia-clinica/${currentNoteId}` : '/historia-clinica/';
-                    const method = currentNoteId ? 'PUT' : 'POST';
-                    try {
-                        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(payload) });
-                        if (res.ok) { closeNoteModal(); fetchAndRender(currentDni); }
-                        else { const e = await res.json(); alert(e.detail); }
-                    } catch (e) { alert("Error"); }
-                }
-                document.getElementById('noteForm').addEventListener('submit', e => e.preventDefault());
-
-                function handlePrint() {
-                    const pCard = document.querySelector('.patient-card').cloneNode(true);
-                    const timeline = document.querySelector('.timeline-section').cloneNode(true);
-                    pCard.querySelector('button')?.remove(); pCard.querySelector('button')?.remove();
-                    const pl = document.getElementById('print-content-placeholder');
-                    pl.innerHTML = ''; pl.appendChild(pCard); pl.appendChild(timeline);
-                    window.print();
-                }
-                window.onafterprint = () => document.getElementById('print-content-placeholder').innerHTML = '';
-                async function loadTemplates() {
-                    try {
-                        const token = localStorage.getItem('token');
-                        if (!token) return;
-                        const res = await fetch('/plantillas/', {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        if (res.ok) {
-                            const templates = await res.json();
-                            const sel = document.getElementById('template-selector');
-                            sel.innerHTML = '<option value="">Seleccionar plantilla...</option>';
-                            templates.forEach(t => {
-                                const opt = document.createElement('option');
-                                opt.value = t.contenido; // Storing content in value for simplicity
-                                opt.textContent = t.titulo;
-                                sel.appendChild(opt);
-                            });
-                        }
-                    } catch (e) { console.error("Error loading templates", e); }
-                }
-
-
-                function applyTemplate() {
-                    const content = document.getElementById('template-selector').value;
-                    if (!content) {
-                        alert("Por favor seleccione una plantilla primero.");
-                        return;
-                    }
-                    const target = document.getElementById('note-evolucion');
-                    target.value = (target.value ? target.value + '\n\n' : '') + content;
-                    // Feedback visual opcional
-                    const btn = document.querySelector('button[onclick="applyTemplate()"]');
-                    const originalText = btn.textContent;
-                    btn.textContent = "✅ Insertado";
-                    setTimeout(() => btn.textContent = originalText, 1000);
-                }
-
-                // Template Creation Logic
-                function openNewTemplateModal() {
-                    document.getElementById('newTemplateModal').style.display = 'flex';
-                    document.getElementById('new-template-title').value = '';
-                    document.getElementById('new-template-content').value = '';
-                }
-
-                function closeNewTemplateModal() {
-                    document.getElementById('newTemplateModal').style.display = 'none';
-                }
-
-                async function saveTemplate() {
-                    const title = document.getElementById('new-template-title').value.trim();
-                    const content = document.getElementById('new-template-content').value.trim();
-
-                    if (!title || !content) {
-                        alert("Por favor complete título y contenido.");
-                        return;
-                    }
-
-                    try {
-                        const res = await fetch('/plantillas/', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`
-                            },
-                            body: JSON.stringify({
-                                titulo: title,
-                                contenido: content,
-                                servicio: "CONSULTA ONC." // Default service
-                            })
-                        });
-
-                        if (res.ok) {
-                            alert("Plantilla creada exitosamente.");
-                            closeNewTemplateModal();
-                            loadTemplates(); // Refresh the list
-                        } else {
-                            const err = await res.json();
-                            alert("Error al crear plantilla: " + (err.detail || "Desconocido"));
-                        }
-                    } catch (e) {
-                        console.error(e);
-                        alert("Error de conexión al guardar plantilla.");
-                    }
-                }
-            </script>
-
-            <!-- PRINT FOOTER -->
-
-
-            <!-- PRINT FOOTER WITH LOGOS -->
-
-            <!-- PRINT FOOTER SAFE MODE (TABLE) -->
-
-            <!-- PRINT FOOTER FINAL V6 -->
-
-
-            <!-- PRINT FOOTER FIXED (V9) -->
-
-
-
-            <!-- Duplicate Footer Removed -->
+            } catch (e) {
+                console.error(e);
+                alert("Error de conexión al guardar plantilla.");
+            }
+        }
+    </script>
 </body>
 
 </html>
