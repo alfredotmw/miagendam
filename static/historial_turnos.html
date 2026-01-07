@@ -121,26 +121,27 @@
         @media print {
 
             /* 1. RESTORE STANDARD MARGINS w/ EXTRA BOTTOM SPACE */
+            /* 1. ZERO-MARGIN STRATEGY (Absolute Control) */
             @page {
                 size: A4;
-                margin-top: 10mm;
-                margin-left: 10mm;
-                margin-right: 10mm;
-                /* Increased bottom margin as per user feedback (34mm+) to show footer */
-                margin-bottom: 35mm;
+                margin: 0;
+                /* Removes browser headers/footers and gives full control */
             }
 
-            /* 2. BODY SETUP */
+            /* 2. BODY SETUP (Simulate Margins) */
             html,
             body {
                 margin: 0 !important;
-                padding: 0 !important;
+                /* Simulated Margins: Top 15mm, Sides 15mm, Bottom 30mm (space for footer) */
+                padding: 15mm 15mm 30mm 15mm !important;
                 background: white !important;
                 height: auto !important;
                 min-height: 100% !important;
                 width: 100% !important;
                 overflow: visible !important;
                 display: block !important;
+                box-sizing: border-box;
+                /* Important for padding to work correctly */
             }
 
             /* Enable fixed footer outside table - REMOVED Round 3 */
@@ -234,10 +235,12 @@
                 padding-top: 10px;
                 width: 100%;
                 text-align: center;
-                /* FIXED POSITION FOR BOTTOM ANCHORING */
+                /* FIXED POSITION ABSOLUTE TO PAGE EDGE */
                 position: fixed;
-                bottom: 0;
+                bottom: 10mm;
+                /* Exactly 10mm from the paper edge */
                 left: 0;
+                right: 0;
                 background: white;
                 z-index: 2000;
             }
