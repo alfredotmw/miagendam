@@ -120,10 +120,14 @@
         /* Responsive Print Fixes for Mobile */
         @media print {
 
-            /* 1. RESTORE STANDARD MARGINS */
+            /* 1. RESTORE STANDARD MARGINS w/ EXTRA BOTTOM SPACE */
             @page {
                 size: A4;
-                margin: 10mm;
+                margin-top: 10mm;
+                margin-left: 10mm;
+                margin-right: 10mm;
+                /* Increased bottom margin as per user feedback (34mm+) to show footer */
+                margin-bottom: 35mm;
             }
 
             /* 2. BODY SETUP */
