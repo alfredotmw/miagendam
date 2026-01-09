@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from database import Base, engine
 from routers import user, agendas, turnos, pacientes, exports, practicas, obras_sociales
-from init_data import init_data, sync_new_practicas  # 👉 AGREGADO
+from init_data import init_data, sync_new_practicas, sync_quimio_practices  # 👉 AGREGADO
 
 from migration_utils import check_and_migrate_db # 👉 MIGRACIÓN
 import models  # 👉 AGREGADO para registrar tablas
@@ -43,6 +43,7 @@ def startup_event():
     try:
         init_data()
         sync_new_practicas() # 🔄 Parchear prácticas nuevas
+        sync_quimio_practices() # 🔄 Parchear prácticas QUIMIO
     except Exception as e:
         print(f"⚠️ INIT DATA ERROR: {e}")
 

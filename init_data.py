@@ -229,5 +229,44 @@ def sync_new_practicas():
     db.close()
 
 
+def sync_quimio_practices():
+    """Ensure Quimioterapia practice exists and is linked to agendas"""
+    from models.practica import Practica, CategoriaPractica
+    from models.agenda import Agenda
+    from models.agenda_practica import AgendaPractica
+
+    db = SessionLocal()
+    print("🔄 Verificando prácticas de Quimioterapia...")
+
+    # 1. Ensure Practice Exists
+    practice_name = "QUIMIOTERAPIA"
+    practice = db.query(Practica).filter(Practica.nombre == practice_name).first()
+    
+    if not practice:
+        print(f"➕ Creando práctica: {practice_name}")
+        practice = Practica(nombre=practice_name, categoria=CategoriaPractica.QUIMIOTERAPIA)
+        db.add(practice)
+        db.commit()
+        db.refresh(practice)
+    
+    # 2. Link to Agendas
+    agendas = db.query(Agenda).filter(Agenda.nombre.ilike('%quimio%')).all()
+
+    for agenda in agendas:
+        link = db.query(AgendaPractica).filter(
+            AgendaPractica.agenda_id == agenda.id,
+            AgendaPractica.practica_id == practice.id
+        ).first()
+
+        if not link:
+            print(f"🔗 Vinculando: {agenda.nombre} -> {practice.nombre}")
+            new_link = AgendaPractica(agenda_id=agenda.id, practica_id=practice.id)
+            db.add(new_link)
+
+    db.commit()
+    db.close()
+
+
+
 if __name__ == "__main__":
     init_data()
