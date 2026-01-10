@@ -165,7 +165,9 @@
                     </div>
                     <div class="form-group">
                         <label>Médico Derivante</label>
-                        <input type="text" id="medico-derivante" class="form-input" placeholder="Nombre Dr.">
+                        <input type="text" id="medico-derivante" class="form-input" list="medicos-list"
+                            placeholder="Nombre Dr." style="text-transform: uppercase;">
+                        <datalist id="medicos-list"></datalist>
                     </div>
                     <div class="form-group">
                         <label>Sede</label>
@@ -232,6 +234,18 @@
                 if (!res.ok) throw new Error('Failed to load');
                 const data = await res.json();
                 renderTable(data);
+
+                // Load Medicos for Autocomplete
+                const medRes = await fetch('/medicos/', { headers: { 'Authorization': `Bearer ${token}` } });
+                const medicos = await medRes.json();
+                const dl = document.getElementById('medicos-list');
+                dl.innerHTML = '';
+                medicos.forEach(m => {
+                    const op = document.createElement('option');
+                    op.value = m.nombre;
+                    dl.appendChild(op);
+                });
+
             } catch (e) { console.error(e); }
         }
 

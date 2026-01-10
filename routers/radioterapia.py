@@ -81,6 +81,22 @@ def create_registro(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    
+    # 🟢 SYNC MEDICO DERIVANTE
+    if registro.medico_derivante:
+        normalized = registro.medico_derivante.strip().upper()
+        registro.medico_derivante = normalized
+        
+        from models.medico import MedicoDerivante
+        existing_med = db.query(MedicoDerivante).filter(MedicoDerivante.nombre == normalized).first()
+        if not existing_med:
+            try:
+                db.add(MedicoDerivante(nombre=normalized))
+                db.commit()
+            except Exception as e:
+                print(f"Error Auto-adding medico: {e}")
+                db.rollback()
+
     new_reg = SeguimientoRadioterapia(**registro.dict())
     db.add(new_reg)
     db.commit()
@@ -185,7 +201,22 @@ def update_registro(
         raise HTTPException(status_code=404, detail="Registro no encontrado")
     
     for key, value in registro_update.dict(exclude_unset=True).items():
-        setattr(db_reg, key, value)
+        if key == "medico_derivante" and value:
+            # 🟢 SYNC MEDICO DERIVANTE UPDATE
+            normalized = value.strip().upper()
+            setattr(db_reg, key, normalized)
+            
+            from models.medico import MedicoDerivante
+            existing_med = db.query(MedicoDerivante).filter(MedicoDerivante.nombre == normalized).first()
+            if not existing_med:
+                try:
+                    db.add(MedicoDerivante(nombre=normalized))
+                    db.commit()
+                except Exception as e:
+                    print(f"Error Auto-adding medico update: {e}")
+                    db.rollback()
+        else:
+            setattr(db_reg, key, value)
     
     db.commit()
     db.refresh(db_reg)

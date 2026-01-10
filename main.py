@@ -58,6 +58,8 @@ app.include_router(practicas.router)
 app.include_router(obras_sociales.router)
 from routers import analytics
 app.include_router(analytics.router)
+from routers import statistics 
+app.include_router(statistics.router)
 from routers import whatsapp
 app.include_router(whatsapp.router)
 from routers import medicos

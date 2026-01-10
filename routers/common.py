@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends
 from typing import List
 from auth.jwt import get_current_user
+from sqlalchemy.orm import Session
+from database import get_db
 
 router = APIRouter(
     prefix="/common",
@@ -70,3 +72,14 @@ def get_common_patologias(current_user: dict = Depends(get_current_user)):
         "Mesotelioma",
         "Otro"
     ]
+
+from models.medico import MedicoDerivante
+from typing import Dict
+
+@router.get("/medicos-derivantes", response_model=List[Dict[str, object]]) # Returns list of dicts {id, nombre}
+def get_medicos_derivantes(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """
+    Returns a list of all registered referring physicians.
+    """
+    medicos = db.query(MedicoDerivante).order_by(MedicoDerivante.nombre.asc()).all()
+    return [{"id": m.id, "nombre": m.nombre} for m in medicos]

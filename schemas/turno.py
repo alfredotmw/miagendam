@@ -30,6 +30,7 @@ class TurnoUpdate(BaseModel):
     estado: Optional[str] = None # completado, ausente, pendiente, cancelado
     duracion: Optional[int] = None
     medico_derivante_id: Optional[int] = None
+    medico_derivante_nombre: Optional[str] = None
     patologia: Optional[str] = None
     crear_seguimiento: Optional[bool] = False
 

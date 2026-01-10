@@ -400,8 +400,24 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
         turno.estado = turno_in.estado.upper()
     if turno_in.duracion is not None:
         turno.duracion = turno_in.duracion
+
+    # Manejo Médico Derivante (ID o Nombre)
     if turno_in.medico_derivante_id is not None:
         turno.medico_derivante_id = turno_in.medico_derivante_id
+    elif turno_in.medico_derivante_nombre:
+        # Si viene nombre, buscamos o creamos
+        from models.medico import MedicoDerivante
+        nombre_medico = turno_in.medico_derivante_nombre.strip().upper()
+        medico_existente = db.query(MedicoDerivante).filter(MedicoDerivante.nombre == nombre_medico).first()
+        if medico_existente:
+            turno.medico_derivante_id = medico_existente.id
+        else:
+            nuevo_medico = MedicoDerivante(nombre=nombre_medico)
+            db.add(nuevo_medico)
+            db.commit()
+            db.refresh(nuevo_medico)
+            turno.medico_derivante_id = nuevo_medico.id
+
     if turno_in.patologia is not None:
         turno.patologia = turno_in.patologia.strip().upper() if turno_in.patologia else None
 
