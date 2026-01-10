@@ -8,7 +8,7 @@ def generate_link():
         expires_minutes=525600
     )
     # Print the Excel Data Feed Link
-    link = f"https://agendas-medicas.onrender.com/estadisticas/excel_feed?token={token}"
+    link = f"https://agendas-medicas.onrender.com/analytics/excel_feed?token={token}"
     with open("link_final.txt", "w") as f:
         f.write(link)
     print("Link written to link_final.txt")
