@@ -36,7 +36,8 @@ def startup_event():
     try:
         # Create Tables first!
         Base.metadata.create_all(bind=engine)
-        check_and_migrate_db(engine) # 🔄 Verificar Schema antes de iniciar
+        # check_and_migrate_db(engine) # 🔄 Verificar Schema antes de iniciar
+        pass
     except Exception as e:
         print(f"⚠️ MIGRATION/DB ERROR: {e}")
 
