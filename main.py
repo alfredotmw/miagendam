@@ -19,7 +19,7 @@ app = FastAPI(
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "version": "v_excel_fix_1.0"}
 
 from fastapi.middleware.cors import CORSMiddleware
 
