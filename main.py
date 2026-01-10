@@ -17,6 +17,10 @@ app = FastAPI(
     description="Sistema de gestión de turnos y agendas médicas para el Centro Oncológico Corrientes",
 )
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
@@ -42,9 +46,10 @@ def startup_event():
         print(f"⚠️ MIGRATION/DB ERROR: {e}")
 
     try:
-        init_data()
-        sync_new_practicas() # 🔄 Parchear prácticas nuevas
-        sync_quimio_practices() # 🔄 Parchear prácticas QUIMIO
+        # init_data()
+        # sync_new_practicas() # 🔄 Parchear prácticas nuevas
+        # sync_quimio_practices() # 🔄 Parchear prácticas QUIMIO
+        pass
     except Exception as e:
         print(f"⚠️ INIT DATA ERROR: {e}")
 
