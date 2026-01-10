@@ -52,38 +52,38 @@ def startup_event():
 
 
 # Registrar routers
-# app.include_router(user.router)
-# app.include_router(agendas.router)
-# app.include_router(turnos.router)
-# app.include_router(pacientes.router)
-# app.include_router(exports.router)
-# app.include_router(practicas.router)
-# app.include_router(obras_sociales.router)
-# from routers import analytics
-# app.include_router(analytics.router)
-# from routers import statistics 
-# app.include_router(statistics.router)
-# from routers import whatsapp
-# app.include_router(whatsapp.router)
-# from routers import medicos
-# app.include_router(medicos.router)
-# from routers import historia_clinica # 👈 NUEVO
-# app.include_router(historia_clinica.router)
+app.include_router(user.router)
+app.include_router(agendas.router)
+app.include_router(turnos.router)
+app.include_router(pacientes.router)
+app.include_router(exports.router)
+app.include_router(practicas.router)
+app.include_router(obras_sociales.router)
+from routers import analytics
+app.include_router(analytics.router)
+from routers import statistics 
+app.include_router(statistics.router)
+from routers import whatsapp
+app.include_router(whatsapp.router)
+from routers import medicos
+app.include_router(medicos.router)
+from routers import historia_clinica # 👈 NUEVO
+app.include_router(historia_clinica.router)
 
 from routers import debug_ops
 app.include_router(debug_ops.router)
 
-# from routers import backup
-# app.include_router(backup.router)
+from routers import backup
+app.include_router(backup.router)
 
-# from routers import plantilla
-# app.include_router(plantilla.router)
+from routers import plantilla
+app.include_router(plantilla.router)
 
-# from routers import radioterapia
-# app.include_router(radioterapia.router)
+from routers import radioterapia
+app.include_router(radioterapia.router)
 
-# from routers import common
-# app.include_router(common.router)
+from routers import common
+app.include_router(common.router)
 
 from fastapi.responses import RedirectResponse
 
