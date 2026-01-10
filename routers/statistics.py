@@ -14,6 +14,7 @@ router = APIRouter(
     tags=["Estadisticas"]
 )
 
+# Endpoint for Excel Feed (Trigger Deploy)
 @router.get("/excel_feed")
 def get_excel_feed(
     token: str = Query(..., description="JWT Token for authentication"),
