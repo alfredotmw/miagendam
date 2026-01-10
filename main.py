@@ -39,16 +39,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def startup_event():
     try:
         # Create Tables first!
-        Base.metadata.create_all(bind=engine)
-        # check_and_migrate_db(engine) # 🔄 Verificar Schema antes de iniciar
+        # Base.metadata.create_all(bind=engine) # 🔴 COMENTADO TEMPORALMENTE
         pass
     except Exception as e:
         print(f"⚠️ MIGRATION/DB ERROR: {e}")
 
     try:
         # init_data()
-        # sync_new_practicas() # 🔄 Parchear prácticas nuevas
-        # sync_quimio_practices() # 🔄 Parchear prácticas QUIMIO
         pass
     except Exception as e:
         print(f"⚠️ INIT DATA ERROR: {e}")
