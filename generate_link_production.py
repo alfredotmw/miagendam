@@ -23,7 +23,7 @@ def generate_production_link():
         expires_minutes=expires
     )
     
-    base_url = "https://agendas-medicas.onrender.com"
+    base_url = "https://miagendam.onrender.com"
     full_link = f"{base_url}/radioterapia/feed?token={token}"
     
     print("\n" + "="*60)

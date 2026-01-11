@@ -7,7 +7,7 @@ def generate_link():
         data={"sub": "admin", "role": "ADMIN"}, 
         expires_minutes=525600
     )
-    print(f"https://agendas-medicas.onrender.com/radioterapia/feed?token={token}")
+    print(f"https://miagendam.onrender.com/radioterapia/feed?token={token}")
 
 if __name__ == "__main__":
     generate_link()
