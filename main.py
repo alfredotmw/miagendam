@@ -37,6 +37,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 👉 SE EJECUTA AUTOMÁTICAMENTE AL ARRANCAR FastAPI
 @app.on_event("startup")
 def startup_event():
+    print("🚀 STARTING APP - FLUSHING LOGS")
     try:
         # Create Tables first!
         # Base.metadata.create_all(bind=engine) # 🔴 COMENTADO TEMPORALMENTE
