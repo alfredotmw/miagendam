@@ -4,6 +4,7 @@ from sqlalchemy import func
 from database import get_db
 from models.paciente import Paciente
 from models.obra_social import ObraSocial
+from models.medico import MedicoDerivante # 👈 Import
 from schemas.paciente import PacienteCreate, PacienteUpdate, PacienteOut
 from typing import List, Optional
 from datetime import date
@@ -38,8 +39,22 @@ def crear_paciente(paciente: PacienteCreate, db: Session = Depends(get_db), curr
             db.refresh(nueva_os)
             paciente.obra_social_id = nueva_os.id
 
-    # Excluir obra_social_nombre del dict antes de crear el modelo
-    paciente_data = paciente.dict(exclude={"obra_social_nombre"})
+    # Manejo de Medico Derivante (Opcional)
+    if paciente.medico_derivante_nombre:
+        nombre_med = paciente.medico_derivante_nombre.strip().upper()
+        if nombre_med:
+            med_existente = db.query(MedicoDerivante).filter(MedicoDerivante.nombre == nombre_med).first()
+            if med_existente:
+                paciente.medico_derivante_id = med_existente.id
+            else:
+                nuevo_med = MedicoDerivante(nombre=nombre_med)
+                db.add(nuevo_med)
+                db.commit()
+                db.refresh(nuevo_med)
+                paciente.medico_derivante_id = nuevo_med.id
+
+    # Excluir campos extra del dict antes de crear el modelo
+    paciente_data = paciente.dict(exclude={"obra_social_nombre", "medico_derivante_nombre"})
     
     # FORCE UPPERCASE for text fields
     if paciente_data.get('nombre'): paciente_data['nombre'] = paciente_data['nombre'].upper()
@@ -111,8 +126,22 @@ def actualizar_paciente(paciente_id: int, datos: PacienteUpdate, db: Session = D
             db.refresh(nueva_os)
             datos.obra_social_id = nueva_os.id
     
-    # Excluir obra_social_nombre del dict antes de actualizar
-    update_data = datos.dict(exclude_unset=True, exclude={"obra_social_nombre"})
+    # Manejo de Medico Derivante en update
+    if datos.medico_derivante_nombre:
+        nombre_med = datos.medico_derivante_nombre.strip().upper()
+        if nombre_med:
+            med_existente = db.query(MedicoDerivante).filter(MedicoDerivante.nombre == nombre_med).first()
+            if med_existente:
+                datos.medico_derivante_id = med_existente.id
+            else:
+                nuevo_med = MedicoDerivante(nombre=nombre_med)
+                db.add(nuevo_med)
+                db.commit()
+                db.refresh(nuevo_med)
+                datos.medico_derivante_id = nuevo_med.id
+
+    # Excluir campos extra del dict antes de actualizar
+    update_data = datos.dict(exclude_unset=True, exclude={"obra_social_nombre", "medico_derivante_nombre"})
     
     for key, value in update_data.items():
         if isinstance(value, str): # FORCE UPPERCASE

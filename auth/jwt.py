@@ -5,9 +5,11 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 
+import os
+
 # ⚙️ Configuración JWT
-SECRET_KEY = "supersecreto"  # ⚠️ en producción mover a variable de entorno
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv("SECRET_KEY", "supersecreto")  # ⚠️ en producción usar variable de entorno
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 security = HTTPBearer()

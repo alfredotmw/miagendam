@@ -17,14 +17,24 @@ class PacienteBase(BaseModel):
 
 class PacienteCreate(PacienteBase):
     obra_social_nombre: Optional[str] = None
+    medico_derivante_nombre: Optional[str] = None # 👈 Nuevo
 
 class PacienteUpdate(PacienteBase):
     obra_social_nombre: Optional[str] = None
+    medico_derivante_nombre: Optional[str] = None # 👈 Nuevo
+
+class MedicoDerivanteOut(BaseModel):
+    id: int
+    nombre: str
+    class Config:
+        from_attributes = True
 
 class PacienteOut(PacienteBase):
     id: int
     edad: Optional[int] = None # Campo calculado
     obra_social: Optional[ObraSocialOut] = None  # 👈 devuelve datos de la obra social
+    medico_derivante_id: Optional[int] = None
+    medico_derivante: Optional[MedicoDerivanteOut] = None # Para devolver nombre, etc.
 
     class Config:
         from_attributes = True

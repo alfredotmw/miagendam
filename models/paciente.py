@@ -25,6 +25,10 @@ class Paciente(Base):
     # Nueva relación para Historia Clínica
     historia_clinica = relationship("HistoriaClinica", back_populates="paciente", cascade="all, delete-orphan")
     turnos = relationship("Turno", back_populates="paciente")
+    
+    # Nuevo campo para médico derivante preferido
+    medico_derivante_id = Column(Integer, ForeignKey("medicos_derivantes.id"), nullable=True)
+    medico_derivante = relationship("MedicoDerivante") # Unidireccional o back_populates si se quiere
 
     @property
     def edad(self):
