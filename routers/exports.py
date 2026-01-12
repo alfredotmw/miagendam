@@ -37,11 +37,12 @@ def export_turnos(
 
     turnos = query.all()
 
-    if not turnos:
-        raise HTTPException(status_code=404, detail="No hay turnos en el rango indicado")
-
-    # 🧩 Transformar datos a lista de diccionarios
+    # transform data even if empty
     data = []
+    if not turnos:
+        # Si no hay turnos, devolvemos array vacío o CSV con headers
+        pass
+        
     for t in turnos:
         paciente_nombre = f"{t.paciente.apellido}, {t.paciente.nombre}" if t.paciente else "Desconocido"
         
@@ -132,7 +133,14 @@ def export_turnos(
     # 📤 Exportar como CSV
     elif formato.lower() == "csv":
         output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        
+        # Definir headers fijos si data está vacía
+        if data:
+            fieldnames = data[0].keys()
+        else:
+             fieldnames = ["Fecha", "Día", "Hora", "Paciente", "DNI", "Edad", "Celular", "Agenda", "Tipo", "Medico Derivante", "Patologia", "Estado", "Duracion", "Práctica"]
+
+        writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(data)
 
