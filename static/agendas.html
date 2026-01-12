@@ -239,6 +239,60 @@
             </div>
         </div>
     </div>
+    </div>
+    </div>
+
+    <!-- Edit Patient Modal -->
+    <div id="editPatientModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Editar Datos del Paciente</h3>
+                <span class="close-modal" onclick="closeEditPatientModal()">&times;</span>
+            </div>
+            <form id="editPatientForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" id="edit-nombre" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <input type="text" id="edit-apellido" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>DNI</label>
+                        <input type="text" id="edit-dni" class="form-input" readonly
+                            style="background: #e2e8f0; cursor: not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Nacimiento</label>
+                        <input type="date" id="edit-fecha-nacimiento" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="text" id="edit-telefono" class="form-input">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Obra Social</label>
+                        <input type="text" id="edit-obra-social" class="form-input" list="os-list"
+                            placeholder="Buscar Obra Social...">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Médico Derivante</label>
+                        <input type="text" id="edit-medico" class="form-input" list="medicos-list"
+                            placeholder="Buscar Médico...">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeEditPatientModal()">Cancelar</button>
+                    <button type="button" class="btn-primary" onclick="submitEditPatient()">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <datalist id="os-list"></datalist>
+    <datalist id="medicos-list"></datalist>
 
     <!-- Note Detail Modal (Read Only for Agendas) -->
     <div id="noteModal" class="modal">
@@ -574,6 +628,9 @@
                         }
 
                         html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0;">📋</button>`;
+
+                        // NEW: Edit Patient Button
+                        html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id})" title="Editar Datos Paciente" style="background: #e2e8f0;">✏️</button>`;
                     }
                 } else {
                     html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
@@ -1145,6 +1202,101 @@
             document.body.classList.add('printing-historia');
             window.print();
             document.body.classList.remove('printing-historia');
+        }
+
+        // --- EDIT PATIENT LOGIC ---
+        let currentPatientIdEdit = null;
+
+        async function openEditPatientModal(patientId) {
+            currentPatientIdEdit = patientId;
+            if (!currentPatientIdEdit) { alert("No hay paciente seleccionado"); return; }
+
+            // Load Lists if empty
+            if (document.getElementById('os-list').children.length === 0) {
+                try {
+                    const [osData, medData] = await Promise.all([
+                        fetch('/obras-sociales/', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
+                        fetch('/common/medicos-derivantes', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json())
+                    ]);
+
+                    const osList = document.getElementById('os-list');
+                    osData.forEach(item => {
+                        const op = document.createElement('option');
+                        op.value = item.nombre;
+                        osList.appendChild(op);
+                    });
+
+                    const medList = document.getElementById('medicos-list');
+                    medData.forEach(item => {
+                        const op = document.createElement('option');
+                        op.value = item.nombre;
+                        medList.appendChild(op);
+                    });
+                } catch (e) {
+                    console.error("Error loading lists", e);
+                }
+            }
+
+            // Load Patient Data
+            try {
+                const res = await fetch(`/pacientes/${currentPatientIdEdit}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error("Error loading patient");
+                const p = await res.json();
+
+                document.getElementById('edit-nombre').value = p.nombre;
+                document.getElementById('edit-apellido').value = p.apellido;
+                document.getElementById('edit-dni').value = p.dni;
+                document.getElementById('edit-fecha-nacimiento').value = p.fecha_nacimiento || '';
+                document.getElementById('edit-telefono').value = p.telefono || '';
+                document.getElementById('edit-obra-social').value = p.obra_social ? p.obra_social.nombre : '';
+                document.getElementById('edit-medico').value = p.medico_derivante ? p.medico_derivante.nombre : '';
+
+                document.getElementById('editPatientModal').style.display = 'flex';
+            } catch (e) {
+                console.error(e);
+                alert("Error cargando datos del paciente");
+            }
+        }
+
+        function closeEditPatientModal() {
+            document.getElementById('editPatientModal').style.display = 'none';
+        }
+
+        async function submitEditPatient() {
+            const nombre = document.getElementById('edit-nombre').value;
+            const apellido = document.getElementById('edit-apellido').value;
+            const fecha_nacimiento = document.getElementById('edit-fecha-nacimiento').value || null;
+            const telefono = document.getElementById('edit-telefono').value;
+            const obra_social_nombre = document.getElementById('edit-obra-social').value;
+            const medico_derivante_nombre = document.getElementById('edit-medico').value;
+
+            const payload = {
+                nombre, apellido, fecha_nacimiento, telefono,
+                obra_social_nombre, medico_derivante_nombre
+            };
+
+            try {
+                const res = await fetch(`/pacientes/${currentPatientIdEdit}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("Paciente actualizado correctamente");
+                    closeEditPatientModal();
+                    loadSlots(); // Refresh Agenda View
+                } else {
+                    const err = await res.json();
+                    alert("Error: " + err.detail);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error de conexión");
+            }
         }
 
         loadAgendas();
