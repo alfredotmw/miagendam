@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, Response
 from sqlalchemy.orm import Session
+from typing import Optional
 from database import get_db
 from models.turno import Turno
 from models.paciente import Paciente
@@ -13,23 +14,28 @@ router = APIRouter(prefix="/exports", tags=["Exports"])
 
 @router.get("/turnos")
 def export_turnos(
-    desde: date = Query(..., description="Fecha desde (YYYY-MM-DD)"),
-    hasta: date = Query(..., description="Fecha hasta (YYYY-MM-DD)"),
+    desde: Optional[date] = Query(None, description="Fecha desde (YYYY-MM-DD)"),
+    hasta: Optional[date] = Query(None, description="Fecha hasta (YYYY-MM-DD)"),
     formato: str = Query("json", description="Formato de salida: json o csv"),
     db: Session = Depends(get_db)
 ):
     """
-    Exporta turnos entre fechas dadas.
+    Exporta turnos. Si se indican fechas, filtra por rango. Si no, trae todo.
     Permite formato JSON (por defecto) o CSV.
     """
 
-    turnos = (
+    query = (
         db.query(Turno)
         .join(Paciente, Paciente.id == Turno.paciente_id)
         .join(Agenda, Agenda.id == Turno.agenda_id)
-        .filter(Turno.fecha >= desde, Turno.fecha <= hasta) # Usar comparación directa o between
-        .all()
     )
+
+    if desde:
+        query = query.filter(Turno.fecha >= desde)
+    if hasta:
+        query = query.filter(Turno.fecha <= hasta)
+
+    turnos = query.all()
 
     if not turnos:
         raise HTTPException(status_code=404, detail="No hay turnos en el rango indicado")
