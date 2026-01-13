@@ -138,6 +138,40 @@ def wipe_all_data(db: Session = Depends(get_db)):
         
         db.commit()
         return {"status": "success", "message": "ALL Patient data wiped (Clean Slate)."}
-    except Exception as e:
         db.rollback()
         return {"status": "error", "message": str(e)}
+
+@router.get("/arregin-status")
+def get_arregin_status(db: Session = Depends(get_db)):
+    from models.agenda import Agenda
+    from models.practica import Practica
+    from models.agenda_practica import AgendaPractica
+    
+    status = {}
+    
+    # 1. Check Agenda
+    agenda = db.query(Agenda).filter(Agenda.nombre.ilike("%Arregin%")).first()
+    if agenda:
+        status["agenda"] = {"id": agenda.id, "nombre": agenda.nombre, "tipo": agenda.tipo}
+        
+        # 2. Check Links
+        links = db.query(AgendaPractica).filter(AgendaPractica.agenda_id == agenda.id).all()
+        status["links_count"] = len(links)
+        status["linked_practices"] = []
+        for l in links:
+            p = db.query(Practica).get(l.practica_id)
+            if p:
+                status["linked_practices"].append({"id": p.id, "nombre": p.nombre, "categoria": p.categoria})
+    else:
+        status["agenda"] = "NOT FOUND"
+        
+    # 3. Check Practices Existence
+    p1 = db.query(Practica).filter(Practica.nombre == "CONSULTA DE 1RA VEZ").first()
+    p2 = db.query(Practica).filter(Practica.nombre == "CONSULTA DE SEGUIMIENTO").first()
+    
+    status["practice_checks"] = {
+        "CONSULTA DE 1RA VEZ": {"id": p1.id, "cat": p1.categoria} if p1 else "NOT FOUND",
+        "CONSULTA DE SEGUIMIENTO": {"id": p2.id, "cat": p2.categoria} if p2 else "NOT FOUND"
+    }
+
+    return status
