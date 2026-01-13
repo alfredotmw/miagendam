@@ -108,13 +108,42 @@ def list_registros(
     skip: int = 0, 
     limit: int = 100, 
     q: Optional[str] = None,
+    sede: Optional[str] = None,
+    estado: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     query = db.query(SeguimientoRadioterapia)
+    
+    # FILTER: Sede
+    if sede:
+        if sede == "SIN_ASIGNAR":
+             query = query.filter((SeguimientoRadioterapia.sede == None) | (SeguimientoRadioterapia.sede == ""))
+        else:
+             query = query.filter(SeguimientoRadioterapia.sede == sede)
+
+    # FILTER: Estado
+    # Logic:
+    # "pendiente": fecha_inicio IS NULL
+    # "en_curso": fecha_inicio IS NOT NULL AND (fecha_fin IS NULL OR fecha_fin >= today)
+    # "finalizado": fecha_fin < today
+    if estado:
+        today = date.today()
+        if estado == "pendiente":
+            query = query.filter(SeguimientoRadioterapia.fecha_inicio == None)
+        elif estado == "en_curso":
+            query = query.filter(
+                SeguimientoRadioterapia.fecha_inicio != None,
+                (SeguimientoRadioterapia.fecha_fin == None) | (SeguimientoRadioterapia.fecha_fin >= today)
+            )
+        elif estado == "finalizado":
+             query = query.filter(SeguimientoRadioterapia.fecha_fin < today)
+
     if q:
         # Basic filtering logic could be improved (join patient name)
-        pass # TODO: Search by patient name if needed
+        # For now, let's allow basic text search on patologia or patient name if connected
+        # But user requested structural filters mainly.
+        pass 
         
     registros = query.order_by(SeguimientoRadioterapia.id.desc()).offset(skip).limit(limit).all()
     

@@ -116,6 +116,34 @@
                 <button class="btn-primary" onclick="openModal()" style="width: auto;">+ Nuevo Registro</button>
             </div>
 
+            <!-- Filters -->
+            <div
+                style="display: flex; gap: 1rem; margin-bottom: 1.5rem; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex-wrap: wrap;">
+                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                    <label style="font-size: 0.85rem; font-weight: 600; color: #4a5568;">Estado</label>
+                    <select id="filter-estado" onchange="loadData()"
+                        style="padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        <option value="">Todos</option>
+                        <option value="en_curso" selected>En Tratamiento</option>
+                        <option value="pendiente">Pendiente (Sin Inicio)</option>
+                        <option value="finalizado">Finalizado</option>
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                    <label style="font-size: 0.85rem; font-weight: 600; color: #4a5568;">Sede / Equipo</label>
+                    <select id="filter-sede" onchange="loadData()"
+                        style="padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        <option value="">Todas</option>
+                        <option value="San Martín">San Martín</option>
+                        <option value="Colombia">Colombia</option>
+                        <option value="SIN_ASIGNAR">Sin Asignar</option>
+                    </select>
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button onclick="loadData()" class="btn-secondary" style="height: 38px;">🔄 Actualizar</button>
+                </div>
+            </div>
+
             <table class="rad-table">
                 <thead>
                     <tr>
@@ -230,7 +258,23 @@
 
         async function loadData() {
             try {
-                const res = await fetch('/radioterapia/', { headers: { 'Authorization': `Bearer ${token}` } });
+                const estado = document.getElementById('filter-estado').value;
+                const sede = document.getElementById('filter-sede').value;
+
+                let url = '/radioterapia/feed?'; // Using feed endpoint or list endpoint? 
+                // Wait, the original code used `/radioterapia/` (list endpoint) in loadData?
+                // Checking previous view_file... 
+                // Line 233: const res = await fetch('/radioterapia/', ... 
+                // Ah, wait, line 233 in view_file was: const res = await fetch('/radioterapia/', ...);
+                // The backend has `list_registros` at `/radioterapia/`.
+                // The feed endpoint is `/radioterapia/feed` (for Excel).
+                // I should use `/radioterapia/` here.
+
+                const params = new URLSearchParams();
+                if (estado) params.append('estado', estado);
+                if (sede) params.append('sede', sede);
+
+                const res = await fetch(`/radioterapia/?${params.toString()}`, { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!res.ok) throw new Error('Failed to load');
                 const data = await res.json();
                 renderTable(data);
