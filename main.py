@@ -47,7 +47,12 @@ def startup_event():
 
     try:
         # init_data()
-        pass
+        # Run Patches
+        sync_new_practicas()
+        sync_quimio_practices()
+        from init_data import sync_arregin_setup
+        sync_arregin_setup()
+        
     except Exception as e:
         print(f"⚠️ INIT DATA ERROR: {e}")
 

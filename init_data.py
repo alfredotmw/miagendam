@@ -268,5 +268,61 @@ def sync_quimio_practices():
 
 
 
+def sync_arregin_setup():
+    """Ensure Lic. Arregin Agenda and Practices exist"""
+    from models.agenda import Agenda
+    from models.practica import Practica, CategoriaPractica
+    from models.agenda_practica import AgendaPractica
+    
+    db = SessionLocal()
+    print("\n--- SYNC: LIC. ARREGIN ---")
+
+    # 1. Get or Create Agenda
+    agenda_name = "CONSULTORIO LIC. ARREGIN"
+    agenda = db.query(Agenda).filter(Agenda.nombre == agenda_name).first()
+    if not agenda:
+        print(f"➕ Creating Agenda: {agenda_name}")
+        agenda = Agenda(
+            nombre=agenda_name,
+            tipo="CONSULTA_MEDICA",
+            profesional="Lic. Arregin"
+        )
+        db.add(agenda)
+        db.commit()
+        db.refresh(agenda)
+    
+    # 2. Get or Create Practices
+    practices_to_add = [
+        "CONSULTA DE 1RA VEZ",
+        "CONSULTA DE SEGUIMIENTO" 
+    ]
+    
+    practice_objs = []
+    
+    for p_name in practices_to_add:
+        p = db.query(Practica).filter(Practica.nombre == p_name).first()
+        if not p:
+            print(f"➕ Creating Practice: {p_name}")
+            p = Practica(nombre=p_name, categoria=CategoriaPractica.CONSULTA_MEDICA)
+            db.add(p)
+            db.commit()
+            db.refresh(p)
+        practice_objs.append(p)
+
+    # 3. Link Practices to Agenda
+    for p in practice_objs:
+        link = db.query(AgendaPractica).filter(
+            AgendaPractica.agenda_id == agenda.id,
+            AgendaPractica.practica_id == p.id
+        ).first()
+        
+        if not link:
+            print(f"🔗 Linking: {agenda.nombre} -> {p.nombre}")
+            new_link = AgendaPractica(agenda_id=agenda.id, practica_id=p.id)
+            db.add(new_link)
+
+    db.commit()
+    db.close()
+
 if __name__ == "__main__":
     init_data()
