@@ -1301,11 +1301,12 @@
             const apellido = document.getElementById('edit-apellido').value;
             const fecha_nacimiento = document.getElementById('edit-fecha-nacimiento').value || null;
             const telefono = document.getElementById('edit-telefono').value;
+            const dni = document.getElementById('edit-dni').value; // 👈 REQUIRED
             const obra_social_nombre = document.getElementById('edit-obra-social').value;
             const medico_derivante_nombre = document.getElementById('edit-medico').value;
 
             const payload = {
-                nombre, apellido, fecha_nacimiento, telefono,
+                nombre, apellido, fecha_nacimiento, telefono, dni, // 👈 Included DNI
                 obra_social_nombre, medico_derivante_nombre
             };
 
@@ -1325,7 +1326,19 @@
                     loadSlots(); // Refresh Agenda View
                 } else {
                     const err = await res.json();
-                    alert("Error: " + err.detail);
+                    // 🟢 Handle Pydantic Error Arrays
+                    let msg = "Error al actualizar";
+                    if (err.detail) {
+                        if (Array.isArray(err.detail)) {
+                            // Pydantic Validation Error
+                            msg = "Error de Validación:\n" + err.detail.map(e => `• ${e.loc[1]}: ${e.msg}`).join('\n');
+                        } else {
+                            msg = "Error: " + err.detail;
+                        }
+                    } else {
+                        msg = "Error desconocido: " + JSON.stringify(err);
+                    }
+                    alert(msg);
                 }
             } catch (e) {
                 console.error(e);
