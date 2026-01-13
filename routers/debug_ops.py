@@ -138,6 +138,7 @@ def wipe_all_data(db: Session = Depends(get_db)):
         
         db.commit()
         return {"status": "success", "message": "ALL Patient data wiped (Clean Slate)."}
+    except Exception as e:
         db.rollback()
         return {"status": "error", "message": str(e)}
 
