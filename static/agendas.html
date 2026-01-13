@@ -1347,6 +1347,68 @@
         }
 
         loadAgendas();
+        // PASTE IMAGE LOGIC
+        function enableImagePaste() {
+            const textareas = document.querySelectorAll('textarea');
+            textareas.forEach(tx => {
+                tx.addEventListener('paste', async (e) => {
+                    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                    for (let index in items) {
+                        const item = items[index];
+                        if (item.kind === 'file') {
+                            const blob = item.getAsFile();
+                            if (blob.type.startsWith('image/')) {
+                                e.preventDefault();
+                                await uploadAndInsertImage(blob, tx);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        async function uploadAndInsertImage(blob, textarea) {
+            const formData = new FormData();
+            formData.append('file', blob);
+
+            // Show uploading state
+            const originalPlaceholder = textarea.placeholder;
+            textarea.placeholder = "Subiendo imagen...";
+
+            // Insert temporary text
+            const cursorPos = textarea.selectionStart;
+            const textBefore = textarea.value.substring(0, cursorPos);
+            const textAfter = textarea.value.substring(cursorPos);
+            textarea.value = textBefore + " [...Subiendo Imagen...] " + textAfter;
+
+            try {
+                const res = await fetch('/uploads/image', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const link = `\n(Ver Imagen: [${data.filename}](${data.url}))\n`;
+
+                    // Replace temp text with actual link
+                    textarea.value = textarea.value.replace(" [...Subiendo Imagen...] ", link);
+                } else {
+                    alert("Error al subir imagen");
+                    textarea.value = textarea.value.replace(" [...Subiendo Imagen...] ", "");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error de conexión al subir imagen");
+                textarea.value = textarea.value.replace(" [...Subiendo Imagen...] ", "");
+            } finally {
+                textarea.placeholder = originalPlaceholder;
+            }
+        }
+
+        // Initialize Paste Listener
+        enableImagePaste();
     </script>
 </body>
 
