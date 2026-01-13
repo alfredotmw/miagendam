@@ -1349,21 +1349,26 @@
         loadAgendas();
         // PASTE IMAGE LOGIC
         function enableImagePaste() {
-            const textareas = document.querySelectorAll('textarea');
-            textareas.forEach(tx => {
-                tx.addEventListener('paste', async (e) => {
+            // Use Event Delegation for better reliability
+            document.addEventListener('paste', async (e) => {
+                const target = e.target;
+                if (target.tagName === 'TEXTAREA') {
+                    console.log("Paste detected on textarea");
                     const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+
                     for (let index in items) {
                         const item = items[index];
                         if (item.kind === 'file') {
                             const blob = item.getAsFile();
+                            console.log("File detected:", blob.type);
                             if (blob.type.startsWith('image/')) {
                                 e.preventDefault();
-                                await uploadAndInsertImage(blob, tx);
+                                await uploadAndInsertImage(blob, target);
+                                return; // Stop after first image found
                             }
                         }
                     }
-                });
+                }
             });
         }
 
