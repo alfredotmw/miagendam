@@ -364,6 +364,18 @@ def listar_turnos(
     turnos = query.order_by(Turno.fecha).offset(offset).limit(limit).all()
     return turnos
 
+# 🟢 Eliminar turno
+@router.delete("/{turno_id}")
+def eliminar_turno(turno_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    turno = db.get(Turno, turno_id)
+    if not turno:
+        raise HTTPException(status_code=404, detail="Turno no encontrado")
+    
+    db.delete(turno)
+    db.commit()
+    return {"mensaje": f"Turno {turno_id} eliminado correctamente"}
+
+
 from schemas.turno import TurnoUpdate
 
 @router.patch("/{turno_id}", response_model=TurnoOut)

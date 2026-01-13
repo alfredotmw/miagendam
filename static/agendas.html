@@ -631,6 +631,9 @@
 
                         // NEW: Edit Patient Button
                         html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id})" title="Editar Datos Paciente" style="background: #e2e8f0;">✏️</button>`;
+
+                        // NEW: Delete Button (Red Trash Can)
+                        html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 0.25rem;">🗑️</button>`;
                     }
                 } else {
                     html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
@@ -641,6 +644,37 @@
 
             html += `</tbody></table>`;
             container.innerHTML = html;
+        }
+
+        // 🟢 NEW: Delete Turn Function
+        async function deleteTurno(id) {
+            if (!confirm("⚠️ ¿ESTÁ SEGURO DE QUE DESEA ELIMINAR ESTE TURNO?\n\nEsta acción es irreversible y borrará el turno de la base de datos para siempre.")) return;
+
+            // Optional second confirmation for safety
+            // if (!confirm("Confirme nuevamente: ¿Eliminar turno definitivamente?")) return;
+
+            try {
+                const response = await fetch(`/turnos/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    // Remove from UI immediately or reload
+                    // loadSlots(); 
+                    // Let's reload to be safe and sync state
+                    loadSlots();
+                    alert('Turno eliminado correctamente.');
+                } else {
+                    const err = await response.text();
+                    alert('Error al eliminar: ' + err);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error de conexión');
+            }
         }
 
         // 🟢 NEW: Start Radiotherapy Function

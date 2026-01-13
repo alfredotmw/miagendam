@@ -141,8 +141,20 @@ def actualizar_paciente(paciente_id: int, datos: PacienteUpdate, db: Session = D
                 datos.medico_derivante_id = nuevo_med.id
 
     # Excluir campos extra del dict antes de actualizar
+    # IMPORTANT: We explicitly exclude the *names* so they don't try to write to the DB columns that don't exist
+    # But we MUST ensure the *IDs* (which might have been set above) are INCLUDED in the update.
+    # The problem with 'exclude_unset=True' is that if the ID wasn't in the JSON payload (it wasn't), it's considered unset.
+    # So we must manually merge our resolved IDs into the update data.
+    
     update_data = datos.dict(exclude_unset=True, exclude={"obra_social_nombre", "medico_derivante_nombre"})
     
+    # Manually inject the resolved IDs if they were determined above
+    if datos.obra_social_id:
+        update_data['obra_social_id'] = datos.obra_social_id
+    
+    if datos.medico_derivante_id:
+        update_data['medico_derivante_id'] = datos.medico_derivante_id
+
     for key, value in update_data.items():
         if isinstance(value, str): # FORCE UPPERCASE
             value = value.upper()
