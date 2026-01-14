@@ -345,6 +345,7 @@ def listar_turnos(
     agenda_id: Optional[int] = Query(default=None),
     estado: Optional[str] = Query(default=None),
     paciente_dni: Optional[str] = Query(default=None), # Nuevo filtro
+    start_date: Optional[str] = Query(default=None), # Nuevo filtro para dashboard (YYYY-MM-DD)
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
 ):
@@ -360,6 +361,21 @@ def listar_turnos(
     # 🟢 Nuevo filtro por DNI
     if paciente_dni is not None:
         query = query.join(Paciente).filter(Paciente.dni == paciente_dni)
+
+    # 🟢 Nuevo filtro por Fecha de Inicio (para Dashboard)
+    if start_date is not None:
+        # Asegurar que comparamos fecha vs datetime correctamente
+        from datetime import datetime, time
+        try:
+             # Si start_date viene como string "YYYY-MM-DD"
+             if isinstance(start_date, str):
+                 start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+             else:
+                 start_dt = datetime.combine(start_date, time.min)
+             
+             query = query.filter(Turno.fecha >= start_dt)
+        except Exception as e:
+            print(f"Error filtering by start_date: {e}")
 
     turnos = query.order_by(Turno.fecha).offset(offset).limit(limit).all()
     return turnos

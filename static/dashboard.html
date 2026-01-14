@@ -88,11 +88,12 @@
                         </svg>
                         Prácticas
                     </a>
-                    
+
                     <!-- PANIC BUTTON -->
-                    <a href="#" onclick="downloadBackup(event)" class="nav-item" style="color: #c53030; font-weight: 600;">
+                    <a href="#" onclick="downloadBackup(event)" class="nav-item"
+                        style="color: #c53030; font-weight: 600;">
                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4">
                             </path>
                         </svg>
@@ -269,7 +270,14 @@
             try {
                 if (!token) return;
 
-                const response = await fetch('/turnos/?limit=100', {
+                // Get Today YYYY-MM-DD
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const todayStr = `${year}-${month}-${day}`;
+
+                const response = await fetch(`/turnos/?limit=100&start_date=${todayStr}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -338,11 +346,12 @@
             const day = String(now.getDate()).padStart(2, '0');
             const today = `${year}-${month}-${day}`;
 
-            const todayTurnos = turnos.filter(t => t.fecha === today);
+            // Filter today AND PENDING (as requested by user to reduce clutter)
+            const todayTurnos = turnos.filter(t => t.fecha === today && t.estado === 'PENDIENTE');
             todayTurnos.sort((a, b) => a.hora.localeCompare(b.hora));
 
             if (todayTurnos.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:#a0aec0; padding: 2rem;">No hay turnos para hoy</p>';
+                container.innerHTML = '<p style="text-align:center; color:#a0aec0; padding: 2rem;">No hay turnos pendientes para hoy</p>';
                 return;
             }
 
@@ -469,9 +478,9 @@
         loadTurnos();
 
         async function downloadBackup(event) {
-            if(event) event.preventDefault();
-            
-            if(!confirm("¿Desea descargar una COPIA COMPLETA de la base de datos?\n\nEste archivo contiene TODA la información sensible de pacientes. Guárdelo en un lugar seguro.")) return;
+            if (event) event.preventDefault();
+
+            if (!confirm("¿Desea descargar una COPIA COMPLETA de la base de datos?\n\nEste archivo contiene TODA la información sensible de pacientes. Guárdelo en un lugar seguro.")) return;
 
             try {
                 const response = await fetch('/backup/download', {
@@ -488,7 +497,7 @@
                     const contentDisp = response.headers.get('Content-Disposition');
                     let filename = 'backup_miagenda.json';
                     if (contentDisp && contentDisp.indexOf('filename=') !== -1) {
-                         filename = contentDisp.split('filename=')[1].replace(/"/g, '');
+                        filename = contentDisp.split('filename=')[1].replace(/"/g, '');
                     }
                     a.download = filename;
                     document.body.appendChild(a);
