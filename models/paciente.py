@@ -16,6 +16,7 @@ class Paciente(Base):
     email = Column(String, nullable=True)
     direccion = Column(String, nullable=True)
     nro_afiliado = Column(String, nullable=True) # Nuevo campo
+    patologia = Column(String, nullable=True) # Nuevo campo centralizado
     obra_social_id = Column(Integer, ForeignKey("obras_sociales.id"), nullable=True)
 
     # Relaciones

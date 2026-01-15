@@ -669,6 +669,11 @@
                         <input type="text" id="edit-medico" class="form-input" list="medicos-list"
                             placeholder="Buscar Médico...">
                     </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Patología (Diagnóstico Principal)</label>
+                        <input type="text" id="edit-patologia" class="form-input" list="cancer-types-list"
+                            placeholder="Buscar o ingresar Patología...">
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeEditPatientModal()">Cancelar</button>
@@ -1166,6 +1171,7 @@
                 document.getElementById('edit-obra-social').value = p.obra_social ? p.obra_social.nombre : '';
                 // Since I updated schema, p.medico_derivante should be object {id, nombre}
                 document.getElementById('edit-medico').value = p.medico_derivante ? p.medico_derivante.nombre : '';
+                document.getElementById('edit-patologia').value = p.patologia || '';
 
                 document.getElementById('editPatientModal').style.display = 'flex';
             } catch (e) {
@@ -1185,10 +1191,12 @@
             const telefono = document.getElementById('edit-telefono').value;
             const obra_social_nombre = document.getElementById('edit-obra-social').value;
             const medico_derivante_nombre = document.getElementById('edit-medico').value;
+            const patologia = document.getElementById('edit-patologia').value;
 
             const payload = {
                 nombre, apellido, fecha_nacimiento, telefono,
-                obra_social_nombre, medico_derivante_nombre
+                obra_social_nombre, medico_derivante_nombre,
+                patologia
             };
 
             try {

@@ -103,12 +103,17 @@ def check_and_migrate_db(engine: Engine):
                 conn.commit()
             logger.info("✅ Columna 'nro_afiliado' agregada.")
             
-        if "medico_derivante_id" not in p_columns:
-            logger.info("⚠️ Columna 'medico_derivante_id' faltante en 'pacientes'. Agregando...")
             with engine.connect() as conn:
                 conn.execute(text("ALTER TABLE pacientes ADD COLUMN medico_derivante_id INTEGER REFERENCES medicos_derivantes(id)"))
                 conn.commit()
             logger.info("✅ Columna 'medico_derivante_id' agregada.")
+
+        if "patologia" not in p_columns:
+            logger.info("⚠️ Columna 'patologia' faltante en 'pacientes'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE pacientes ADD COLUMN patologia VARCHAR"))
+                conn.commit()
+            logger.info("✅ Columna 'patologia' agregada a pacientes.")
 
     # 4. Verificar tabla 'historia_clinica'
     if inspector.has_table("historia_clinica"):
