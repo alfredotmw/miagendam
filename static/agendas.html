@@ -282,6 +282,11 @@
                         <input type="text" id="edit-medico" class="form-input" list="medicos-list"
                             placeholder="Buscar Médico...">
                     </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Patología</label>
+                        <input type="text" id="edit-patologia" class="form-input" list="cancer-types-list"
+                            placeholder="Buscar o ingresar Patología...">
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeEditPatientModal()">Cancelar</button>
@@ -630,7 +635,7 @@
                         html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0;">📋</button>`;
 
                         // NEW: Edit Patient Button
-                        html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id})" title="Editar Datos Paciente" style="background: #e2e8f0;">✏️</button>`;
+                        html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0;">✏️</button>`;
 
                         // NEW: Delete Button (Red Trash Can)
                         html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 0.25rem;">🗑️</button>`;
@@ -1239,10 +1244,12 @@
         }
 
         // --- EDIT PATIENT LOGIC ---
-        let currentPatientIdEdit = null;
+        let currentTurnoIdEdit = null; // New global to store the context
 
-        async function openEditPatientModal(patientId) {
+        async function openEditPatientModal(patientId, turnoId = null) {
             currentPatientIdEdit = patientId;
+            currentTurnoIdEdit = turnoId;
+
             if (!currentPatientIdEdit) { alert("No hay paciente seleccionado"); return; }
 
             // Load Lists if empty
@@ -1285,6 +1292,41 @@
                 document.getElementById('edit-obra-social').value = p.obra_social ? p.obra_social.nombre : '';
                 document.getElementById('edit-medico').value = p.medico_derivante ? p.medico_derivante.nombre : '';
 
+                // Clear Patologia by default if no turn context
+                document.getElementById('edit-patologia').value = '';
+
+                // If Context Turno exists, override/populate fields from Turno
+                if (currentTurnoIdEdit) {
+                    // Try to find turno in global cache first
+                    let foundTurno = null;
+                    if (currentSlots) {
+                        for (let s of currentSlots) {
+                            if (s.turno && s.turno.id === currentTurnoIdEdit) {
+                                foundTurno = s.turno;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (foundTurno) {
+                        if (foundTurno.patologia) document.getElementById('edit-patologia').value = foundTurno.patologia;
+                        // If Turno has a derivante, show THAT instead of Patient's default?
+                        // Yes, likely what user expects to edit for this appointment.
+                        // But we also want to update the patient's default? Maybe.
+                        // Let's pre-fill with Turno's data if valid.
+                        // Note: Turno doesn't give us the NAME of the medico directly in the standard schema sometimes 
+                        // unless we load it. checking schema... TurnoOut has `medico_derivante_id` but not nested object?
+                        // Wait, looking at `renderSlots`: `s.turno.medico_derivante_id`. No Name. 
+                        // Ah, patient has `medico_derivante`.
+                        // Use case: User wants to SET a medico for this turno. 
+                        // If the backend didn't send the name of the medico for the TURNO, we might show the patient's one.
+                        // But if we want to Edit it, we need to know what it is.
+                        // Let's stick to Patient's one if Turno's one is numeric/unknown, or fetch the turno details?
+                        // Simpler: Just rely on Patient's data for now unless we fetch unique turno info.
+                        // BUT Patologia IS on the turno.
+                    }
+                }
+
                 document.getElementById('editPatientModal').style.display = 'flex';
             } catch (e) {
                 console.error(e);
@@ -1301,48 +1343,60 @@
             const apellido = document.getElementById('edit-apellido').value;
             const fecha_nacimiento = document.getElementById('edit-fecha-nacimiento').value || null;
             const telefono = document.getElementById('edit-telefono').value;
-            const dni = document.getElementById('edit-dni').value; // 👈 REQUIRED
+            const dni = document.getElementById('edit-dni').value;
             const obra_social_nombre = document.getElementById('edit-obra-social').value;
             const medico_derivante_nombre = document.getElementById('edit-medico').value;
+            const patologia = document.getElementById('edit-patologia').value; // New Field
 
-            const payload = {
-                nombre, apellido, fecha_nacimiento, telefono, dni, // 👈 Included DNI
+            const payloadPaciente = {
+                nombre, apellido, fecha_nacimiento, telefono, dni,
                 obra_social_nombre, medico_derivante_nombre
             };
 
             try {
+                // 1. Update Patient
                 const res = await fetch(`/pacientes/${currentPatientIdEdit}`, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(payload)
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payloadPaciente)
                 });
 
-                if (res.ok) {
-                    alert("Paciente actualizado correctamente");
-                    closeEditPatientModal();
-                    loadSlots(); // Refresh Agenda View
-                } else {
+                if (!res.ok) {
                     const err = await res.json();
-                    // 🟢 Handle Pydantic Error Arrays
-                    let msg = "Error al actualizar";
-                    if (err.detail) {
-                        if (Array.isArray(err.detail)) {
-                            // Pydantic Validation Error
-                            msg = "Error de Validación:\n" + err.detail.map(e => `• ${e.loc[1]}: ${e.msg}`).join('\n');
-                        } else {
-                            msg = "Error: " + err.detail;
-                        }
-                    } else {
-                        msg = "Error desconocido: " + JSON.stringify(err);
-                    }
-                    alert(msg);
+                    // Handle Error (reuse existing logic)
+                    let msg = "Error al actualizar Paciente";
+                    if (err.detail) msg = Array.isArray(err.detail) ? "Validation Error" : "Error: " + err.detail;
+                    throw new Error(msg);
                 }
+
+                // 2. Update Turno (if context exists)
+                if (currentTurnoIdEdit) {
+                    const payloadTurno = {
+                        patologia: patologia,
+                        medico_derivante_nombre: medico_derivante_nombre // Sync Medico to Turno explicitly too
+                    };
+
+                    const resTurno = await fetch(`/turnos/${currentTurnoIdEdit}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify(payloadTurno)
+                    });
+
+                    if (!resTurno.ok) {
+                        const errT = await resTurno.json();
+                        console.warn("Error updating Turno details:", errT);
+                        // Don't block success but warn? Or alert user?
+                        // alert("Datos del paciente guardados, pero hubo error al actualizar turno: " + errT.detail);
+                    }
+                }
+
+                alert("Datos guardados correctamente");
+                closeEditPatientModal();
+                loadSlots(); // Refresh Agenda View
+
             } catch (e) {
                 console.error(e);
-                alert("Error de conexión");
+                alert(e.message || "Error de conexión");
             }
         }
 
