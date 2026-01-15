@@ -49,6 +49,7 @@ class TurnoOut(BaseModel):
     # Notificaciones
     recordatorio_enviado: bool = False
     recordatorio_fecha: Optional[datetime] = None
+    recordatorio_usuario_nombre: Optional[str] = None
     
     paciente: Optional[PacienteOut] = None
     agenda: Optional[AgendaOut] = None

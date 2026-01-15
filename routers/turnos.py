@@ -695,6 +695,7 @@ def get_daily_report(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    from sqlalchemy.orm import joinedload
     try:
         start_of_day = datetime.strptime(date, "%Y-%m-%d")
         # En Postgres/SQLAlchemy, para comparar fecha exacta a veces es mejor rango
@@ -703,7 +704,7 @@ def get_daily_report(
         # Filtrar todos los turnos de ese día
         end_of_day = start_of_day.replace(hour=23, minute=59, second=59)
         
-        query = db.query(Turno).filter(
+        query = db.query(Turno).options(joinedload(Turno.recordatorio_usuario)).filter(
             Turno.fecha >= start_of_day,
             Turno.fecha <= end_of_day
         )
@@ -715,7 +716,27 @@ def get_daily_report(
         
         turnos = query.order_by(Turno.hora).all()
         
-        return turnos
+        # Manually map to schema to include the user name, or rely on lazy loading if schema handles it?
+        # Since TurnoOut has from_attributes=True, it will try to get attributes from the model.
+        # But Turno model doesn't have 'recordatorio_usuario_nombre'.
+        # We need to attach it to the objects or return a list of dicts.
+        
+        results = []
+        for t in turnos:
+            # Create a dict from the model
+            t_dict = t.__dict__.copy()
+            
+            # Populate the custom field
+            user_name = None
+            if t.recordatorio_usuario:
+               user_name = t.recordatorio_usuario.full_name or t.recordatorio_usuario.username
+            
+            # Since Pydantic 2/V2, or even v1, we can pass the object if we monkeypatch or use a wrapper.
+            # But safer to just add the attribute to the instance if it's not a dict (SQLAlchemy models are objects)
+            setattr(t, "recordatorio_usuario_nombre", user_name)
+            results.append(t)
+        
+        return results
         
     except ValueError:
         raise HTTPException(status_code=400, detail="Fecha inválida")

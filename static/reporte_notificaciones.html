@@ -94,6 +94,12 @@
                     <label>Fecha</label>
                     <input type="date" id="dateFilter" class="form-input">
                 </div>
+                <div class="form-group">
+                    <label>Agenda</label>
+                    <select id="agendaFilter" class="form-input">
+                        <option value="">Todas las Agendas</option>
+                    </select>
+                </div>
                 <!-- Future: Filter by User or Status -->
                 <button onclick="loadReport()" class="btn-primary"
                     style="align-self: flex-end; margin-bottom: 1rem;">Filtrar</button>
@@ -143,6 +149,26 @@
         tomorrow.setDate(tomorrow.getDate() + 1);
         document.getElementById('dateFilter').valueAsDate = tomorrow;
 
+        // Load Agendas
+        async function loadAgendas() {
+            try {
+                const res = await fetch('/agendas/', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const agendas = await res.json();
+                    const select = document.getElementById('agendaFilter');
+                    agendas.forEach(a => {
+                        const opt = document.createElement('option');
+                        opt.value = a.id;
+                        opt.textContent = a.nombre;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error("Error loading agendas", e); }
+        }
+        loadAgendas();
+
+        let currentTurnos = []; // Store raw data for filtering
+
         async function loadReport() {
             const date = document.getElementById('dateFilter').value;
             const container = document.getElementById('reportTableBody');
@@ -154,14 +180,26 @@
 
                 if (!response.ok) throw new Error("Error fetching report");
 
-                const data = await response.json();
-                renderReport(data);
+                currentTurnos = await response.json();
+                applyFilter(); // Render with filter
 
             } catch (error) {
                 console.error(error);
                 container.innerHTML = `<tr><td colspan="7" style="color: red; text-align: center;">Error al cargar reporte: ${error.message}</td></tr>`;
             }
         }
+
+        function applyFilter() {
+            const agendaId = document.getElementById('agendaFilter').value;
+            let filtered = currentTurnos;
+            if (agendaId) {
+                filtered = currentTurnos.filter(t => t.agenda_id == agendaId);
+            }
+            renderReport(filtered);
+        }
+
+        // Trigger filter on change
+        document.getElementById('agendaFilter').addEventListener('change', applyFilter);
 
         function renderReport(turnos) {
             const container = document.getElementById('reportTableBody');
@@ -197,7 +235,7 @@
                         : '<span class="status-badge status-ausente">Pendiente ⏳</span>'}
                         ${isSent ? `<br><small style="color: #718096">${new Date(t.recordatorio_fecha).toLocaleTimeString()}</small>` : ''}
                     </td>
-                     <td>${t.usuario_envio || '-'}</td>
+                     <td>${t.recordatorio_usuario_nombre || '-'}</td>
                      <td style="text-align: center;">${actionBtn}</td>
                 `;
                 container.appendChild(tr);
