@@ -86,8 +86,16 @@ def marcar_como_enviado(turno_id: int, db: Session = Depends(get_db), current_us
     
     turno.recordatorio_enviado = True
     turno.recordatorio_fecha = now
-    turno.recordatorio_usuario_id = current_user.get("id") # Asumiendo que get_current_user devuelve dict con id
     
+    # 🟢 Fix: Get User ID from DB using username from token
+    # current_user from get_current_user only has 'username' and 'role'
+    username = current_user.get("username")
+    if username:
+        from models.user import User
+        user_db = db.query(User).filter(User.username == username).first()
+        if user_db:
+             turno.recordatorio_usuario_id = user_db.id
+
     db.commit()
     
     return {"status": "success", "message": "Recordatorio marcado como enviado"}
