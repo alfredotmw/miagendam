@@ -658,7 +658,7 @@ def get_available_slots(
     current_date = start_date
     while len(dates_to_check) < days_count:
         # Skip weekends
-        if current_date.weekday() < 5: # 0-4 are Mon-Fri
+        if current_date.weekday() < 6: # 0-5 are Mon-Sat
             dates_to_check.append(current_date)
         current_date += timedelta(days=1)
 

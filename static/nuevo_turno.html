@@ -644,7 +644,7 @@
                 const d = new Date(today);
                 d.setDate(today.getDate() + i);
                 i++;
-                if (d.getDay() === 0 || d.getDay() === 6) continue;
+                if (d.getDay() === 0) continue;
 
                 const dateStr = d.toISOString().split('T')[0];
                 const div = document.createElement('div');
