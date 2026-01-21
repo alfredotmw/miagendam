@@ -191,9 +191,20 @@ def get_dashboard_data(
     # distinct_patients[service] = set(patient_id)
     distinct_patients = {}
     
+    # Radiotherapy specific (Turno level)
+    radio_turnos_stats = {
+        "SAN MARTIN": {"completed": 0, "absent": 0},
+        "COLOMBIA": {"completed": 0, "absent": 0}
+    }
+
     for t in turnos:
         # Determine Service
         svc = normalize_service(t.agenda.nombre)
+        
+        # Skip Consultorios and Otros for main stats if requested ("Que es otros? no me agregues los consultorios")
+        if svc in ["CONSULTORIOS", "OTROS"]:
+            continue
+
         if svc not in stats["services"]:
             stats["services"][svc] = {
                 "practices": 0,
@@ -201,19 +212,11 @@ def get_dashboard_data(
                 "absent": 0,
                 "os_counts": {},
                 "medico_counts": {},
-                "en_tratamiento": 0,
-                "suspendido": 0
             }
             distinct_patients[svc] = set()
 
-        # Count Practices (1 turno can have multiple practices)
-        # Assuming query joined TurnoPractica, we get duplicates of Turno?
-        # WARNING: querying (Turno) with joins but .all() might return duplicated Turnos if not careful usually SQLAlchemy deduplicates objects in identity map results if query(Turno).
-        # But if we did query(Turno, Practica) it would differ. 
-        # Here we did query(Turno).join(...) -> .all() returns Turno objects. unique.
-        
-        # So manual practice count:
-        p_count = len(t.practicas) if t.practicas else 1 # Fallback 1 if no practices but turno exists?
+        # Count Practices
+        p_count = len(t.practicas) if t.practicas else 1
         stats["services"][svc]["practices"] += p_count
         
         # Count Patient
@@ -225,34 +228,38 @@ def get_dashboard_data(
             stats["services"][svc]["completed"] += 1
         elif st == "AUSENTE":
             stats["services"][svc]["absent"] += 1
-            
-        # Radiotherapy Status (Special Logic, maybe from SeguimientoRadioterapia?)
-        # For now, just turno status or simplistic assumption if requested.
-        # User asked: "en otro cuento cantidad de practicas... en otro cantidad de pacientes... separo completos y ausentes... % ausentismo"
-        # "Inicios - Finalizaciones" chart in image suggests something else.
-        # "En Lista" -> En tratamiento/Suspendido chart.
-        # Let's stick to Turno stats first.
         
-        # OS
+        # OS & Medico
         os_name = t.paciente.obra_social.nombre if t.paciente.obra_social else "PARTICULAR"
         stats["services"][svc]["os_counts"][os_name] = stats["services"][svc]["os_counts"].get(os_name, 0) + 1
         
-        # Medico
         med_name = t.medico_derivante.nombre if t.medico_derivante else "NO ESPECIFICADO"
         stats["services"][svc]["medico_counts"][med_name] = stats["services"][svc]["medico_counts"].get(med_name, 0) + 1
         
-    # Finalize
+        # Special Logic for Radiotherapy (Turno Level Attendance)
+        # Check Agenda Name for Sede
+        if "RADIOTERAPIA" in t.agenda.nombre.upper():
+            sede = "UNKNOWN"
+            if "SAN MARTIN" in t.agenda.nombre.upper() or "SM" in t.agenda.nombre.upper():
+                sede = "SAN MARTIN"
+            elif "COLOMBIA" in t.agenda.nombre.upper():
+                sede = "COLOMBIA"
+            
+            if sede in radio_turnos_stats:
+                if st == "COMPLETADO":
+                    radio_turnos_stats[sede]["completed"] += 1
+                elif st == "AUSENTE":
+                    radio_turnos_stats[sede]["absent"] += 1
+
+    # Finalize Services Data
     final_data = []
     
     for svc, data in stats["services"].items():
-        total_turnos_validos = data["completed"] + data["absent"] # Only consider resolved? Or all? User wants Absenteeism %. usually Absent / (Present + Absent).
-        # Ignore PENDING for absenteeism rate? Yes usually.
-        
+        total_turnos_validos = data["completed"] + data["absent"] 
         absent_rate = 0
         if total_turnos_validos > 0:
             absent_rate = round((data["absent"] / total_turnos_validos) * 100, 1)
             
-        # Sort Top 10s
         top_os = sorted(data["os_counts"].items(), key=lambda x: x[1], reverse=True)[:10]
         top_med = sorted(data["medico_counts"].items(), key=lambda x: x[1], reverse=True)[:10]
         
@@ -267,27 +274,39 @@ def get_dashboard_data(
             "top_medicos": top_med
         })
         
-    # Radiotherapy Stats (Active vs Suspended)
-    # Fetch from SeguimientoRadioterapia
+    # Radiotherapy Stats (Patient Status from SeguimientoRadioterapia)
     from models.radioterapia import SeguimientoRadioterapia
     
-    # Logic: Count records where fecha_fin is NULL (En tratamiento) vs "Suspendido" (how do we know? usually there's no state, just fecha_fin)
-    # User's image shows "En tratamiento" vs "Suspendido".
-    # Assuming "Suspendido" is a specific state or just "Active but maybe not scheduled?"
-    # Actually, let's just count "Active" (no fecha_fin) vs "Completed" (fecha_fin present).
-    # Or check if model has 'estado'.
+    # Helper to count by sede and state
+    def count_radio(sede_filter, finished):
+        query = db.query(SeguimientoRadioterapia)
+        if sede_filter:
+            # Flexible match for Sede
+            query = query.filter(SeguimientoRadioterapia.sede.ilike(f"%{sede_filter}%"))
+        
+        if finished:
+            query = query.filter(SeguimientoRadioterapia.fecha_fin != None)
+        else:
+            query = query.filter(SeguimientoRadioterapia.fecha_fin == None)
+            
+        return query.count()
+
+    radio_status = {
+        "SAN MARTIN": {
+            "en_tratamiento": count_radio("San Martín", False),
+            "finalizados": count_radio("San Martín", True),
+            "attendance": radio_turnos_stats["SAN MARTIN"]
+        },
+        "COLOMBIA": {
+            "en_tratamiento": count_radio("Colombia", False),
+            "finalizados": count_radio("Colombia", True),
+             "attendance": radio_turnos_stats["COLOMBIA"]
+        }
+    }
     
-    # We'll do a simple count of Active Treatments for now.
-    radio_active = db.query(SeguimientoRadioterapia).filter(SeguimientoRadioterapia.fecha_fin == None).count()
-    radio_completed = db.query(SeguimientoRadioterapia).filter(SeguimientoRadioterapia.fecha_fin != None).count()
-    
-    # Add to specific special stats
     final_response = {
         "services_data": final_data,
-        "radiotherapy": {
-            "en_tratamiento": radio_active,
-            "finalizados": radio_completed 
-        }
+        "radiotherapy": radio_status
     }
         
     return final_response

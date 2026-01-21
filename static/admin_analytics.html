@@ -13,7 +13,8 @@
     <style>
         .analytics-container {
             padding: 2rem;
-            max-width: 1400px;
+            max-width: 1600px;
+            /* Wider */
             margin: 0 auto;
         }
 
@@ -31,7 +32,8 @@
 
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            /* Bigger cards */
             gap: 2rem;
             margin-bottom: 2rem;
         }
@@ -41,11 +43,19 @@
             padding: 1.5rem;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            min-height: 400px;
+            min-height: 450px;
         }
 
         .full-width {
             grid-column: 1 / -1;
+        }
+
+        .radio-section {
+            background: #f7fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
         }
 
         h2.section-title {
@@ -102,12 +112,7 @@
             </div>
         </div>
 
-        <!-- Metric Cards Row -->
-        <div class="charts-grid" id="kpi-grid">
-            <!-- Injected via JS -->
-        </div>
-
-        <h2 class="section-title">Análisis General</h2>
+        <h2 class="section-title">Servicios Generales</h2>
         <div class="charts-grid">
             <div class="chart-card">
                 <h3>Cantidad de Prácticas</h3>
@@ -117,13 +122,21 @@
                 <h3>Pacientes Únicos</h3>
                 <canvas id="chartPatients"></canvas>
             </div>
-            <div class="chart-card">
+            <div class="chart-card full-width">
                 <h3>Ausentismo por Servicio (%)</h3>
                 <canvas id="chartAbsentism"></canvas>
             </div>
+        </div>
+
+        <h2 class="section-title">Radioterapia (San Martín vs Colombia)</h2>
+        <div class="charts-grid">
             <div class="chart-card">
-                <h3>Radioterapia: Estado Pacientes</h3>
-                <canvas id="chartRadio"></canvas>
+                <h3>San Martín: Estado & Asistencia</h3>
+                <canvas id="chartRadioSM"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Colombia: Estado & Asistencia</h3>
+                <canvas id="chartRadioCOL"></canvas>
             </div>
         </div>
 
@@ -159,6 +172,19 @@
             font: { weight: 'bold' }
         });
 
+        // Common Chart Options for Clean Look
+        const commonOptions = {
+            indexAxis: 'y',
+            responsive: true,
+            scales: {
+                x: { display: false, grid: { display: false } }, // Hide X axis
+                y: { grid: { display: false } }  // Hide Y grid, keep labels
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        };
+
         const token = localStorage.getItem('token');
         if (!token) window.location.href = '/static/login.html';
 
@@ -188,10 +214,7 @@
                 end = new Date(year, 11, 31);
             }
 
-            // Format to YYYY-MM-DD
-            function fmt(d) {
-                return d.toISOString().split('T')[0];
-            }
+            function fmt(d) { return d.toISOString().split('T')[0]; }
 
             document.getElementById('startDt').value = fmt(start);
             document.getElementById('endDt').value = fmt(end);
@@ -240,88 +263,79 @@
             renderPracticesChart(data);
             renderPatientsChart(data);
             renderAbsentismChart(data);
-            if (radioData) renderRadioChart(radioData);
+            if (radioData) renderRadiotherapyComplex(radioData);
             updateRankings(data);
         }
 
         function destroyChart(id) {
-            if (chartInstances[id]) {
-                chartInstances[id].destroy();
-            }
+            if (chartInstances[id]) chartInstances[id].destroy();
         }
 
-        function renderRadioChart(rData) {
-            destroyChart('radio');
-            const ctx = document.getElementById('chartRadio');
-            chartInstances['radio'] = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['En Tratamiento', 'Finalizados'],
-                    datasets: [{
-                        data: [rData.en_tratamiento, rData.finalizados],
-                        backgroundColor: ['#4299e1', '#a0aec0']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        datalabels: {
-                            color: '#fff'
-                        }
+        function renderRadiotherapyComplex(rData) {
+            // Helper to render one sede chart
+            function renderSedeChart(canvasId, sedeData, labelSede) {
+                destroyChart(canvasId);
+                const ctx = document.getElementById(canvasId);
+                chartInstances[canvasId] = new Chart(ctx, {
+                    type: 'bar', // Horizontal bar
+                    data: {
+                        labels: ['En Tratamiento', 'Finalizados', 'Asistieron', 'Ausentes'],
+                        datasets: [{
+                            data: [
+                                sedeData.en_tratamiento,
+                                sedeData.finalizados,
+                                sedeData.attendance.completed,
+                                sedeData.attendance.absent
+                            ],
+                            backgroundColor: ['#4299e1', '#a0aec0', '#48bb78', '#f56565']
+                        }]
+                    },
+                    options: {
+                        ...commonOptions,
+                        plugins: { legend: { display: false } }
                     }
-                }
-            });
+                });
+            }
+
+            renderSedeChart('chartRadioSM', rData['SAN MARTIN'], 'San Martín');
+            renderSedeChart('chartRadioCOL', rData['COLOMBIA'], 'Colombia');
         }
 
         function renderPracticesChart(data) {
             destroyChart('practices');
-            const ctx = document.getElementById('chartPractices');
 
+            // Sort?
+            const sorted = [...data].sort((a, b) => b.practices_count - a.practices_count);
+
+            const ctx = document.getElementById('chartPractices');
             chartInstances['practices'] = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: data.map(d => d.service),
-                    datasets: [
-                        {
-                            label: 'Prácticas',
-                            data: data.map(d => d.practices_count),
-                            backgroundColor: '#4299e1'
-                        }
-                    ]
+                    labels: sorted.map(d => d.service),
+                    datasets: [{
+                        data: sorted.map(d => d.practices_count),
+                        backgroundColor: '#4299e1'
+                    }]
                 },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
+                options: commonOptions
             });
         }
 
         function renderPatientsChart(data) {
             destroyChart('patients');
-            const ctx = document.getElementById('chartPatients');
+            const sorted = [...data].sort((a, b) => b.patients_count - a.patients_count);
 
+            const ctx = document.getElementById('chartPatients');
             chartInstances['patients'] = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: data.map(d => d.service),
-                    datasets: [
-                        {
-                            label: 'Pacientes Únicos',
-                            data: data.map(d => d.patients_count),
-                            backgroundColor: '#48bb78'
-                        }
-                    ]
+                    labels: sorted.map(d => d.service),
+                    datasets: [{
+                        data: sorted.map(d => d.patients_count),
+                        backgroundColor: '#48bb78'
+                    }]
                 },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
+                options: commonOptions
             });
         }
 
@@ -329,7 +343,6 @@
             destroyChart('abs');
             const ctx = document.getElementById('chartAbsentism');
 
-            // Sort by highest absenteeism
             const sorted = [...data].sort((a, b) => b.absentism_rate - a.absentism_rate);
 
             chartInstances['abs'] = new Chart(ctx, {
@@ -337,19 +350,21 @@
                 data: {
                     labels: sorted.map(d => d.service),
                     datasets: [{
-                        label: '% Ausentismo',
                         data: sorted.map(d => d.absentism_rate),
                         backgroundColor: '#f56565'
                     }]
                 },
                 options: {
-                    indexAxis: 'y', // Horizontal
-                    responsive: true,
-                    scales: { x: { max: 100 } },
+                    ...commonOptions,
+                    scales: {
+                        x: { display: false, max: 100 },
+                        y: { grid: { display: false } }
+                    },
                     plugins: {
                         datalabels: {
                             formatter: (value) => value + '%'
-                        }
+                        },
+                        legend: { display: false }
                     }
                 }
             });
@@ -369,19 +384,13 @@
             chartInstances['topOS'] = new Chart(ctxOS, {
                 type: 'bar',
                 data: {
-                    labels: svcData.top_os.map(i => i[0].substring(0, 15) + '...'),
+                    labels: svcData.top_os.map(i => i[0].substring(0, 20)),
                     datasets: [{
-                        label: `Top Obras Sociales (${svcName})`,
                         data: svcData.top_os.map(i => i[1]),
                         backgroundColor: '#805ad5'
                     }]
                 },
-                options: {
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
+                options: commonOptions
             });
 
             // Render Top Medicos
@@ -390,19 +399,13 @@
             chartInstances['topMed'] = new Chart(ctxMed, {
                 type: 'bar',
                 data: {
-                    labels: svcData.top_medicos.map(i => i[0].substring(0, 15) + '...'),
+                    labels: svcData.top_medicos.map(i => i[0].substring(0, 20)),
                     datasets: [{
-                        label: `Top Derivantes (${svcName})`,
                         data: svcData.top_medicos.map(i => i[1]),
                         backgroundColor: '#ed8936'
                     }]
                 },
-                options: {
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
+                options: commonOptions
             });
         }
 
