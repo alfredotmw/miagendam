@@ -1286,7 +1286,13 @@
 
                 document.getElementById('edit-nombre').value = p.nombre;
                 document.getElementById('edit-apellido').value = p.apellido;
-                document.getElementById('edit-dni').value = p.dni;
+                const dniInput = document.getElementById('edit-dni');
+                dniInput.value = p.dni;
+                // 🟢 FIX: Explicitly unlock DNI
+                dniInput.readOnly = false;
+                dniInput.disabled = false;
+                dniInput.style.cursor = 'text';
+                dniInput.style.backgroundColor = 'white';
                 document.getElementById('edit-fecha-nacimiento').value = p.fecha_nacimiento || '';
                 document.getElementById('edit-telefono').value = p.telefono || '';
                 document.getElementById('edit-obra-social').value = p.obra_social ? p.obra_social.nombre : '';
