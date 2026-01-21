@@ -208,7 +208,10 @@
             }
         }
 
-        function renderAll(data) {
+        function renderAll(fullData) {
+            const data = fullData.services_data;
+            const radioData = fullData.radiotherapy;
+
             // Populate Service Selector if empty
             const sel = document.getElementById('serviceSelect');
             if (sel.options.length === 0) {
@@ -222,13 +225,30 @@
 
             renderVolumeChart(data);
             renderAbsentismChart(data);
-            updateRankings(); // Initial render for first service
+            if (radioData) renderRadioChart(radioData);
+            updateRankings(data);
         }
 
         function destroyChart(id) {
             if (chartInstances[id]) {
                 chartInstances[id].destroy();
             }
+        }
+
+        function renderRadioChart(rData) {
+            destroyChart('radio');
+            const ctx = document.getElementById('chartRadio');
+            chartInstances['radio'] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['En Tratamiento', 'Finalizados'],
+                    datasets: [{
+                        data: [rData.en_tratamiento, rData.finalizados],
+                        backgroundColor: ['#4299e1', '#a0aec0']
+                    }]
+                },
+                options: { responsive: true }
+            });
         }
 
         function renderVolumeChart(data) {
@@ -281,10 +301,11 @@
             });
         }
 
-        function updateRankings() {
+        function updateRankings(passedData) {
             if (!globalData) return;
+            const data = Array.isArray(passedData) ? passedData : globalData.services_data;
             const svcName = document.getElementById('serviceSelect').value;
-            const svcData = globalData.find(d => d.service === svcName);
+            const svcData = data.find(d => d.service === svcName);
 
             if (!svcData) return;
 
