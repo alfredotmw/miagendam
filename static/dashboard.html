@@ -348,13 +348,26 @@
 
             // Filter today AND PENDING (as requested by user to reduce clutter)
             // AND filter out past appointments (keep only if time >= now)
-            const currentTime = now.toTimeString().split(' ')[0].substring(0, 5);
+            // Filter today AND PENDING (as requested by user to reduce clutter)
+            // AND filter out past appointments (keep only if time >= now)
+            const currentHours = now.getHours();
+            const currentMinutes = now.getMinutes();
 
             const todayTurnos = turnos.filter(t => {
                 if (t.fecha !== today) return false;
                 if (t.estado !== 'PENDIENTE') return false;
-                // Show if time is greater or equal to current time
-                if (t.hora < currentTime) return false;
+
+                // Robust Time Comparison
+                try {
+                    // t.hora expects format "HH:MM" or "HH:MM:SS"
+                    const [h, m] = t.hora.split(':').map(Number);
+                    if (h < currentHours) return false;
+                    if (h === currentHours && m < currentMinutes) return false;
+                } catch (e) {
+                    console.error("Error parsing time:", t.hora);
+                    return true; // Show safety
+                }
+
                 return true;
             });
             todayTurnos.sort((a, b) => a.hora.localeCompare(b.hora));
