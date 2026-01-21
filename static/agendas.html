@@ -614,6 +614,9 @@
                     // BUT: Only show Absent button if not completed/absent? 
                     // Wait, user wants Reschedule EVEN IF Absent.
 
+                    // 🟢 NEW: Edit Patient Button - AVAILABLE FOR ALL STATUSES (Even Completed)
+                    html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0;">✏️</button>`;
+
                     if (estado !== 'COMPLETADO') {
                         html += `
                                 <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar">✅</button>
@@ -633,9 +636,6 @@
                         }
 
                         html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0;">📋</button>`;
-
-                        // NEW: Edit Patient Button
-                        html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0;">✏️</button>`;
 
                         // NEW: Delete Button (Red Trash Can)
                         html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 0.25rem;">🗑️</button>`;
