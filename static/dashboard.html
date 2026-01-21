@@ -347,7 +347,16 @@
             const today = `${year}-${month}-${day}`;
 
             // Filter today AND PENDING (as requested by user to reduce clutter)
-            const todayTurnos = turnos.filter(t => t.fecha === today && t.estado === 'PENDIENTE');
+            // AND filter out past appointments (keep only if time >= now)
+            const currentTime = now.toTimeString().split(' ')[0].substring(0, 5);
+
+            const todayTurnos = turnos.filter(t => {
+                if (t.fecha !== today) return false;
+                if (t.estado !== 'PENDIENTE') return false;
+                // Show if time is greater or equal to current time
+                if (t.hora < currentTime) return false;
+                return true;
+            });
             todayTurnos.sort((a, b) => a.hora.localeCompare(b.hora));
 
             if (todayTurnos.length === 0) {
