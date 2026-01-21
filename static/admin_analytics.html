@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métricas Admin - Agenda Médica</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css?v=2">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .analytics-container {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .filter-bar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        h2.section-title {
+            color: #2d3748;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 0.5rem;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loading-overlay" id="loader">
+        <div style="font-size: 1.5rem; color: #4299e1; font-weight: bold;">Cargando Métricas...</div>
+    </div>
+
+    <div class="analytics-container">
+        <div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
+            <h1 style="font-size: 2rem; font-weight: 800; color: #1a202c;">Panel de Métricas</h1>
+            <a href="/static/dashboard.html" class="btn-secondary">Volver al Dashboard</a>
+        </div>
+
+        <div class="filter-bar">
+            <div>
+                <label for="startDt" style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Desde:</label>
+                <input type="date" id="startDt" class="form-input">
+            </div>
+            <div>
+                <label for="endDt" style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Hasta:</label>
+                <input type="date" id="endDt" class="form-input">
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button onclick="applyFilters()" class="btn-primary" style="height: 42px;">Aplicar Filtros</button>
+            </div>
+            <div style="margin-left: auto;">
+                <button onclick="setRange('today')" class="btn-secondary">Hoy</button>
+                <button onclick="setRange('month')" class="btn-secondary">Este Mes</button>
+                <button onclick="setRange('year')" class="btn-secondary">Este Año</button>
+            </div>
+        </div>
+
+        <!-- Metric Cards Row -->
+        <div class="charts-grid" id="kpi-grid">
+            <!-- Injected via JS -->
+        </div>
+
+        <h2 class="section-title">Análisis General</h2>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Turnos por Servicio (Totales)</h3>
+                <canvas id="chartVolume"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Ausentismo por Servicio (%)</h3>
+                <canvas id="chartAbsentism"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Radioterapia: Estado Pacientes</h3>
+                <canvas id="chartRadio"></canvas>
+            </div>
+        </div>
+
+        <h2 class="section-title">Referidos y Obras Sociales (Top 10)</h2>
+        <div class="charts-grid">
+            <div class="chart-card full-width">
+                <div style="margin-bottom: 1rem;">
+                    <label>Seleccionar Servicio para Ranking:</label>
+                    <select id="serviceSelect" onchange="updateRankings()" class="form-input" style="width: 200px;">
+                        <!-- Populated via JS -->
+                    </select>
+                </div>
+                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 400px;">
+                        <canvas id="chartTopOS"></canvas>
+                    </div>
+                    <div style="flex: 1; min-width: 400px;">
+                        <canvas id="chartTopMedicos"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/static/login.html';
+
+        let globalData = null; // Store fetched data
+        let chartInstances = {};
+
+        // Init Dates (Current Month)
+        function initDates() {
+            setRange('month');
+        }
+
+        function setRange(type) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const day = now.getDate();
+
+            let start, end;
+
+            if (type === 'today') {
+                start = end = now;
+            } else if (type === 'month') {
+                start = new Date(year, month, 1);
+                end = new Date(year, month + 1, 0);
+            } else if (type === 'year') {
+                start = new Date(year, 0, 1);
+                end = new Date(year, 11, 31);
+            }
+
+            // Format to YYYY-MM-DD
+            function fmt(d) {
+                return d.toISOString().split('T')[0];
+            }
+
+            document.getElementById('startDt').value = fmt(start);
+            document.getElementById('endDt').value = fmt(end);
+            applyFilters();
+        }
+
+        async function applyFilters() {
+            const s = document.getElementById('startDt').value;
+            const e = document.getElementById('endDt').value;
+
+            document.getElementById('loader').style.display = 'flex';
+
+            try {
+                const res = await fetch(`/analytics/dashboard?start_date=${s}&end_date=${e}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error("Error loading data");
+
+                globalData = await res.json();
+                renderAll(globalData);
+
+            } catch (err) {
+                console.error(err);
+                alert("Error cargando métricas");
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        function renderAll(data) {
+            // Populate Service Selector if empty
+            const sel = document.getElementById('serviceSelect');
+            if (sel.options.length === 0) {
+                data.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.service;
+                    opt.textContent = d.service;
+                    sel.appendChild(opt);
+                });
+            }
+
+            renderVolumeChart(data);
+            renderAbsentismChart(data);
+            updateRankings(); // Initial render for first service
+        }
+
+        function destroyChart(id) {
+            if (chartInstances[id]) {
+                chartInstances[id].destroy();
+            }
+        }
+
+        function renderVolumeChart(data) {
+            destroyChart('vol');
+            const ctx = document.getElementById('chartVolume');
+
+            chartInstances['vol'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.service),
+                    datasets: [
+                        {
+                            label: 'Prácticas',
+                            data: data.map(d => d.practices_count),
+                            backgroundColor: '#4299e1'
+                        },
+                        {
+                            label: 'Pacientes Únicos',
+                            data: data.map(d => d.patients_count),
+                            backgroundColor: '#48bb78'
+                        }
+                    ]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function renderAbsentismChart(data) {
+            destroyChart('abs');
+            const ctx = document.getElementById('chartAbsentism');
+
+            // Sort by highest absenteeism
+            const sorted = [...data].sort((a, b) => b.absentism_rate - a.absentism_rate);
+
+            chartInstances['abs'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(d => d.service),
+                    datasets: [{
+                        label: '% Ausentismo',
+                        data: sorted.map(d => d.absentism_rate),
+                        backgroundColor: '#f56565'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Horizontal
+                    responsive: true,
+                    scales: { x: { max: 100 } }
+                }
+            });
+        }
+
+        function updateRankings() {
+            if (!globalData) return;
+            const svcName = document.getElementById('serviceSelect').value;
+            const svcData = globalData.find(d => d.service === svcName);
+
+            if (!svcData) return;
+
+            // Render Top OS
+            destroyChart('topOS');
+            const ctxOS = document.getElementById('chartTopOS');
+            chartInstances['topOS'] = new Chart(ctxOS, {
+                type: 'bar',
+                data: {
+                    labels: svcData.top_os.map(i => i[0].substring(0, 15) + '...'),
+                    datasets: [{
+                        label: `Top Obras Sociales (${svcName})`,
+                        data: svcData.top_os.map(i => i[1]),
+                        backgroundColor: '#805ad5'
+                    }]
+                },
+                options: { indexAxis: 'y' }
+            });
+
+            // Render Top Medicos
+            destroyChart('topMed');
+            const ctxMed = document.getElementById('chartTopMedicos');
+            chartInstances['topMed'] = new Chart(ctxMed, {
+                type: 'bar',
+                data: {
+                    labels: svcData.top_medicos.map(i => i[0].substring(0, 15) + '...'),
+                    datasets: [{
+                        label: `Top Derivantes (${svcName})`,
+                        data: svcData.top_medicos.map(i => i[1]),
+                        backgroundColor: '#ed8936'
+                    }]
+                },
+                options: { indexAxis: 'y' }
+            });
+        }
+
+        window.onload = initDates;
+    </script>
+</body>
+
+</html>
