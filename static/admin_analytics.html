@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/static/css/styles.css?v=2">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         .analytics-container {
             padding: 2rem;
@@ -109,8 +110,12 @@
         <h2 class="section-title">Análisis General</h2>
         <div class="charts-grid">
             <div class="chart-card">
-                <h3>Turnos por Servicio (Totales)</h3>
-                <canvas id="chartVolume"></canvas>
+                <h3>Cantidad de Prácticas</h3>
+                <canvas id="chartPractices"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Pacientes Únicos</h3>
+                <canvas id="chartPatients"></canvas>
             </div>
             <div class="chart-card">
                 <h3>Ausentismo por Servicio (%)</h3>
@@ -145,6 +150,15 @@
     </div>
 
     <script>
+        // Register DataLabels Plugin
+        Chart.register(ChartDataLabels);
+        Chart.defaults.set('plugins.datalabels', {
+            color: '#333',
+            align: 'end',
+            anchor: 'end',
+            font: { weight: 'bold' }
+        });
+
         const token = localStorage.getItem('token');
         if (!token) window.location.href = '/static/login.html';
 
@@ -223,7 +237,8 @@
                 });
             }
 
-            renderVolumeChart(data);
+            renderPracticesChart(data);
+            renderPatientsChart(data);
             renderAbsentismChart(data);
             if (radioData) renderRadioChart(radioData);
             updateRankings(data);
@@ -247,15 +262,22 @@
                         backgroundColor: ['#4299e1', '#a0aec0']
                     }]
                 },
-                options: { responsive: true }
+                options: {
+                    responsive: true,
+                    plugins: {
+                        datalabels: {
+                            color: '#fff'
+                        }
+                    }
+                }
             });
         }
 
-        function renderVolumeChart(data) {
-            destroyChart('vol');
-            const ctx = document.getElementById('chartVolume');
+        function renderPracticesChart(data) {
+            destroyChart('practices');
+            const ctx = document.getElementById('chartPractices');
 
-            chartInstances['vol'] = new Chart(ctx, {
+            chartInstances['practices'] = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: data.map(d => d.service),
@@ -264,7 +286,28 @@
                             label: 'Prácticas',
                             data: data.map(d => d.practices_count),
                             backgroundColor: '#4299e1'
-                        },
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function renderPatientsChart(data) {
+            destroyChart('patients');
+            const ctx = document.getElementById('chartPatients');
+
+            chartInstances['patients'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.service),
+                    datasets: [
                         {
                             label: 'Pacientes Únicos',
                             data: data.map(d => d.patients_count),
@@ -272,7 +315,13 @@
                         }
                     ]
                 },
-                options: { responsive: true }
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
             });
         }
 
@@ -296,7 +345,12 @@
                 options: {
                     indexAxis: 'y', // Horizontal
                     responsive: true,
-                    scales: { x: { max: 100 } }
+                    scales: { x: { max: 100 } },
+                    plugins: {
+                        datalabels: {
+                            formatter: (value) => value + '%'
+                        }
+                    }
                 }
             });
         }
@@ -322,7 +376,12 @@
                         backgroundColor: '#805ad5'
                     }]
                 },
-                options: { indexAxis: 'y' }
+                options: {
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
             });
 
             // Render Top Medicos
@@ -338,7 +397,12 @@
                         backgroundColor: '#ed8936'
                     }]
                 },
-                options: { indexAxis: 'y' }
+                options: {
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
             });
         }
 
