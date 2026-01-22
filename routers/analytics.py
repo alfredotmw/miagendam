@@ -232,7 +232,7 @@ def get_dashboard_data(
         if svc in ["CONSULTORIOS", "OTROS"]:
             continue
 
-            if svc not in stats["services"]:
+        if svc not in stats["services"]:
             stats["services"][svc] = {
                 "practices": 0,
                 "completed": 0,
