@@ -13,10 +13,8 @@ class PacienteBase(BaseModel):
     celular: Optional[str] = None
     email: Optional[EmailStr] = None
     direccion: Optional[str] = None
-    direccion: Optional[str] = None
     obra_social_id: Optional[int] = None  # se elige desde el combo
     medico_derivante_id: Optional[int] = None # 👈 Nuevo campo habilitado para update
-    patologia: Optional[str] = None # 👈 Nuevo campo patología global
 
 class PacienteCreate(PacienteBase):
     obra_social_nombre: Optional[str] = None
