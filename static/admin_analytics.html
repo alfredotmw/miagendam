@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Métricas Admin - Agenda Médica</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/styles.css?v=2">
+    <link rel="stylesheet" href="/static/css/styles.css?v=3">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -166,12 +166,12 @@
         // Register DataLabels Plugin
         Chart.register(ChartDataLabels);
         Chart.defaults.set('plugins.datalabels', {
-            color: '#333',
-            align: 'end',
-            anchor: 'end',
-            font: { weight: 'bold', size: 12 },
-            display: true, // Always show labels
-            formatter: (value) => value > 0 ? value : '' // Show number only if > 0, but keep label active logic simpler
+            color: '#fff', // White text
+            align: 'center', // Inside the bar
+            anchor: 'center', // Centered in the segment
+            font: { weight: 'bold', size: 14 }, // Bigger font
+            display: true,
+            formatter: (value) => value > 0 ? value : ''
         });
 
         // Common Chart Options for Clean Look
@@ -334,9 +334,7 @@
                     plugins: {
                         legend: { display: true, position: 'top' },
                         datalabels: {
-                            color: '#fff',
-                            display: function (context) { return context.dataset.data[context.dataIndex] > 0; },
-                            font: { weight: 'bold' }
+                            display: function (context) { return context.dataset.data[context.dataIndex] > 0; }
                         }
                     },
                     scales: {

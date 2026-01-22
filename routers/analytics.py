@@ -251,9 +251,9 @@ def get_dashboard_data(
         # Status
         st = t.estado.upper()
         if st == "COMPLETADO":
-            stats["services"][svc]["completed"] += 1
+            stats["services"][svc]["completed"] += p_count
         elif st == "AUSENTE" or st == "PENDIENTE": # 👈 PENDIENTE counts as AUSENTE for metrics
-            stats["services"][svc]["absent"] += 1
+            stats["services"][svc]["absent"] += p_count
         
         # OS & Medico
         os_name = t.paciente.obra_social.nombre if t.paciente.obra_social else "PARTICULAR"
