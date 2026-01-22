@@ -252,7 +252,7 @@ def get_dashboard_data(
         st = t.estado.upper()
         if st == "COMPLETADO":
             stats["services"][svc]["completed"] += 1
-        elif st == "AUSENTE":
+        elif st == "AUSENTE" or st == "PENDIENTE": # 👈 PENDIENTE counts as AUSENTE for metrics
             stats["services"][svc]["absent"] += 1
         
         # OS & Medico

@@ -169,7 +169,9 @@
             color: '#333',
             align: 'end',
             anchor: 'end',
-            font: { weight: 'bold' }
+            font: { weight: 'bold', size: 12 },
+            display: true, // Always show labels
+            formatter: (value) => value > 0 ? value : '' // Show number only if > 0, but keep label active logic simpler
         });
 
         // Common Chart Options for Clean Look
@@ -316,13 +318,13 @@
                         {
                             label: 'Presentes / Completados',
                             data: sorted.map(d => d.completed),
-                            backgroundColor: '#48bb78', // Green
+                            backgroundColor: '#2c5282', // Corporate Blue (Darker/Professional)
                             stack: 'Stack 0',
                         },
                         {
-                            label: 'Ausentes',
+                            label: 'Ausentes / Pendientes',
                             data: sorted.map(d => d.absent),
-                            backgroundColor: '#f56565', // Red
+                            backgroundColor: '#e53e3e', // Professional Red
                             stack: 'Stack 0',
                         }
                     ]
@@ -330,12 +332,10 @@
                 options: {
                     ...commonOptions,
                     plugins: {
-                        legend: { display: true, position: 'top' }, // Show legend for stacked
+                        legend: { display: true, position: 'top' },
                         datalabels: {
-                            color: '#fff', // White text inside bars
-                            display: function (context) {
-                                return context.dataset.data[context.dataIndex] > 0; // Hide 0s
-                            },
+                            color: '#fff',
+                            display: function (context) { return context.dataset.data[context.dataIndex] > 0; },
                             font: { weight: 'bold' }
                         }
                     },
@@ -364,7 +364,7 @@
                     labels: sorted.map(d => d.service),
                     datasets: [{
                         data: sorted.map(d => d.patients_count),
-                        backgroundColor: '#48bb78'
+                        backgroundColor: '#2b6cb0' // Medium Blue
                     }]
                 },
                 options: commonOptions
