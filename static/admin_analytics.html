@@ -112,6 +112,8 @@
             </div>
         </div>
 
+        <button onclick="debugMetrics()" class="btn-secondary"
+            style="margin-left:auto; background:#ecc94b; color:black;">⚠️ Debug Metrics</button>
         <h2 class="section-title">Servicios Generales</h2>
         <div class="charts-grid">
             <div class="chart-card">
@@ -299,11 +301,23 @@
             renderPracticesChart(data);
             renderPatientsChart(data);
             renderAbsentismChart(data);
-            renderPracticesChart(data);
-            renderPatientsChart(data);
-            renderAbsentismChart(data);
-            if (radioData) renderRadiotherapyComplex(radioData, fullData.radio_en_lista_summary);
+
+            try {
+                if (radioData) renderRadiotherapyComplex(radioData, fullData.radio_en_lista_summary);
+            } catch (e) {
+                console.error("Radio Chart Error:", e);
+                alert("Error dibujando gráficos de Radioterapia: " + e.message);
+            }
+
             updateRankings(data);
+        }
+
+        function debugMetrics() {
+            if (!globalData) { alert("No data loaded yet."); return; }
+            console.log("Global Data:", globalData);
+            const radioKeys = globalData.radiotherapy ? Object.keys(globalData.radiotherapy) : "MISSING";
+            const services = globalData.services_data.length;
+            alert(`Data Loaded:\nServices: ${services}\nRadiotherapy Keys: ${radioKeys}\nCheck Console for full object.`);
         }
 
         function destroyChart(id) {
