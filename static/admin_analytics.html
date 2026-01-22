@@ -353,19 +353,42 @@
 
         function renderPatientsChart(data) {
             destroyChart('patients');
-            const sorted = [...data].sort((a, b) => b.patients_count - a.patients_count);
+            const sorted = [...data].sort((a, b) => b.patients_total_unique - a.patients_total_unique);
 
             const ctx = document.getElementById('chartPatients');
             chartInstances['patients'] = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: sorted.map(d => d.service),
-                    datasets: [{
-                        data: sorted.map(d => d.patients_count),
-                        backgroundColor: '#2b6cb0' // Medium Blue
-                    }]
+                    datasets: [
+                        {
+                            label: 'Pacientes Presentes',
+                            data: sorted.map(d => d.patients_completed),
+                            backgroundColor: '#2c5282',
+                            stack: 'Stack 0',
+                        },
+                        {
+                            label: 'Pacientes Ausentes',
+                            data: sorted.map(d => d.patients_absent),
+                            backgroundColor: '#e53e3e',
+                            stack: 'Stack 0',
+                        }
+                    ]
                 },
-                options: commonOptions
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        datalabels: {
+                            color: '#fff',
+                            display: function (context) { return context.dataset.data[context.dataIndex] > 0; }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true, display: false },
+                        y: { stacked: true, grid: { display: false } }
+                    }
+                }
             });
         }
 

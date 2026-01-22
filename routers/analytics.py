@@ -44,6 +44,7 @@ def normalize_service(agenda_name, practices_names=None):
 
     # Fallback a Nombre de Agenda si no detectamos nada o no hay prácticas
     if "TOMOGRAFIA" in name or "TAC" in name: return "TOMOGRAFIA"
+    if "QUIMIOTERAPIA" in name or "QUIMIO" in name: return "QUIMIOTERAPIA"
     if "CAMARA GAMMA" in name or "MN" in name or "MEDICINA NUCLEAR" in name or "SPECT" in name: return "MEDICINA NUCLEAR"
     if "ECOGRAFIA" in name or "ECO" in name: return "ECOGRAFIA"
     if "PET" in name: return "PET"
@@ -239,21 +240,25 @@ def get_dashboard_data(
                 "os_counts": {},
                 "medico_counts": {},
             }
-            distinct_patients[svc] = set()
+                "medico_counts": {},
+            }
+            distinct_patients[svc] = {
+                "completed": set(),
+                "absent": set()
+            }
 
         # Count Practices
         p_count = len(t.practicas) if t.practicas else 1
         stats["services"][svc]["practices"] += p_count
         
-        # Count Patient
-        distinct_patients[svc].add(t.paciente_id)
-        
         # Status
         st = t.estado.upper()
         if st == "COMPLETADO":
             stats["services"][svc]["completed"] += p_count
+            distinct_patients[svc]["completed"].add(t.paciente_id)
         elif st == "AUSENTE" or st == "PENDIENTE": # 👈 PENDIENTE counts as AUSENTE for metrics
             stats["services"][svc]["absent"] += p_count
+            distinct_patients[svc]["absent"].add(t.paciente_id)
         
         # OS & Medico
         os_name = t.paciente.obra_social.nombre if t.paciente.obra_social else "PARTICULAR"
@@ -293,7 +298,12 @@ def get_dashboard_data(
         final_data.append({
             "service": svc,
             "practices_count": data["practices"],
-            "patients_count": len(distinct_patients[svc]),
+        final_data.append({
+            "service": svc,
+            "practices_count": data["practices"],
+            "patients_completed": len(distinct_patients[svc]["completed"]),
+            "patients_absent": len(distinct_patients[svc]["absent"]),
+            "patients_total_unique": len(distinct_patients[svc]["completed"] | distinct_patients[svc]["absent"]),
             "completed": data["completed"],
             "absent": data["absent"],
             "absentism_rate": absent_rate,
