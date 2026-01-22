@@ -128,15 +128,49 @@
             </div>
         </div>
 
-        <h2 class="section-title">Radioterapia (San Martín vs Colombia)</h2>
+        <h2 class="section-title">RADIOTERAPIA</h2>
+
+        <!-- En Lista (Resumen) -->
+        <div class="chart-card full-width" style="min-height: 300px; margin-bottom: 2rem;">
+            <h3>EN LISTA (En Tratamiento)</h3>
+            <div style="height: 250px;">
+                <canvas id="chartRadioEnLista"></canvas>
+            </div>
+        </div>
+
+        <!-- Presentismo Timeline -->
         <div class="charts-grid">
             <div class="chart-card">
-                <h3>San Martín: Estado & Asistencia</h3>
-                <canvas id="chartRadioSM"></canvas>
+                <h3>PRESENTISMO COLOMBIA (Dia a Dia)</h3>
+                <canvas id="chartRadioPresCOL"></canvas>
             </div>
             <div class="chart-card">
-                <h3>Colombia: Estado & Asistencia</h3>
-                <canvas id="chartRadioCOL"></canvas>
+                <h3>PRESENTISMO SAN MARTIN (Dia a Dia)</h3>
+                <canvas id="chartRadioPresSM"></canvas>
+            </div>
+        </div>
+
+        <!-- Detalles: OS, Patologia -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>POR OBRA SOCIAL (Top 10)</h3>
+                <canvas id="chartRadioOS"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>POR PATOLOGIA (Top 10)</h3>
+                <canvas id="chartRadioPat"></canvas>
+            </div>
+        </div>
+
+        <!-- Detalles: Trends, Derivantes -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>INICIOS - FINALIZACIONES (Mensual)</h3>
+                <canvas id="chartRadioTrends"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>DERIVANTES (Top 10)</h3>
+                <canvas id="chartRadioDeriv"></canvas>
             </div>
         </div>
 
@@ -265,7 +299,10 @@
             renderPracticesChart(data);
             renderPatientsChart(data);
             renderAbsentismChart(data);
-            if (radioData) renderRadiotherapyComplex(radioData);
+            renderPracticesChart(data);
+            renderPatientsChart(data);
+            renderAbsentismChart(data);
+            if (radioData) renderRadiotherapyComplex(radioData, fullData.radio_en_lista_summary);
             updateRankings(data);
         }
 
@@ -273,34 +310,127 @@
             if (chartInstances[id]) chartInstances[id].destroy();
         }
 
-        function renderRadiotherapyComplex(rData) {
-            // Helper to render one sede chart
-            function renderSedeChart(canvasId, sedeData, labelSede) {
+        function renderRadiotherapyComplex(rData, enListaSummary) {
+
+            // 1. En Lista Chart
+            destroyChart('radioEnLista');
+            const ctxLista = document.getElementById('chartRadioEnLista');
+            chartInstances['radioEnLista'] = new Chart(ctxLista, {
+                type: 'bar',
+                data: {
+                    labels: ['COLOMBIA', 'SAN MARTIN'],
+                    datasets: [{
+                        label: 'En Tratamiento',
+                        data: [enListaSummary.COLOMBIA, enListaSummary.SAN MARTIN],
+                        backgroundColor: '#2b6cb0'
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    indexAxis: 'x', // Vertical bars
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 2. Presentismo Daily (Timeline)
+            function renderDaily(canvasId, dailyData) {
                 destroyChart(canvasId);
                 const ctx = document.getElementById(canvasId);
+
+                // Sort by date just in case
+                dailyData.sort((a, b) => new Date(a.date) - new Date(b.date));
+
                 chartInstances[canvasId] = new Chart(ctx, {
-                    type: 'bar', // Horizontal bar
+                    type: 'bar',
                     data: {
-                        labels: ['En Tratamiento', 'Finalizados', 'Asistieron', 'Ausentes'],
-                        datasets: [{
-                            data: [
-                                sedeData.en_tratamiento,
-                                sedeData.finalizados,
-                                sedeData.attendance.completed,
-                                sedeData.attendance.absent
-                            ],
-                            backgroundColor: ['#4299e1', '#a0aec0', '#48bb78', '#f56565']
-                        }]
+                        labels: dailyData.map(d => d.date.substring(5)), // MM-DD
+                        datasets: [
+                            {
+                                label: 'Completados',
+                                data: dailyData.map(d => d.completed),
+                                backgroundColor: '#2c5282',
+                                stack: 'Stack 0'
+                            },
+                            {
+                                label: 'Ausentes',
+                                data: dailyData.map(d => d.absent),
+                                backgroundColor: '#e53e3e',
+                                stack: 'Stack 0'
+                            }
+                        ]
                     },
                     options: {
                         ...commonOptions,
-                        plugins: { legend: { display: false } }
+                        indexAxis: 'x',
+                        scales: { x: { stacked: true }, y: { stacked: true, display: false } }, // Show X axis for dates
+                        plugins: { legend: { display: true } }
                     }
                 });
             }
+            renderDaily('chartRadioPresCOL', rData['COLOMBIA'].daily_attendance);
+            renderDaily('chartRadioPresSM', rData['SAN MARTIN'].daily_attendance);
 
-            renderSedeChart('chartRadioSM', rData['SAN MARTIN'], 'San Martín');
-            renderSedeChart('chartRadioCOL', rData['COLOMBIA'], 'Colombia');
+            // 3. Obra Social (Combined SM+COL or just show top from one? Assuming aggregate or we can pick one. 
+            // Let's aggregate both for a "Radioterapia General" view, or if user wants split we'd need more charts. 
+            // The image implies one "Por Obra Social" chart. We'll aggregate manually here or pick one.
+            // Better approach: Aggregate counters from both sedes.
+            const aggOS = {};
+            const aggPat = {};
+            const aggDer = {};
+
+            ['COLOMBIA', 'SAN MARTIN'].forEach(sede => {
+                rData[sede].obras_sociales.forEach(i => aggOS[i[0]] = (aggOS[i[0]] || 0) + i[1]);
+                rData[sede].patologias.forEach(i => aggPat[i[0]] = (aggPat[i[0]] || 0) + i[1]);
+                rData[sede].derivantes.forEach(i => aggDer[i[0]] = (aggDer[i[0]] || 0) + i[1]);
+            });
+
+            function renderHoriz(canvasId, aggData, color) {
+                destroyChart(canvasId);
+                const sorted = Object.entries(aggData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+                const ctx = document.getElementById(canvasId);
+                chartInstances[canvasId] = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sorted.map(i => i[0].substring(0, 25)),
+                        datasets: [{ data: sorted.map(i => i[1]), backgroundColor: color }]
+                    },
+                    options: commonOptions
+                });
+            }
+
+            renderHoriz('chartRadioOS', aggOS, '#2c5282');
+            renderHoriz('chartRadioPat', aggPat, '#2b6cb0');
+            renderHoriz('chartRadioDeriv', aggDer, '#4299e1');
+
+            // 4. Trends (Inicios/Fin) - Aggregated
+            const trendMap = {};
+            // merged keys
+            ['COLOMBIA', 'SAN MARTIN'].forEach(sede => {
+                rData[sede].trends.forEach(t => {
+                    if (!trendMap[t.month]) trendMap[t.month] = { inicios: 0, final: 0 };
+                    trendMap[t.month].inicios += t.inicios;
+                    trendMap[t.month].final += t.finalizaciones;
+                });
+            });
+            const sortedMonths = Object.keys(trendMap).sort();
+
+            destroyChart('radioTrends');
+            chartInstances['radioTrends'] = new Chart(document.getElementById('chartRadioTrends'), {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths,
+                    datasets: [
+                        { label: 'Inicios', data: sortedMonths.map(m => trendMap[m].inicios), backgroundColor: '#2c5282' },
+                        { label: 'Finalizaciones', data: sortedMonths.map(m => trendMap[m].final), backgroundColor: '#63b3ed' }
+                    ]
+                },
+                options: {
+                    ...commonOptions,
+                    indexAxis: 'x',
+                    plugins: { legend: { display: true } }
+                }
+            });
+
         }
 
         function renderPracticesChart(data) {

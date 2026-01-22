@@ -44,7 +44,12 @@ def normalize_service(agenda_name, practices_names=None):
 
     # Fallback a Nombre de Agenda si no detectamos nada o no hay prácticas
     if "TOMOGRAFIA" in name or "TAC" in name: return "TOMOGRAFIA"
-    if "QUIMIOTERAPIA" in name or "QUIMIO" in name: return "QUIMIOTERAPIA"
+    if "QUIMIOTERAPIA" in name or "QUIMIO" in name:
+        if "SAN MARTIN" in name or "SM" in name:
+            return "QUIMIOTERAPIA SM"
+        if "COLOMBIA" in name or "COL" in name:
+            return "QUIMIOTERAPIA COL"
+        return "QUIMIOTERAPIA"
     if "CAMARA GAMMA" in name or "MN" in name or "MEDICINA NUCLEAR" in name or "SPECT" in name: return "MEDICINA NUCLEAR"
     if "ECOGRAFIA" in name or "ECO" in name: return "ECOGRAFIA"
     if "PET" in name: return "PET"
@@ -216,9 +221,10 @@ def get_dashboard_data(
     distinct_patients = {}
     
     # Radiotherapy specific (Turno level) aggregation for the dedicated cards
-    radio_turnos_stats = {
-        "SAN MARTIN": {"completed": 0, "absent": 0},
-        "COLOMBIA": {"completed": 0, "absent": 0}
+    # Radiotherapy specific (Turno level) aggregation for the dedicated cards
+    radio_daily_stats = {
+         "SAN MARTIN": {}, # date string -> { completed: 0, absent: 0 }
+         "COLOMBIA": {}
     }
 
     for t in turnos:
@@ -275,11 +281,15 @@ def get_dashboard_data(
             elif "COLOMBIA" in t.agenda.nombre.upper():
                 sede = "COLOMBIA"
             
-            if sede in radio_turnos_stats:
+            if sede in radio_daily_stats:
+                d_str = t.fecha.strftime("%Y-%m-%d")
+                if d_str not in radio_daily_stats[sede]:
+                    radio_daily_stats[sede][d_str] = {"completed": 0, "absent": 0}
+                
                 if st == "COMPLETADO":
-                    radio_turnos_stats[sede]["completed"] += 1
-                elif st == "AUSENTE":
-                    radio_turnos_stats[sede]["absent"] += 1
+                    radio_daily_stats[sede][d_str]["completed"] += 1
+                elif st == "AUSENTE" or st == "PENDIENTE":
+                     radio_daily_stats[sede][d_str]["absent"] += 1
 
     # Finalize Services Data
     final_data = []
@@ -306,39 +316,89 @@ def get_dashboard_data(
             "top_medicos": top_med
         })
         
-    # Radiotherapy Stats (Patient Status from SeguimientoRadioterapia)
+    # Radiotherapy Stats (Detailed from SeguimientoRadioterapia)
     from models.radioterapia import SeguimientoRadioterapia
     
-    # Helper to count by sede and state
-    def count_radio(sede_filter, finished):
-        query = db.query(SeguimientoRadioterapia)
+    # helper for aggregations
+    def get_radio_aggregations(sede_filter):
+        q = db.query(SeguimientoRadioterapia)
         if sede_filter:
-            # Flexible match for Sede
-            query = query.filter(SeguimientoRadioterapia.sede.ilike(f"%{sede_filter}%"))
+            q = q.filter(SeguimientoRadioterapia.sede.ilike(f"%{sede_filter}%"))
         
-        if finished:
-            query = query.filter(SeguimientoRadioterapia.fecha_fin != None)
-        else:
-            query = query.filter(SeguimientoRadioterapia.fecha_fin == None)
+        all_recs = q.all()
+        
+        patologias = {}
+        obras_sociales = {}
+        derivantes = {}
+        starts_by_month = {}
+        ends_by_month = {}
+        
+        en_lista_count = 0
+        
+        for r in all_recs:
+             # En Lista logic (simplified: if no end date -> active)
+             if not r.fecha_fin:
+                 en_lista_count += 1
+                 
+             # Patologia
+             pat = r.patologia or "NO ESPECIFICADO"
+             patologias[pat] = patologias.get(pat, 0) + 1
+             
+             # OS
+             os = r.paciente.obra_social.nombre if r.paciente and r.paciente.obra_social else "PARTICULAR"
+             obras_sociales[os] = obras_sociales.get(os, 0) + 1
+             
+             # Derivante
+             der = r.medico_derivante or "NO ESPECIFICADO"
+             derivantes[der] = derivantes.get(der, 0) + 1
+             
+             # Start/End Trends
+             if r.fecha_inicio:
+                 m_s = r.fecha_inicio.strftime("%Y-%m")
+                 starts_by_month[m_s] = starts_by_month.get(m_s, 0) + 1
+             if r.fecha_fin:
+                 m_e = r.fecha_fin.strftime("%Y-%m")
+                 ends_by_month[m_e] = ends_by_month.get(m_e, 0) + 1
+                 
+        # Normalize Trends
+        all_months = sorted(list(set(starts_by_month.keys()) | set(ends_by_month.keys())))
+        trend_data = []
+        for m in all_months:
+            trend_data.append({
+                "month": m,
+                "inicios": starts_by_month.get(m, 0),
+                "finalizaciones": ends_by_month.get(m, 0)
+            })
             
-        return query.count()
+        return {
+            "en_lista": en_lista_count,
+            "patologias": sorted(patologias.items(), key=lambda x: x[1], reverse=True)[:15],
+            "obras_sociales": sorted(obras_sociales.items(), key=lambda x: x[1], reverse=True)[:15],
+            "derivantes": sorted(derivantes.items(), key=lambda x: x[1], reverse=True)[:15],
+            "trends": trend_data
+        }
 
-    radio_status = {
+    radio_full_stats = {
         "SAN MARTIN": {
-            "en_tratamiento": count_radio("San Martín", False),
-            "finalizados": count_radio("San Martín", True),
-            "attendance": radio_turnos_stats["SAN MARTIN"]
+             **get_radio_aggregations("San Martín"),
+             "daily_attendance": [{"date": k, **v} for k, v in sorted(radio_daily_stats["SAN MARTIN"].items())]
         },
         "COLOMBIA": {
-            "en_tratamiento": count_radio("Colombia", False),
-            "finalizados": count_radio("Colombia", True),
-             "attendance": radio_turnos_stats["COLOMBIA"]
+             **get_radio_aggregations("Colombia"),
+             "daily_attendance": [{"date": k, **v} for k, v in sorted(radio_daily_stats["COLOMBIA"].items())]
         }
     }
     
+    # Merge En Lista Aggregates for strict "En Lista" Chart (COL vs SM)
+    en_lista_summary = {
+        "COLOMBIA": radio_full_stats["COLOMBIA"]["en_lista"],
+        "SAN MARTIN": radio_full_stats["SAN MARTIN"]["en_lista"]
+    }
+
     final_response = {
         "services_data": final_data,
-        "radiotherapy": radio_status
+        "radiotherapy": radio_full_stats,
+        "radio_en_lista_summary": en_lista_summary
     }
         
     return final_response
