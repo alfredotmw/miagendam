@@ -232,14 +232,12 @@ def get_dashboard_data(
         if svc in ["CONSULTORIOS", "OTROS"]:
             continue
 
-        if svc not in stats["services"]:
+            if svc not in stats["services"]:
             stats["services"][svc] = {
                 "practices": 0,
                 "completed": 0,
                 "absent": 0,
                 "os_counts": {},
-                "medico_counts": {},
-            }
                 "medico_counts": {},
             }
             distinct_patients[svc] = {
@@ -295,9 +293,6 @@ def get_dashboard_data(
         top_os = sorted(data["os_counts"].items(), key=lambda x: x[1], reverse=True)[:10]
         top_med = sorted(data["medico_counts"].items(), key=lambda x: x[1], reverse=True)[:10]
         
-        final_data.append({
-            "service": svc,
-            "practices_count": data["practices"],
         final_data.append({
             "service": svc,
             "practices_count": data["practices"],
