@@ -18,6 +18,40 @@ router = APIRouter(
     tags=["Analytics"],
 )
 
+def normalize_service(agenda_name, practices_names=None):
+    name = agenda_name.upper()
+    
+    # 🟢 1. Lógica Radioterapia con Sede
+    if "RADIOTERAPIA" in name or "LINAC" in name:
+        if "SAN MARTIN" in name or "SM" in name:
+            return "RADIOTERAPIA SM"
+        if "COLOMBIA" in name or "COL" in name:
+            return "RADIOTERAPIA COL"
+        return "RADIOTERAPIA (GEN)"
+
+    # 🟢 2. Lógica Robusta Tomografía vs RX (Mirando Prácticas si es posible)
+    # Copiamos lógica de exports.py para coherencia
+    if practices_names:
+        # Si hay prácticas, tratamos de deducir por el contenido
+        # Concatenamos para buscar keywords en el conjunto
+        full_practice_str = " ".join(practices_names).upper()
+        
+        if any(k in full_practice_str for k in ["RADIOGRAFIA", "RX", "PLACA", "ESPINOGRAMA", "INCIDENCIA", "MAMOGRAFIA", "DENSITOMETRIA", "UROGRAMA", "TELEGONO"]):
+            return "RADIOGRAFIA"
+        
+        if any(k in full_practice_str for k in ["TOMOGRAFIA", "TC ", " TC", "TAC ", " TAC", "UROTAC", "ANGIOTC", "SCORE DE CALCIO"]):
+            return "TOMOGRAFIA"
+
+    # Fallback a Nombre de Agenda si no detectamos nada o no hay prácticas
+    if "TOMOGRAFIA" in name or "TAC" in name: return "TOMOGRAFIA"
+    if "CAMARA GAMMA" in name or "MN" in name or "MEDICINA NUCLEAR" in name or "SPECT" in name: return "MEDICINA NUCLEAR"
+    if "ECOGRAFIA" in name or "ECO" in name: return "ECOGRAFIA"
+    if "PET" in name: return "PET"
+    if "CONSULTORIO" in name: return "CONSULTORIOS"
+    if "RADIOGRAFIA" in name or "RX" in name: return "RADIOGRAFIA"
+    
+    return "OTROS"
+
 @router.get("/live_data")
 def get_live_data(db: Session = Depends(get_db)):
     """
@@ -176,32 +210,24 @@ def get_dashboard_data(
         "services": {}, # key: service_name -> { total_practices, unique_patients, completed, absent, os_counts: {}, medico_counts: {} }
     }
     
-    def normalize_service(agenda_name):
-        name = agenda_name.upper()
-        if "TOMOGRAFIA" in name or "TAC" in name: return "TOMOGRAFIA"
-        if "CAMARA GAMMA" in name or "MN" in name or "MEDICINA NUCLEAR" in name or "SPECT" in name: return "MEDICINA NUCLEAR"
-        if "RADIOTERAPIA" in name or "LINAC" in name: return "RADIOTERAPIA"
-        if "ECOGRAFIA" in name or "ECO" in name: return "ECOGRAFIA"
-        if "PET" in name: return "PET"
-        if "CONSULTORIO" in name: return "CONSULTORIOS"
-        if "RADIOGRAFIA" in name or "RX" in name: return "RADIOGRAFIA"
-        return "OTROS"
-
     # Structures for counting
     # distinct_patients[service] = set(patient_id)
     distinct_patients = {}
     
-    # Radiotherapy specific (Turno level)
+    # Radiotherapy specific (Turno level) aggregation for the dedicated cards
     radio_turnos_stats = {
         "SAN MARTIN": {"completed": 0, "absent": 0},
         "COLOMBIA": {"completed": 0, "absent": 0}
     }
 
     for t in turnos:
-        # Determine Service
-        svc = normalize_service(t.agenda.nombre)
+        # Extraer nombres de prácticas para mejor clasificación
+        p_names = [p.nombre for p in t.practicas] if t.practicas else []
         
-        # Skip Consultorios and Otros for main stats if requested ("Que es otros? no me agregues los consultorios")
+        # Determine Service
+        svc = normalize_service(t.agenda.nombre, p_names)
+        
+        # Skip Consultorios and Otros for main stats if requested
         if svc in ["CONSULTORIOS", "OTROS"]:
             continue
 
@@ -236,8 +262,9 @@ def get_dashboard_data(
         med_name = t.medico_derivante.nombre if t.medico_derivante else "NO ESPECIFICADO"
         stats["services"][svc]["medico_counts"][med_name] = stats["services"][svc]["medico_counts"].get(med_name, 0) + 1
         
-        # Special Logic for Radiotherapy (Turno Level Attendance)
-        # Check Agenda Name for Sede
+        # Special Logic for Radiotherapy (Legacy/Dedicated Cards Support)
+        # We still want the old Sede-specific counters for the bottom cards, 
+        # even if we now have them in the main chart too.
         if "RADIOTERAPIA" in t.agenda.nombre.upper():
             sede = "UNKNOWN"
             if "SAN MARTIN" in t.agenda.nombre.upper() or "SM" in t.agenda.nombre.upper():

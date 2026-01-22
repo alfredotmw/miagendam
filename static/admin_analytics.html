@@ -304,7 +304,7 @@
         function renderPracticesChart(data) {
             destroyChart('practices');
 
-            // Sort?
+            // Sort by total volume (practices count)
             const sorted = [...data].sort((a, b) => b.practices_count - a.practices_count);
 
             const ctx = document.getElementById('chartPractices');
@@ -312,12 +312,44 @@
                 type: 'bar',
                 data: {
                     labels: sorted.map(d => d.service),
-                    datasets: [{
-                        data: sorted.map(d => d.practices_count),
-                        backgroundColor: '#4299e1'
-                    }]
+                    datasets: [
+                        {
+                            label: 'Presentes / Completados',
+                            data: sorted.map(d => d.completed),
+                            backgroundColor: '#48bb78', // Green
+                            stack: 'Stack 0',
+                        },
+                        {
+                            label: 'Ausentes',
+                            data: sorted.map(d => d.absent),
+                            backgroundColor: '#f56565', // Red
+                            stack: 'Stack 0',
+                        }
+                    ]
                 },
-                options: commonOptions
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        legend: { display: true, position: 'top' }, // Show legend for stacked
+                        datalabels: {
+                            color: '#fff', // White text inside bars
+                            display: function (context) {
+                                return context.dataset.data[context.dataIndex] > 0; // Hide 0s
+                            },
+                            font: { weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            display: false
+                        },
+                        y: {
+                            stacked: true,
+                            grid: { display: false }
+                        }
+                    }
+                }
             });
         }
 
