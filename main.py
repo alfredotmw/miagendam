@@ -40,8 +40,8 @@ def startup_event():
     print("🚀 STARTING APP - FLUSHING LOGS")
     try:
         # Create Tables first!
-        # Base.metadata.create_all(bind=engine) # 🔴 COMENTADO TEMPORALMENTE
-        check_and_migrate_db(engine) # 👈 FORCE MIGRATION CHECK
+        Base.metadata.create_all(bind=engine) # 🟢 ENABLED AGAIN
+        # check_and_migrate_db(engine) # 👈 FORCE MIGRATION CHECK
     except Exception as e:
         print(f"⚠️ MIGRATION/DB ERROR: {e}")
 
