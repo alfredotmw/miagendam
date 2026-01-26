@@ -147,10 +147,87 @@
             font-size: 0.75rem;
             opacity: 0.7;
         }
+    </style>
+</head>
 
-        </head><body><div class="loading-overlay" id="loader"><div style="font-size: 1.5rem; color: #4299e1; font-weight: bold;">Cargando Métricas...</div></div><div class="analytics-container"><div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;"><h1 style="font-size: 1.5rem; font-weight: 700; color: #1a202c;">Panel de Métricas</h1><div>< !-- Debug button tucked away --><button onclick="debugMetrics()" class="btn-compact btn-secondary-new btn-debug"
-        style="margin-right: 1rem; background:#ecc94b; color:black;">⚠️ Debug</button><a href="/static/dashboard.html" class="btn-compact btn-secondary-new" style="text-decoration:none;">&larr;
-        Volver</a></div></div><div class="filter-bar"><div style="display:flex; gap: 1rem;"><div class="filter-group"><label for="startDt" style="font-size: 0.75rem; color: #4a5568; font-weight:600">Desde</label><input type="date" id="startDt" class="form-input"></div><div class="filter-group"><label for="endDt" style="font-size: 0.75rem; color: #4a5568; font-weight:600">Hasta</label><input type="date" id="endDt" class="form-input"></div></div><div><button onclick="applyFilters()" class="btn-compact btn-primary-new">Aplicar Filtros</button></div><div style="width: 1px; height: 30px; background: #e2e8f0; margin: 0 0.5rem;"></div><div style="display: flex; gap: 0.5rem;"><button onclick="setRange('today')" class="btn-compact btn-secondary-new">Hoy</button><button onclick="setRange('month')" class="btn-compact btn-secondary-new">Este Mes</button><button onclick="setRange('year')" class="btn-compact btn-secondary-new">Este Año</button></div></div><h2 class="section-title">Servicios Generales</h2><div class="charts-grid"><div class="chart-card"><h3>Cantidad de Prácticas</h3><div><canvas id="chartPractices"></canvas></div></div><div class="chart-card"><h3>Pacientes Únicos</h3><div><canvas id="chartPatients"></canvas></div></div>< !-- Removed full-width to allow 3rd column --><div class="chart-card"><h3>Ausentismo por Servicio (%)</h3><div><canvas id="chartAbsentism"></canvas></div></div></div><h2 class="section-title">Rankings (Por Servicio)</h2>< !-- Custom Controls Bar for Rankings --><div class="controls-card"><label style="font-weight: 600;">Seleccionar Servicio:</label><select id="serviceSelect" onchange="updateRankings()" class="form-input" style="width: 300px;">< !-- Populated via JS --></select></div><div class="charts-grid"><div class="chart-card"><h3>Top 10 Obras Sociales</h3><div><canvas id="chartTopOS"></canvas></div></div><div class="chart-card"><h3>Top 10 Médicos Derivantes</h3><div><canvas id="chartTopMedicos"></canvas></div></div></div><h2 class="section-title">Radioterapia - Patologías</h2><div class="charts-grid"><div class="chart-card">< !-- San Martin Pathologies --><h3>Top Patologías - San Martín</h3><div><canvas id="chartRadioPatSM"></canvas></div></div><div class="chart-card">< !-- Colombia Pathologies --><h3>Top Patologías - Colombia</h3><div><canvas id="chartRadioPatCol"></canvas></div></div></div></div><script> // Register DataLabels Plugin
+<body>
+    <div class="loading-overlay" id="loader">
+        <div style="font-size: 1.5rem; color: #4299e1; font-weight: bold;">Cargando Métricas...</div>
+    </div>
+    <div class="analytics-container">
+        <!-- Header -->
+        <div style="margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
+            <h1 style="font-size: 1.5rem; font-weight: 700; color: #1a202c;">Panel de Métricas</h1>
+            <div>
+                <button onclick="debugMetrics()" class="btn-compact btn-secondary-new btn-debug"
+                    style="margin-right: 1rem; background:#ecc94b; color:black;">⚠️ Debug</button>
+                <a href="/static/dashboard.html" class="btn-compact btn-secondary-new"
+                    style="text-decoration:none;">&larr; Volver</a>
+            </div>
+        </div>
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div style="display:flex; gap: 1rem;">
+                <div class="filter-group"><label for="startDt"
+                        style="font-size: 0.75rem; color: #4a5568; font-weight:600">Desde</label><input type="date"
+                        id="startDt" class="form-input"></div>
+                <div class="filter-group"><label for="endDt"
+                        style="font-size: 0.75rem; color: #4a5568; font-weight:600">Hasta</label><input type="date"
+                        id="endDt" class="form-input"></div>
+            </div>
+            <div><button onclick="applyFilters()" class="btn-compact btn-primary-new">Aplicar Filtros</button></div>
+            <div style="width: 1px; height: 30px; background: #e2e8f0; margin: 0 0.5rem;"></div>
+            <div style="display: flex; gap: 0.5rem;"><button onclick="setRange('today')"
+                    class="btn-compact btn-secondary-new">Hoy</button><button onclick="setRange('month')"
+                    class="btn-compact btn-secondary-new">Este Mes</button><button onclick="setRange('year')"
+                    class="btn-compact btn-secondary-new">Este Año</button></div>
+        </div>
+        <!-- General Services -->
+        <h2 class="section-title">Servicios Generales</h2>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Cantidad de Prácticas</h3>
+                <div><canvas id="chartPractices"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Pacientes Únicos</h3>
+                <div><canvas id="chartPatients"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Ausentismo por Servicio (%)</h3>
+                <div><canvas id="chartAbsentism"></canvas></div>
+            </div>
+        </div>
+        <!-- Rankings -->
+        <h2 class="section-title">Rankings (Por Servicio)</h2>
+        <div class="controls-card"><label style="font-weight: 600;">Seleccionar Servicio:</label><select
+                id="serviceSelect" onchange="updateRankings()" class="form-input" style="width: 300px;">
+                <!-- Populated via JS -->
+            </select></div>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Top 10 Obras Sociales</h3>
+                <div><canvas id="chartTopOS"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Top 10 Médicos Derivantes</h3>
+                <div><canvas id="chartTopMedicos"></canvas></div>
+            </div>
+        </div>
+        <!-- Radiotherapy -->
+        <h2 class="section-title">Radioterapia - Patologías</h2>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Top Patologías - San Martín</h3>
+                <div><canvas id="chartRadioPatSM"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Top Patologías - Colombia</h3>
+                <div><canvas id="chartRadioPatCol"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <script> // Register DataLabels Plugin
         Chart.register(ChartDataLabels);
 
         Chart.defaults.set('plugins.datalabels', {
@@ -164,11 +241,11 @@
 
             , // Bigger font
             display: true,
-            formatter: (value)=> value > 0 ? value : ''
+            formatter: (value) => value > 0 ? value : ''
         });
 
         // Common Chart Options for Clean Look
-        const commonOptions= {
+        const commonOptions = {
 
             indexAxis: 'y',
             responsive: true,
@@ -200,16 +277,16 @@
             }
         }
 
-        ;
+            ;
 
-        const token=localStorage.getItem('token');
-        if ( !token) window.location.href='/static/login.html';
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/static/login.html';
 
-        let globalData=null; // Store fetched data
+        let globalData = null; // Store fetched data
 
-        let chartInstances= {}
+        let chartInstances = {}
 
-        ;
+            ;
 
         // Init Dates (Current Month)
         function initDates() {
@@ -217,45 +294,45 @@
         }
 
         function setRange(type) {
-            const now=new Date();
-            const year=now.getFullYear();
-            const month=now.getMonth();
-            const day=now.getDate();
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const day = now.getDate();
 
             let start,
-            end;
+                end;
 
-            if (type==='today') {
-                start=end=now;
+            if (type === 'today') {
+                start = end = now;
             }
 
-            else if (type==='month') {
-                start=new Date(year, month, 1);
-                end=new Date(year, month + 1, 0);
+            else if (type === 'month') {
+                start = new Date(year, month, 1);
+                end = new Date(year, month + 1, 0);
             }
 
-            else if (type==='year') {
-                start=new Date(year, 0, 1);
-                end=new Date(year, 11, 31);
+            else if (type === 'year') {
+                start = new Date(year, 0, 1);
+                end = new Date(year, 11, 31);
             }
 
             function fmt(d) {
                 return d.toISOString().split('T')[0];
             }
 
-            document.getElementById('startDt').value=fmt(start);
-            document.getElementById('endDt').value=fmt(end);
+            document.getElementById('startDt').value = fmt(start);
+            document.getElementById('endDt').value = fmt(end);
             applyFilters();
         }
 
         async function applyFilters() {
-            const s=document.getElementById('startDt').value;
-            const e=document.getElementById('endDt').value;
+            const s = document.getElementById('startDt').value;
+            const e = document.getElementById('endDt').value;
 
-            document.getElementById('loader').style.display='flex';
+            document.getElementById('loader').style.display = 'flex';
 
             try {
-                const res=await fetch(`/analytics/dashboard?start_date=$ {
+                const res = await fetch(`/analytics/dashboard?start_date=$ {
                         s
                     }
 
@@ -273,37 +350,37 @@
                     }
                 });
 
-            if ( !res.ok) throw new Error("Error loading data");
+                if (!res.ok) throw new Error("Error loading data");
 
-            globalData=await res.json();
-            renderAll(globalData);
+                globalData = await res.json();
+                renderAll(globalData);
 
-        }
+            }
 
-        catch (err) {
-            console.error(err);
-            alert("Error cargando métricas");
-        }
+            catch (err) {
+                console.error(err);
+                alert("Error cargando métricas");
+            }
 
-        finally {
-            document.getElementById('loader').style.display='none';
-        }
+            finally {
+                document.getElementById('loader').style.display = 'none';
+            }
         }
 
         function renderAll(fullData) {
-            const data=fullData.services_data;
-            const radioData=fullData.radiotherapy;
+            const data = fullData.services_data;
+            const radioData = fullData.radiotherapy;
 
             // Populate Service Selector if empty
-            const sel=document.getElementById('serviceSelect');
+            const sel = document.getElementById('serviceSelect');
 
-            if (sel.options.length===0) {
-                data.forEach(d=> {
-                        const opt=document.createElement('option');
-                        opt.value=d.service;
-                        opt.textContent=d.service;
-                        sel.appendChild(opt);
-                    });
+            if (sel.options.length === 0) {
+                data.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.service;
+                    opt.textContent = d.service;
+                    sel.appendChild(opt);
+                });
             }
 
             renderPracticesChart(data);
@@ -321,14 +398,14 @@
         }
 
         function debugMetrics() {
-            if ( !globalData) {
+            if (!globalData) {
                 alert("No data loaded yet.");
                 return;
             }
 
             console.log("Global Data:", globalData);
-            const radioKeys=globalData.radiotherapy ? Object.keys(globalData.radiotherapy) : "MISSING";
-            const services=globalData.services_data.length;
+            const radioKeys = globalData.radiotherapy ? Object.keys(globalData.radiotherapy) : "MISSING";
+            const services = globalData.services_data.length;
 
             alert(`Data Loaded:\nServices: $ {
                     services
@@ -351,151 +428,151 @@
             destroyChart('practices');
 
             // Sort by total volume (practices count)
-            const sorted=[...data].sort((a, b)=> b.practices_count - a.practices_count);
+            const sorted = [...data].sort((a, b) => b.practices_count - a.practices_count);
 
-            const ctx=document.getElementById('chartPractices');
+            const ctx = document.getElementById('chartPractices');
 
-            chartInstances['practices']=new Chart(ctx, {
+            chartInstances['practices'] = new Chart(ctx, {
 
                 type: 'bar',
                 data: {
 
-                    labels: sorted.map(d=> d.service),
-                    datasets: [ {
+                    labels: sorted.map(d => d.service),
+                    datasets: [{
                         label: 'Presentes / Completados',
-                        data: sorted.map(d=> d.completed),
+                        data: sorted.map(d => d.completed),
                         backgroundColor: '#2c5282', // Corporate Blue (Darker/Professional)
                         stack: 'Stack 0',
                     }
 
-                    ,
+                        ,
                     {
-                    label: 'Ausentes / Pendientes',
-                    data: sorted.map(d=> d.absent),
-                    backgroundColor: '#e53e3e', // Professional Red
-                    stack: 'Stack 0',
-                }
-
-                ]
-            }
-
-            ,
-            options: {
-
-                ...commonOptions,
-                plugins: {
-                    legend: {
-                        display: true, position: 'top'
+                        label: 'Ausentes / Pendientes',
+                        data: sorted.map(d => d.absent),
+                        backgroundColor: '#e53e3e', // Professional Red
+                        stack: 'Stack 0',
                     }
 
-                    ,
-                    datalabels: {
-                        display: function (context) {
-                            return context.dataset.data[context.dataIndex] > 0;
-                        }
-                    }
+                    ]
                 }
 
                 ,
-                scales: {
-                    x: {
-                        stacked: true,
-                        display: false
+                options: {
+
+                    ...commonOptions,
+                    plugins: {
+                        legend: {
+                            display: true, position: 'top'
+                        }
+
+                        ,
+                        datalabels: {
+                            display: function (context) {
+                                return context.dataset.data[context.dataIndex] > 0;
+                            }
+                        }
                     }
 
                     ,
-                    y: {
-
-                        stacked: true,
-                        grid: {
+                    scales: {
+                        x: {
+                            stacked: true,
                             display: false
+                        }
+
+                        ,
+                        y: {
+
+                            stacked: true,
+                            grid: {
+                                display: false
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
         }
 
         function renderPatientsChart(data) {
             destroyChart('patients');
-            const sorted=[...data].sort((a, b)=> b.patients_total_unique - a.patients_total_unique);
+            const sorted = [...data].sort((a, b) => b.patients_total_unique - a.patients_total_unique);
 
-            const ctx=document.getElementById('chartPatients');
+            const ctx = document.getElementById('chartPatients');
 
-            chartInstances['patients']=new Chart(ctx, {
+            chartInstances['patients'] = new Chart(ctx, {
 
                 type: 'bar',
                 data: {
 
-                    labels: sorted.map(d=> d.service),
-                    datasets: [ {
+                    labels: sorted.map(d => d.service),
+                    datasets: [{
                         label: 'Pacientes Presentes',
-                        data: sorted.map(d=> d.patients_completed),
+                        data: sorted.map(d => d.patients_completed),
                         backgroundColor: '#2c5282',
                         stack: 'Stack 0',
                     }
 
-                    ,
+                        ,
                     {
-                    label: 'Pacientes Ausentes',
-                    data: sorted.map(d=> d.patients_absent),
-                    backgroundColor: '#e53e3e',
-                    stack: 'Stack 0',
-                }
-
-                ]
-            }
-
-            ,
-            options: {
-
-                ...commonOptions,
-                plugins: {
-                    legend: {
-                        display: true, position: 'top'
+                        label: 'Pacientes Ausentes',
+                        data: sorted.map(d => d.patients_absent),
+                        backgroundColor: '#e53e3e',
+                        stack: 'Stack 0',
                     }
 
-                    ,
-                    datalabels: {
-
-                        color: '#fff',
-                        display: function (context) {
-                            return context.dataset.data[context.dataIndex] > 0;
-                        }
-                    }
+                    ]
                 }
 
                 ,
-                scales: {
-                    x: {
-                        stacked: true, display: false
+                options: {
+
+                    ...commonOptions,
+                    plugins: {
+                        legend: {
+                            display: true, position: 'top'
+                        }
+
+                        ,
+                        datalabels: {
+
+                            color: '#fff',
+                            display: function (context) {
+                                return context.dataset.data[context.dataIndex] > 0;
+                            }
+                        }
                     }
 
                     ,
-                    y: {
-                        stacked: true, grid: {
-                            display: false
+                    scales: {
+                        x: {
+                            stacked: true, display: false
+                        }
+
+                        ,
+                        y: {
+                            stacked: true, grid: {
+                                display: false
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
         }
 
         function renderAbsentismChart(data) {
             destroyChart('abs');
-            const ctx=document.getElementById('chartAbsentism');
+            const ctx = document.getElementById('chartAbsentism');
 
-            const sorted=[...data].sort((a, b)=> b.absentism_rate - a.absentism_rate);
+            const sorted = [...data].sort((a, b) => b.absentism_rate - a.absentism_rate);
 
-            chartInstances['abs']=new Chart(ctx, {
+            chartInstances['abs'] = new Chart(ctx, {
 
                 type: 'bar',
                 data: {
 
-                    labels: sorted.map(d=> d.service),
-                    datasets: [ {
-                        data: sorted.map(d=> d.absentism_rate),
+                    labels: sorted.map(d => d.service),
+                    datasets: [{
+                        data: sorted.map(d => d.absentism_rate),
                         backgroundColor: '#f56565'
                     }
 
@@ -522,7 +599,7 @@
                     ,
                     plugins: {
                         datalabels: {
-                            formatter: (value)=> value + '%'
+                            formatter: (value) => value + '%'
                         }
 
                         ,
@@ -535,31 +612,31 @@
         }
 
         function updateRankings(passedData) {
-            if ( !globalData) return;
-            const data=Array.isArray(passedData) ? passedData: globalData.services_data;
-            const svcName=document.getElementById('serviceSelect').value;
-            const svcData=data.find(d=> d.service===svcName);
+            if (!globalData) return;
+            const data = Array.isArray(passedData) ? passedData : globalData.services_data;
+            const svcName = document.getElementById('serviceSelect').value;
+            const svcData = data.find(d => d.service === svcName);
 
             // Clear previous charts always
             destroyChart('topOS');
             destroyChart('topMed');
 
-            if ( !svcData || svcData.practices_count===0) {
+            if (!svcData || svcData.practices_count === 0) {
                 // Optional: Render empty state or just leave blank
                 return;
             }
 
             // Render Top OS
-            const ctxOS=document.getElementById('chartTopOS');
+            const ctxOS = document.getElementById('chartTopOS');
 
-            chartInstances['topOS']=new Chart(ctxOS, {
+            chartInstances['topOS'] = new Chart(ctxOS, {
 
                 type: 'bar',
                 data: {
 
-                    labels: svcData.top_os.map(i=> i[0].substring(0, 20)),
-                    datasets: [ {
-                        data: svcData.top_os.map(i=> i[1]),
+                    labels: svcData.top_os.map(i => i[0].substring(0, 20)),
+                    datasets: [{
+                        data: svcData.top_os.map(i => i[1]),
                         backgroundColor: '#805ad5'
                     }
 
@@ -570,49 +647,49 @@
                 options: commonOptions
             });
 
-        // Render Top Medicos
-        const ctxMed=document.getElementById('chartTopMedicos');
+            // Render Top Medicos
+            const ctxMed = document.getElementById('chartTopMedicos');
 
-        chartInstances['topMed']=new Chart(ctxMed, {
+            chartInstances['topMed'] = new Chart(ctxMed, {
 
-            type: 'bar',
-            data: {
+                type: 'bar',
+                data: {
 
-                labels: svcData.top_medicos.map(i=> i[0].substring(0, 20)),
-                datasets: [ {
-                    data: svcData.top_medicos.map(i=> i[1]),
-                    backgroundColor: '#ed8936'
+                    labels: svcData.top_medicos.map(i => i[0].substring(0, 20)),
+                    datasets: [{
+                        data: svcData.top_medicos.map(i => i[1]),
+                        backgroundColor: '#ed8936'
+                    }
+
+                    ]
                 }
 
-                ]
-            }
-
-            ,
-            options: commonOptions
-        });
+                ,
+                options: commonOptions
+            });
         }
 
         // --- NEW: Radiotherapy Pathology Charts ---
         function renderRadioPathologyCharts(radioData) {
-            if ( !radioData) return;
+            if (!radioData) return;
 
             // San Martin
-            const smData=radioData["SAN MARTIN"];
+            const smData = radioData["SAN MARTIN"];
 
             if (smData && smData.patologias) {
                 destroyChart('radioPatSM');
-                const ctx=document.getElementById('chartRadioPatSM');
+                const ctx = document.getElementById('chartRadioPatSM');
 
                 if (ctx) {
-                    chartInstances['radioPatSM']=new Chart(ctx, {
+                    chartInstances['radioPatSM'] = new Chart(ctx, {
                         type: 'bar', // Horizontal bar is good for long text
 
                         data: {
 
-                            labels: smData.patologias.map(p=> p[0]),
-                            datasets: [ {
+                            labels: smData.patologias.map(p => p[0]),
+                            datasets: [{
                                 label: 'Cantidad',
-                                data: smData.patologias.map(p=> p[1]),
+                                data: smData.patologias.map(p => p[1]),
                                 backgroundColor: '#2c5282', // Corporate Blue
                                 barPercentage: 0.7,
                             }
@@ -656,72 +733,75 @@
                             }
                         }
                     });
+                }
             }
-        }
 
-        // Colombia
-        const colData=radioData["COLOMBIA"];
+            // Colombia
+            const colData = radioData["COLOMBIA"];
 
-        if (colData && colData.patologias) {
-            destroyChart('radioPatCol');
-            const ctx=document.getElementById('chartRadioPatCol');
+            if (colData && colData.patologias) {
+                destroyChart('radioPatCol');
+                const ctx = document.getElementById('chartRadioPatCol');
 
-            if (ctx) {
-                chartInstances['radioPatCol']=new Chart(ctx, {
+                if (ctx) {
+                    chartInstances['radioPatCol'] = new Chart(ctx, {
 
-                    type: 'bar',
-                    data: {
+                        type: 'bar',
+                        data: {
 
-                        labels: colData.patologias.map(p=> p[0]),
-                        datasets: [ {
-                            label: 'Cantidad',
-                            data: colData.patologias.map(p=> p[1]),
-                            backgroundColor: '#805ad5', // Purple
-                            barPercentage: 0.7,
-                        }
-
-                        ]
-                    }
-
-                    ,
-                    options: {
-
-                        ...commonOptions,
-                        layout: {
-                            padding: {
-                                right: 50
+                            labels: colData.patologias.map(p => p[0]),
+                            datasets: [{
+                                label: 'Cantidad',
+                                data: colData.patologias.map(p => p[1]),
+                                backgroundColor: '#805ad5', // Purple
+                                barPercentage: 0.7,
                             }
 
-                            // Prevent label clipping
+                            ]
                         }
 
                         ,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
+                        options: {
+
+                            ...commonOptions,
+                            layout: {
+                                padding: {
+                                    right: 50
+                                }
+
+                                // Prevent label clipping
                             }
 
                             ,
-                            datalabels: {
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
 
-                                anchor: 'end', align: 'end', color: '#2d3748',
-                                font: {
-                                    weight: 'bold'
+                                ,
+                                datalabels: {
+
+                                    anchor: 'end', align: 'end', color: '#2d3748',
+                                    font: {
+                                        weight: 'bold'
+                                    }
+                                }
+
+                                ,
+                                // Title removed (handled in HTML)
+                                title: {
+                                    display: false
                                 }
                             }
-
-                            ,
-                            // Title removed (handled in HTML)
-                            title: {
-                                display: false
-                            }
                         }
-                    }
-                });
-        }
-        }
+                    });
+                }
+            }
         }
 
-        window.onload=initDates;
-        </script></body></html>
+        window.onload = initDates;
+    </script>
+</body>
+
+</html>
