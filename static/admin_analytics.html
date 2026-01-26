@@ -420,10 +420,16 @@
             const svcName = document.getElementById('serviceSelect').value;
             const svcData = data.find(d => d.service === svcName);
 
-            if (!svcData) return;
+            // Clear previous charts always
+            destroyChart('topOS');
+            destroyChart('topMed');
+
+            if (!svcData || svcData.practices_count === 0) {
+                // Optional: Render empty state or just leave blank
+                return;
+            }
 
             // Render Top OS
-            destroyChart('topOS');
             const ctxOS = document.getElementById('chartTopOS');
             chartInstances['topOS'] = new Chart(ctxOS, {
                 type: 'bar',
@@ -438,7 +444,6 @@
             });
 
             // Render Top Medicos
-            destroyChart('topMed');
             const ctxMed = document.getElementById('chartTopMedicos');
             chartInstances['topMed'] = new Chart(ctxMed, {
                 type: 'bar',
