@@ -12,50 +12,53 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         .analytics-container {
-            padding: 2rem;
-            max-width: 1600px;
-            /* Wider */
+            padding: 1rem;
+            width: 98%;
+            max-width: 1920px;
             margin: 0 auto;
-        }
-
-        .filter-bar {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
         }
 
         .charts-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            /* Bigger cards */
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1rem;
             margin-bottom: 2rem;
         }
 
         .chart-card {
             background: white;
-            padding: 1.5rem;
+            padding: 1rem;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            min-height: 450px;
+            height: 350px;
+            /* Fixed height for uniformity */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Wrapper div for Chart.js compliance */
+        .chart-card>div {
+            flex-grow: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            /* Flexbox scroll fix */
         }
 
         .full-width {
             grid-column: 1 / -1;
         }
 
-        .radio-section {
-            background: #f7fafc;
-            padding: 1.5rem;
+        .controls-card {
+            background: white;
+            padding: 1rem;
             border-radius: 8px;
-            margin-bottom: 2rem;
-            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
         h2.section-title {
@@ -118,37 +121,37 @@
         <div class="charts-grid">
             <div class="chart-card">
                 <h3>Cantidad de Prácticas</h3>
-                <canvas id="chartPractices"></canvas>
+                <div><canvas id="chartPractices"></canvas></div>
             </div>
             <div class="chart-card">
                 <h3>Pacientes Únicos</h3>
-                <canvas id="chartPatients"></canvas>
+                <div><canvas id="chartPatients"></canvas></div>
             </div>
-            <div class="chart-card full-width">
+            <!-- Removed full-width to allow 3rd column -->
+            <div class="chart-card">
                 <h3>Ausentismo por Servicio (%)</h3>
-                <canvas id="chartAbsentism"></canvas>
+                <div><canvas id="chartAbsentism"></canvas></div>
             </div>
         </div>
 
 
+        <h2 class="section-title">Rankings (Por Servicio)</h2>
+        <!-- Custom Controls Bar for Rankings -->
+        <div class="controls-card">
+            <label style="font-weight: 600;">Seleccionar Servicio:</label>
+            <select id="serviceSelect" onchange="updateRankings()" class="form-input" style="width: 300px;">
+                <!-- Populated via JS -->
+            </select>
+        </div>
 
-        <h2 class="section-title">Referidos y Obras Sociales (Top 10)</h2>
         <div class="charts-grid">
-            <div class="chart-card full-width">
-                <div style="margin-bottom: 1rem;">
-                    <label>Seleccionar Servicio para Ranking:</label>
-                    <select id="serviceSelect" onchange="updateRankings()" class="form-input" style="width: 200px;">
-                        <!-- Populated via JS -->
-                    </select>
-                </div>
-                <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 400px;">
-                        <canvas id="chartTopOS"></canvas>
-                    </div>
-                    <div style="flex: 1; min-width: 400px;">
-                        <canvas id="chartTopMedicos"></canvas>
-                    </div>
-                </div>
+            <div class="chart-card">
+                <h3>Top 10 Obras Sociales</h3>
+                <div><canvas id="chartTopOS"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>Top 10 Médicos Derivantes</h3>
+                <div><canvas id="chartTopMedicos"></canvas></div>
             </div>
         </div>
 
@@ -156,11 +159,13 @@
         <div class="charts-grid">
             <div class="chart-card">
                 <!-- San Martin Pathologies -->
-                <canvas id="chartRadioPatSM"></canvas>
+                <h3>Top Patologías - San Martín</h3>
+                <div><canvas id="chartRadioPatSM"></canvas></div>
             </div>
             <div class="chart-card">
                 <!-- Colombia Pathologies -->
-                <canvas id="chartRadioPatCol"></canvas>
+                <h3>Top Patologías - Colombia</h3>
+                <div><canvas id="chartRadioPatCol"></canvas></div>
             </div>
         </div>
 
@@ -491,7 +496,8 @@
                                     anchor: 'end', align: 'end', color: '#2d3748',
                                     font: { weight: 'bold' }
                                 },
-                                title: { display: true, text: 'Top Patologías - San Martín' }
+                                // Title removed (handled in HTML)
+                                title: { display: false }
                             }
                         }
                     });
@@ -527,7 +533,8 @@
                                     anchor: 'end', align: 'end', color: '#2d3748',
                                     font: { weight: 'bold' }
                                 },
-                                title: { display: true, text: 'Top Patologías - Colombia' }
+                                // Title removed (handled in HTML)
+                                title: { display: false }
                             }
                         }
                     });
