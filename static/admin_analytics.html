@@ -332,21 +332,9 @@
             document.getElementById('loader').style.display = 'flex';
 
             try {
-                const res = await fetch(`/analytics/dashboard?start_date=$ {
-                        s
-                    }
-
-                    &end_date=$ {
-                        e
-                    }
-
-                    `, {
+                const res = await fetch(`/analytics/dashboard?start_date=${s}&end_date=${e}`, {
                     headers: {
-                        'Authorization': `Bearer $ {
-                            token
-                        }
-
-                        `
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
@@ -355,14 +343,10 @@
                 globalData = await res.json();
                 renderAll(globalData);
 
-            }
-
-            catch (err) {
+            } catch (err) {
                 console.error(err);
                 alert("Error cargando métricas");
-            }
-
-            finally {
+            } finally {
                 document.getElementById('loader').style.display = 'none';
             }
         }
@@ -373,7 +357,6 @@
 
             // Populate Service Selector if empty
             const sel = document.getElementById('serviceSelect');
-
             if (sel.options.length === 0) {
                 data.forEach(d => {
                     const opt = document.createElement('option');
@@ -386,8 +369,6 @@
             renderPracticesChart(data);
             renderPatientsChart(data);
             renderAbsentismChart(data);
-
-
 
             updateRankings(data);
 
@@ -402,20 +383,11 @@
                 alert("No data loaded yet.");
                 return;
             }
-
             console.log("Global Data:", globalData);
             const radioKeys = globalData.radiotherapy ? Object.keys(globalData.radiotherapy) : "MISSING";
             const services = globalData.services_data.length;
 
-            alert(`Data Loaded:\nServices: $ {
-                    services
-                }
-
-                \nRadiotherapy Keys: $ {
-                    radioKeys
-                }
-
-                \nCheck Console for full object.`);
+            alert(`Data Loaded:\nServices: ${services}\nRadiotherapy Keys: ${radioKeys}\nCheck Console for full object.`);
         }
 
         function destroyChart(id) {
