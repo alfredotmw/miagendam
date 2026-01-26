@@ -470,11 +470,16 @@
                             datasets: [{
                                 label: 'Cantidad',
                                 data: smData.patologias.map(p => p[1]),
-                                backgroundColor: '#38b2ac' // Teal
+                                backgroundColor: '#2c5282', // Corporate Blue
+                                barPercentage: 0.7,
                             }]
                         },
                         options: {
                             ...commonOptions,
+                            layout: {
+                                padding: { right: 50 } // Prevent label clipping
+                            },
+                            maintainAspectRatio: false,
                             plugins: {
                                 legend: { display: false },
                                 datalabels: {
@@ -501,11 +506,16 @@
                             datasets: [{
                                 label: 'Cantidad',
                                 data: colData.patologias.map(p => p[1]),
-                                backgroundColor: '#319795' // Darker Teal
+                                backgroundColor: '#805ad5', // Purple
+                                barPercentage: 0.7,
                             }]
                         },
                         options: {
                             ...commonOptions,
+                            layout: {
+                                padding: { right: 50 } // Prevent label clipping
+                            },
+                            maintainAspectRatio: false,
                             plugins: {
                                 legend: { display: false },
                                 datalabels: {
