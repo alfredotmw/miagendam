@@ -152,6 +152,18 @@
             </div>
         </div>
 
+        <h2 class="section-title">Radioterapia - Patologías</h2>
+        <div class="charts-grid">
+            <div class="chart-card">
+                <!-- San Martin Pathologies -->
+                <canvas id="chartRadioPatSM"></canvas>
+            </div>
+            <div class="chart-card">
+                <!-- Colombia Pathologies -->
+                <canvas id="chartRadioPatCol"></canvas>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -261,6 +273,11 @@
 
 
             updateRankings(data);
+
+            // New Radiotherapy Charts
+            if (radioData) {
+                renderRadioPathologyCharts(radioData);
+            }
         }
 
         function debugMetrics() {
@@ -434,6 +451,73 @@
                 },
                 options: commonOptions
             });
+        }
+
+        // --- NEW: Radiotherapy Pathology Charts ---
+        function renderRadioPathologyCharts(radioData) {
+            if (!radioData) return;
+
+            // San Martin
+            const smData = radioData["SAN MARTIN"];
+            if (smData && smData.patologias) {
+                destroyChart('radioPatSM');
+                const ctx = document.getElementById('chartRadioPatSM');
+                if (ctx) {
+                    chartInstances['radioPatSM'] = new Chart(ctx, {
+                        type: 'bar', // Horizontal bar is good for long text
+                        data: {
+                            labels: smData.patologias.map(p => p[0]),
+                            datasets: [{
+                                label: 'Cantidad',
+                                data: smData.patologias.map(p => p[1]),
+                                backgroundColor: '#38b2ac' // Teal
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            plugins: {
+                                legend: { display: false },
+                                datalabels: {
+                                    anchor: 'end', align: 'end', color: '#2d3748',
+                                    font: { weight: 'bold' }
+                                },
+                                title: { display: true, text: 'Top Patologías - San Martín' }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Colombia
+            const colData = radioData["COLOMBIA"];
+            if (colData && colData.patologias) {
+                destroyChart('radioPatCol');
+                const ctx = document.getElementById('chartRadioPatCol');
+                if (ctx) {
+                    chartInstances['radioPatCol'] = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: colData.patologias.map(p => p[0]),
+                            datasets: [{
+                                label: 'Cantidad',
+                                data: colData.patologias.map(p => p[1]),
+                                backgroundColor: '#319795' // Darker Teal
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            plugins: {
+                                legend: { display: false },
+                                datalabels: {
+                                    anchor: 'end', align: 'end', color: '#2d3748',
+                                    font: { weight: 'bold' }
+                                },
+                                title: { display: true, text: 'Top Patologías - Colombia' }
+                            }
+                        }
+                    });
+                }
+            }
         }
 
         window.onload = initDates;
