@@ -208,6 +208,7 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
              # This assumes the latest appointment is the source of truth for the current treatment.
              
              # 1. Update Pathology if present
+             updated_persistent = False # Fix UnboundLocalError
              if turno_in.patologia:
                  pato_normalized = turno_in.patologia.strip().upper()
                  if seguimiento.patologia != pato_normalized:
