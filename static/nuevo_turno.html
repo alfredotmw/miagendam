@@ -638,14 +638,15 @@
             container.innerHTML = '';
             const today = new Date();
             let count = 0;
-            let i = -1; // Start from yesterday (Day -1)
+            let i = -7; // Start from 1 week ago (Allow retroactive booking)
 
             // Extend to 90 days as requested
             while (count < 90) {
                 const d = new Date(today);
                 d.setDate(today.getDate() + i);
                 i++;
-                if (d.getDay() === 0) continue; // Skip Sundays
+                if (d.getDay() === 0 && i > 0) continue; // Skip Future Sundays, but show Past Sundays if needed? Strict rule: Skip Sundays generally.
+                if (d.getDay() === 0) continue;
 
                 const dateStr = d.toISOString().split('T')[0];
                 const div = document.createElement('div');
@@ -653,12 +654,9 @@
                 const displayDate = d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0');
 
                 // Determine precise day status
-                // We use new Date() for "now" reference, d is the loop date
                 const now = new Date();
                 const isToday = d.toDateString() === now.toDateString();
-                const yesterday = new Date(now);
-                yesterday.setDate(now.getDate() - 1);
-                const isYesterday = d.toDateString() === yesterday.toDateString();
+                const isPast = d < new Date(now.setHours(0, 0, 0, 0)); // Strictly past dates
 
                 let labelStyle = "";
                 let suffix = "";
@@ -666,9 +664,9 @@
                 if (isToday) {
                     labelStyle = "font-weight:bold; color:#2b6cb0;";
                     suffix = " (Hoy)";
-                } else if (isYesterday) {
-                    labelStyle = "font-weight:bold; color:#c53030;";
-                    suffix = " (Ayer)";
+                } else if (isPast) {
+                    labelStyle = "font-weight:bold; color:#c53030;"; // Red for past
+                    suffix = " (Pasado)";
                 }
 
                 div.innerHTML = `<input type="checkbox" name="fechas_multi" value="${dateStr}" id="d_${dateStr}"> <label for="d_${dateStr}" style="${labelStyle}">${displayDate}${suffix}</label>`;
@@ -676,7 +674,6 @@
                 count++;
             }
         }
-
         // Add listener to Checkbox
         document.getElementById('crear_seguimiento').addEventListener('change', function () {
             toggleSpecialFields();
@@ -833,6 +830,7 @@
                 // 2. Create Turnos
                 let successCount = 0;
                 let errorCount = 0;
+                let lastError = ""; // Fix variable missing error
                 const patologia = document.getElementById('patologia').value || null;
                 const agendaSelect = document.getElementById('agenda_id');
                 const tipoAgenda = agendaSelect.options[agendaSelect.selectedIndex].dataset.tipo;
@@ -856,20 +854,22 @@
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                         body: JSON.stringify(turnoData)
                     });
-
                     if (tRes.ok) successCount++;
                     else {
                         const tErr = await tRes.text();
                         console.error('Error creando turno:', tErr);
+                        lastError = tErr; // Capture last error
                         errorCount++;
                     }
                 }
 
                 if (successCount > 0) {
-                    alert(`✅ Turno(s) creado(s) con éxito!`);
+                    let msg = `✅ ${successCount} Turno(s) creado(s) con éxito!`;
+                    if (errorCount > 0) msg += `\n⚠️ ${errorCount} fallaron: ${lastError}`;
+                    alert(msg);
                     window.location.href = '/static/dashboard.html';
                 } else {
-                    alert('Error al crear el turno. Verifique la disponibilidad.');
+                    alert('Error al crear el turno: ' + (lastError || 'Verifique la disponibilidad.'));
                 }
 
             } catch (error) {
