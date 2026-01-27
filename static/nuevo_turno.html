@@ -638,20 +638,40 @@
             container.innerHTML = '';
             const today = new Date();
             let count = 0;
-            let i = 0;
+            let i = -1; // Start from yesterday (Day -1)
 
-            while (count < 50) {
+            // Extend to 90 days as requested
+            while (count < 90) {
                 const d = new Date(today);
                 d.setDate(today.getDate() + i);
                 i++;
-                if (d.getDay() === 0) continue;
+                if (d.getDay() === 0) continue; // Skip Sundays
 
                 const dateStr = d.toISOString().split('T')[0];
                 const div = document.createElement('div');
                 div.className = 'checkbox-item';
                 const displayDate = d.getDate().toString().padStart(2, '0') + '/' + (d.getMonth() + 1).toString().padStart(2, '0');
 
-                div.innerHTML = `<input type="checkbox" name="fechas_multi" value="${dateStr}" id="d_${dateStr}"> <label for="d_${dateStr}">${displayDate}</label>`;
+                // Determine precise day status
+                // We use new Date() for "now" reference, d is the loop date
+                const now = new Date();
+                const isToday = d.toDateString() === now.toDateString();
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+                const isYesterday = d.toDateString() === yesterday.toDateString();
+
+                let labelStyle = "";
+                let suffix = "";
+
+                if (isToday) {
+                    labelStyle = "font-weight:bold; color:#2b6cb0;";
+                    suffix = " (Hoy)";
+                } else if (isYesterday) {
+                    labelStyle = "font-weight:bold; color:#c53030;";
+                    suffix = " (Ayer)";
+                }
+
+                div.innerHTML = `<input type="checkbox" name="fechas_multi" value="${dateStr}" id="d_${dateStr}"> <label for="d_${dateStr}" style="${labelStyle}">${displayDate}${suffix}</label>`;
                 container.appendChild(div);
                 count++;
             }
