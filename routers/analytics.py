@@ -36,6 +36,10 @@ def normalize_service(agenda_name, practices_names=None):
         # Concatenamos para buscar keywords en el conjunto
         full_practice_str = " ".join(practices_names).upper()
         
+        # 🟢 2.1 Excepción TAC DE MARCACIÓN (Pedido explícito para separar en métricas)
+        if "TAC DE MARCACIÓN" in full_practice_str or "TAC DE MARCACION" in full_practice_str:
+            return "TAC ACL"
+        
         if any(k in full_practice_str for k in ["RADIOGRAFIA", "RX", "PLACA", "ESPINOGRAMA", "INCIDENCIA", "MAMOGRAFIA", "DENSITOMETRIA", "UROGRAMA", "TELEGONO"]):
             return "RADIOGRAFIA"
         
@@ -134,6 +138,7 @@ def get_excel_feed(
 ):
     # Verify Token manually (query param auth for Excel)
     try:
+        from jose import jwt, JWTError # Fix imports if needed inside processing or global
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         if "sub" not in payload:
             raise HTTPException(status_code=401, detail="Invalid token")
@@ -196,7 +201,8 @@ def get_dashboard_data(
     from datetime import datetime
     
     # Base Query
-    query = db.query(Turno).join(Agenda).join(Paciente).outerjoin(MedicoDerivante).outerjoin(TurnoPractica).outerjoin(Practica)
+    # 🟢 FIX: Use DISTINCT to avoid double counting if multiple practices or joins multiply rows
+    query = db.query(Turno).distinct().join(Agenda).join(Paciente).outerjoin(MedicoDerivante).outerjoin(TurnoPractica).outerjoin(Practica)
     
     if start_date:
         query = query.filter(Turno.fecha >= start_date)
