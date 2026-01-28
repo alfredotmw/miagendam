@@ -197,6 +197,22 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
                 md = db.get(MedicoDerivante, medico_id)
                 if md: derivante_name = md.nombre
 
+            # 🟢 SEARCH FOR CONSULTA DE 1RA VEZ
+            fecha_1ra_consulta = None
+            try:
+                # Search specifically for practice "CONSULTA DE 1RA VEZ"
+                first_consult = db.query(Turno).join(TurnoPractica).join(Practica)\
+                    .filter(Turno.paciente_id == turno_in.paciente_id)\
+                    .filter(Turno.id != nuevo_turno.id)\
+                    .filter(Practica.nombre == "CONSULTA DE 1RA VEZ")\
+                    .order_by(Turno.fecha.desc())\
+                    .first()
+                
+                if first_consult:
+                    fecha_1ra_consulta = first_consult.fecha.date()
+            except Exception as e:
+                print(f"Error searching first consult: {e}")
+
             seguimiento = SeguimientoRadioterapia(
                 paciente_id=turno_in.paciente_id,
                 patologia=turno_in.patologia.strip().upper() if turno_in.patologia else None,
@@ -204,7 +220,7 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
                 medico_responsable=responsable,
                 sede=sede,
                 tipo_tecnica=technique,
-                fecha_consulta=fecha_hora_real.date(),
+                fecha_consulta=fecha_1ra_consulta,
                 created_at=datetime.now()
             )
             db.add(seguimiento)
