@@ -177,7 +177,8 @@
             </div>
             <div><button onclick="applyFilters()" class="btn-compact btn-primary-new">Aplicar Filtros</button></div>
             <div style="width: 1px; height: 30px; background: #e2e8f0; margin: 0 0.5rem;"></div>
-            <div style="display: flex; gap: 0.5rem;"><button onclick="setRange('today')"
+            <div style="display: flex; gap: 0.5rem;"><button onclick="setRange('yesterday')"
+                    class="btn-compact btn-secondary-new">Ayer</button><button onclick="setRange('today')"
                     class="btn-compact btn-secondary-new">Hoy</button><button onclick="setRange('month')"
                     class="btn-compact btn-secondary-new">Este Mes</button><button onclick="setRange('year')"
                     class="btn-compact btn-secondary-new">Este Año</button></div>
@@ -304,6 +305,10 @@
 
             if (type === 'today') {
                 start = end = now;
+            } else if (type === 'yesterday') {
+                start = new Date(now);
+                start.setDate(now.getDate() - 1);
+                end = new Date(start);
             }
 
             else if (type === 'month') {
