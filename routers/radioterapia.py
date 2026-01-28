@@ -52,6 +52,8 @@ def get_excel_feed(
             "Paciente": f"{pat.apellido}, {pat.nombre}" if pat else "",
             # Column 2: Edad
             "Edad": pat.edad if pat else "",
+            # Column 2.5: Obra Social
+            "Obra_Social": pat.obra_social.nombre if pat and pat.obra_social else (pat.nro_afiliado if pat.nro_afiliado else ""),
             # Column 3: Patología
             "Patologia": reg.patologia,
             # Column 4: Medico Responsable
