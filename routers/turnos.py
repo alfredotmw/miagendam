@@ -59,6 +59,16 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
         if len(practicas) != len(set(turno_in.practicas_ids)):
             raise HTTPException(status_code=400, detail="Una o más prácticas no existen")
 
+        # 🟢 AUTOMATION: Pre-calculate TAC MARCACION trigger
+        is_tac_marcacion_trigger = False
+        import unicodedata
+        def normalize_text_check(text):
+            return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn').upper()
+
+        for p in practicas:
+            if "MARCACION" in normalize_text_check(p.nombre):
+                is_tac_marcacion_trigger = True
+
         # Calcular duración
         from services.turno_service import calculate_duration, check_availability
         from models.medico import MedicoDerivante # Importar modelo
@@ -156,7 +166,7 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
              seguimiento = latest_seg
 
         # 2. Create Logic (if needed)
-        if turno_in.crear_seguimiento and not seguimiento:
+        if (turno_in.crear_seguimiento or is_tac_marcacion_trigger) and not seguimiento:
             # Determine Responsible from Agenda Name
             responsable = "Dr. Angel Miño" # Default fallback
             a_name = agenda.nombre.upper()
