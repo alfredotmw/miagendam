@@ -59,6 +59,7 @@ def normalize_service(agenda_name, practices_names=None):
     if "PET" in name: return "PET"
     if "CONSULTORIO" in name: return "CONSULTORIOS"
     if "RADIOGRAFIA" in name or "RX" in name: return "RADIOGRAFIA"
+    if "ELECTRO" in name or "MAPEO" in name or "EEG" in name: return "ELECTRO Y MAPEOS"
     
     return "OTROS"
 
