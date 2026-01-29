@@ -130,9 +130,9 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
             )
             db.add(tp)
 
-        db.commit()
-        db.refresh(nuevo_turno)
-
+        # db.commit()  <-- REMOVED: Commit moved to the end to ensure atomicity
+        # db.refresh(nuevo_turno) <-- REMOVED
+        
             
         # 🟢 AUTOMATION: Radiotherapy Registry (Create & Update)
         from models.radioterapia import SeguimientoRadioterapia
@@ -224,8 +224,8 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
                 created_at=datetime.now()
             )
             db.add(seguimiento)
-            db.commit()
-            db.refresh(seguimiento)
+            # db.commit() <-- Removed internal commit to rely on final commit
+            # db.refresh(seguimiento)
         
         # 🟢 FIX: If we ARE reusing a tracking record, force update of Derivante/Patologia if they changed
         # This fixes the issue where old tracking info persists even if the new appointment has different data.
@@ -263,7 +263,7 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
 
              if updated_persistent:
                  db.add(seguimiento)
-                 db.commit()
+                 # db.commit() <-- Removed internal commit
 
         # 3. Update Logic (if tracking exists)
         if seguimiento:
@@ -353,7 +353,13 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
 
             if updated:
                 db.add(seguimiento)
-                db.commit()
+                # db.commit() <-- Removed internal commit
+
+        # ✅ FINAL ATOMIC COMMIT
+        # This commit saves BOTH the Turno and any Radiotherapy Tracking changes.
+        # If any exception occurred above, we jump to except block and NOTHING is saved.
+        db.commit()
+        db.refresh(nuevo_turno)
 
         return nuevo_turno
     except HTTPException as e:
@@ -361,7 +367,8 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
     except Exception as e:
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+        # Implicit rollback on exception
+        raise HTTPException(status_code=500, detail=f"Error interno creando turno: {str(e)}")
 
 
 @router.get("/", response_model=List[TurnoOut])
