@@ -658,31 +658,31 @@
                     // BUT: Only show Absent button if not completed/absent? 
                     // Wait, user wants Reschedule EVEN IF Absent.
 
-                    // 🟢 NEW: Edit Patient Button - AVAILABLE FOR ALL STATUSES (Even Completed)
-                    html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0; margin-right: 0.5rem;">✏️</button>`;
+                    // 🟢 NEW: Edit Patient Button
+                    html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0; margin-right: 15px;">✏️</button>`;
 
                     if (estado !== 'COMPLETADO') {
                         html += `
-                                <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar" style="margin-right: 0.5rem;">✅</button>
-                                <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar" style="margin-right: 0.5rem;">📅</button>
+                                <button class="action-btn btn-complete" onclick="clickCompletar(${turno.id})" title="Completar" style="margin-right: 15px;">✅</button>
+                                <button class="action-btn btn-reschedule" onclick="clickReprogramar(${turno.id})" title="Reprogramar" style="margin-right: 15px;">📅</button>
                             `;
 
                         const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
                         const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar WhatsApp';
 
-                        html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}" style="margin-right: 0.5rem;">💬</button>`;
+                        html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}" style="margin-right: 10px;">💬</button>`;
 
                         // 🟢 NEW: Start Tracking Button
-                        html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030; margin-right: 0.5rem;">☢️</button>`;
+                        html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030; margin-right: 10px;">☢️</button>`;
 
                         if (estado !== 'AUSENTE') {
-                            html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente" style="margin-right: 0.5rem;">❌</button>`;
+                            html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente" style="margin-right: 10px;">❌</button>`;
                         }
 
-                        html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0; margin-right: 0.5rem;">📋</button>`;
+                        html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0; margin-right: 10px;">📋</button>`;
 
                         // NEW: Delete Button (Red Trash Can)
-                        html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 0.25rem;">🗑️</button>`;
+                        html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
                     }
                 } else {
                     html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
@@ -1539,6 +1539,17 @@
             } finally {
                 textarea.placeholder = originalPlaceholder;
             }
+        }
+
+        // Wrappers to break cache/collision issues
+        function clickCompletar(id) {
+            console.log("clickCompletar wrapper called", id);
+            requestUpdateStatus(id, 'COMPLETADO');
+        }
+
+        function clickReprogramar(id) {
+            console.log("clickReprogramar wrapper called", id);
+            openReschedule(id);
         }
 
         // Initialize Paste Listener
