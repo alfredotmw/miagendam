@@ -403,1158 +403,1183 @@
     </datalist>
     </div>
 
-    <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = '/static/login.html';
+    <script src="/static/js/agendas_main.js?v=20260129-2"></script>
+</body>
 
-        // Load Patologias
-        fetch('/common/patologias', { headers: { 'Authorization': `Bearer ${token}` } })
-            .then(r => r.json())
-            .then(data => {
-                const dl = document.getElementById('cancer-types-list');
-                dl.innerHTML = '';
-                data.forEach(item => {
-                    const op = document.createElement('option');
-                    op.value = item;
-                    dl.appendChild(op);
-                });
-            })
-            .catch(e => console.error("Could not load pathologies", e));
+</html>
+// Load Patologias
+fetch('/common/patologias', { headers: { 'Authorization': `Bearer ${token}` } })
+.then(r => r.json())
+.then(data => {
+const dl = document.getElementById('cancer-types-list');
+dl.innerHTML = '';
+data.forEach(item => {
+const op = document.createElement('option');
+op.value = item;
+dl.appendChild(op);
+});
+})
+.catch(e => console.error("Could not load pathologies", e));
 
 
-        let currentAgendaId = null;
-        let currentAgendaType = null;
-        let currentTurnoId = null;
+let currentAgendaId = null;
+let currentAgendaType = null;
+let currentTurnoId = null;
 
-        // Variables for confirmation modal
-        let pendingAction = null;
-        let pendingId = null;
-        let pendingStatus = null;
+// Variables for confirmation modal
+let pendingAction = null;
+let pendingId = null;
+let pendingStatus = null;
 
-        // Set default date to today
-        document.getElementById('dateFilter').valueAsDate = new Date();
+// Set default date to today
+document.getElementById('dateFilter').valueAsDate = new Date();
 
-        async function loadUser() {
-            if (!token) return;
-            try {
-                const res = await fetch('/users/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+async function loadUser() {
+if (!token) return;
+try {
+const res = await fetch('/users/me', {
+headers: { 'Authorization': `Bearer ${token}` }
+});
 
-                if (!res.ok) {
-                    throw new Error(`Error ${res.status}`);
-                }
+if (!res.ok) {
+throw new Error(`Error ${res.status}`);
+}
 
-                const user = await res.json();
-                document.getElementById('user-name-display').textContent = `${user.username} (${user.role})`;
+const user = await res.json();
+document.getElementById('user-name-display').textContent = `${user.username} (${user.role})`;
 
-                if (user.role === 'ADMIN') {
-                    const al = document.getElementById('admin-links');
-                    if (al) al.style.display = 'block';
-                }
+if (user.role === 'ADMIN') {
+const al = document.getElementById('admin-links');
+if (al) al.style.display = 'block';
+}
 
-            } catch (e) {
-                console.error("Auth Error:", e);
-                document.getElementById('user-name-display').textContent = 'Error al cargar';
-                document.getElementById('user-name-display').style.color = 'red';
-                document.getElementById('user-name-display').style.fontSize = '0.8rem';
-                // Optionally redirect to login if 401
-            }
-        }
+} catch (e) {
+console.error("Auth Error:", e);
+document.getElementById('user-name-display').textContent = 'Error al cargar';
+document.getElementById('user-name-display').style.color = 'red';
+document.getElementById('user-name-display').style.fontSize = '0.8rem';
+// Optionally redirect to login if 401
+}
+}
 
-        loadUser();
+loadUser();
 
-        async function loadAgendas() {
-            try {
-                const response = await fetch(`/agendas/?_=${new Date().getTime()}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+async function loadAgendas() {
+try {
+const response = await fetch(`/agendas/?_=${new Date().getTime()}`, {
+headers: { 'Authorization': `Bearer ${token}` }
+});
 
-                if (response.status === 401) {
-                    logout();
-                    return;
-                }
+if (response.status === 401) {
+logout();
+return;
+}
 
-                const agendas = await response.json();
-                renderAgendaList(agendas);
+const agendas = await response.json();
+renderAgendaList(agendas);
 
-                // ✨ Auto-select logic if only 1 agenda exists (Fix for Doctors)
-                if (agendas.length === 1) {
-                    const firstAgenda = agendas[0];
-                    const item = document.querySelector(`.agenda-item[data-id="${firstAgenda.id}"]`);
-                    if (item) selectAgendaFromClick(item);
-                }
+// ✨ Auto-select logic if only 1 agenda exists (Fix for Doctors)
+if (agendas.length === 1) {
+const firstAgenda = agendas[0];
+const item = document.querySelector(`.agenda-item[data-id="${firstAgenda.id}"]`);
+if (item) selectAgendaFromClick(item);
+}
 
-            } catch (error) {
-                console.error('Error loading agendas:', error);
-                document.getElementById('agendaList').innerHTML = '<div style="text-align: center; padding: 1rem; color: #f56565;">Error al cargar agendas</div>';
-            }
-        }
+} catch (error) {
+console.error('Error loading agendas:', error);
+document.getElementById('agendaList').innerHTML = '<div style="text-align: center; padding: 1rem; color: #f56565;">Error
+    al cargar agendas</div>';
+}
+}
 
-        function renderAgendaList(agendas) {
-            const container = document.getElementById('agendaList');
-            container.innerHTML = agendas.map(agenda => `
-                <div class="agenda-item" 
-                     data-id="${agenda.id}" 
-                     data-name="${agenda.nombre.replace(/"/g, '&quot;')}" 
-                     data-type="${agenda.tipo}"
-                     onclick="selectAgendaFromClick(this)">
-                    <div class="dot"></div>
-                    <div>
-                        <div style="font-weight: 500;">${agenda.nombre}</div>
-                        <div style="font-size: 0.75rem; color: #718096; text-transform: uppercase;">${agenda.tipo}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
+function renderAgendaList(agendas) {
+const container = document.getElementById('agendaList');
+container.innerHTML = agendas.map(agenda => `
+<div class="agenda-item" data-id="${agenda.id}" data-name="${agenda.nombre.replace(/" /g, '&quot;' )}"
+    data-type="${agenda.tipo}" onclick="selectAgendaFromClick(this)">
+    <div class="dot"></div>
+    <div>
+        <div style="font-weight: 500;">${agenda.nombre}</div>
+        <div style="font-size: 0.75rem; color: #718096; text-transform: uppercase;">${agenda.tipo}</div>
+    </div>
+</div>
+`).join('');
+}
 
-        function selectAgendaFromClick(element) {
-            const id = element.dataset.id;
-            const name = element.dataset.name;
-            const type = element.dataset.type;
+function selectAgendaFromClick(element) {
+const id = element.dataset.id;
+const name = element.dataset.name;
+const type = element.dataset.type;
 
-            document.querySelectorAll('.agenda-item').forEach(el => el.classList.remove('active'));
-            element.classList.add('active');
+document.querySelectorAll('.agenda-item').forEach(el => el.classList.remove('active'));
+element.classList.add('active');
 
-            document.getElementById('currentAgendaTitle').textContent = name;
-            document.getElementById('filtersBar').style.display = 'flex';
+document.getElementById('currentAgendaTitle').textContent = name;
+document.getElementById('filtersBar').style.display = 'flex';
 
-            currentAgendaId = id;
-            currentAgendaType = type;
+currentAgendaId = id;
+currentAgendaType = type;
 
-            loadPracticas(type);
-            loadSlots();
-        }
+loadPracticas(type);
+loadSlots();
+}
 
-        async function loadPracticas(tipo) {
-            const select = document.getElementById('practicaFilter');
-            select.innerHTML = '<option value="">Cargando...</option>';
+async function loadPracticas(tipo) {
+const select = document.getElementById('practicaFilter');
+select.innerHTML = '<option value="">Cargando...</option>';
 
-            try {
-                const response = await fetch(`/practicas/?categoria=${tipo}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const practicas = await response.json();
-                select.innerHTML = '<option value="">Todas las prácticas</option>' +
-                    practicas.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
-            } catch (error) {
-                console.error('Error loading practicas:', error);
-                select.innerHTML = '<option value="">Error al cargar</option>';
-            }
-        }
+try {
+const response = await fetch(`/practicas/?categoria=${tipo}`, {
+headers: { 'Authorization': `Bearer ${token}` }
+});
+const practicas = await response.json();
+select.innerHTML = '<option value="">Todas las prácticas</option>' +
+practicas.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+} catch (error) {
+console.error('Error loading practicas:', error);
+select.innerHTML = '<option value="">Error al cargar</option>';
+}
+}
 
-        let currentSlots = []; // Global store
+let currentSlots = []; // Global store
 
-        async function loadSlots() {
-            if (!currentAgendaId) return;
+async function loadSlots() {
+if (!currentAgendaId) return;
 
-            const container = document.getElementById('turnosContainer');
-            container.innerHTML = '<div style="text-align: center; padding: 4rem; color: #718096;">Cargando disponibilidad...</div>';
+const container = document.getElementById('turnosContainer');
+container.innerHTML = '<div style="text-align: center; padding: 4rem; color: #718096;">Cargando disponibilidad...</div>
+';
 
-            const date = document.getElementById('dateFilter').value;
-            const practicaId = document.getElementById('practicaFilter').value;
+const date = document.getElementById('dateFilter').value;
+const practicaId = document.getElementById('practicaFilter').value;
 
-            try {
-                let url = `/agendas/${currentAgendaId}/slots?fecha=${date}&_=${new Date().getTime()}`;
-                if (practicaId) url += `&practica_id=${practicaId}`;
+try {
+let url = `/agendas/${currentAgendaId}/slots?fecha=${date}&_=${new Date().getTime()}`;
+if (practicaId) url += `&practica_id=${practicaId}`;
 
-                const response = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+const response = await fetch(url, {
+headers: { 'Authorization': `Bearer ${token}` }
+});
 
-                const slots = await response.json();
-                currentSlots = slots; // Store for access
-                renderSlots(slots);
-            } catch (error) {
-                console.error(error);
-                container.innerHTML = '<p style="color: #f56565; text-align: center; padding: 2rem;">Error al cargar disponibilidad</p>';
-            }
-        }
+const slots = await response.json();
+currentSlots = slots; // Store for access
+renderSlots(slots);
+} catch (error) {
+console.error(error);
+container.innerHTML = '<p style="color: #f56565; text-align: center; padding: 2rem;">Error al cargar disponibilidad</p>
+';
+}
+}
 
-        function renderSlots(slots) {
-            const container = document.getElementById('turnosContainer');
-            const statsContainer = document.getElementById('agendaStats');
+function renderSlots(slots) {
+const container = document.getElementById('turnosContainer');
+const statsContainer = document.getElementById('agendaStats');
 
-            // 🟢 Statistics Logic
-            let occupiedCount = 0;
-            let availableCount = 0;
+// 🟢 Statistics Logic
+let occupiedCount = 0;
+let availableCount = 0;
 
-            slots.forEach(s => {
-                if (s.turno) occupiedCount++;
-                else if (s.disponible) availableCount++;
-            });
+slots.forEach(s => {
+if (s.turno) occupiedCount++;
+else if (s.disponible) availableCount++;
+});
 
-            // Update UI Stats
-            if (slots.length > 0 || currentAgendaId) {
-                statsContainer.style.display = 'flex';
-                statsContainer.innerHTML = `
-                    <div style="background: #EBF8FF; color: #2B6CB0; padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; border: 1px solid #BEE3F8;">
-                        Otorgados: ${occupiedCount}
-                    </div>
-                    <div style="background: #F0FFF4; color: #2F855A; padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; border: 1px solid #C6F6D5;">
-                        Disponibles: ${availableCount}
-                    </div>
-                `;
-            } else {
-                statsContainer.style.display = 'none';
-            }
+// Update UI Stats
+if (slots.length > 0 || currentAgendaId) {
+statsContainer.style.display = 'flex';
+statsContainer.innerHTML = `
+<div
+    style="background: #EBF8FF; color: #2B6CB0; padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; border: 1px solid #BEE3F8;">
+    Otorgados: ${occupiedCount}
+</div>
+<div
+    style="background: #F0FFF4; color: #2F855A; padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; border: 1px solid #C6F6D5;">
+    Disponibles: ${availableCount}
+</div>
+`;
+} else {
+statsContainer.style.display = 'none';
+}
 
-            if (slots.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 4rem; color: #a0aec0;">No hay horarios disponibles para esta fecha</div>';
-                return;
-            }
+if (slots.length === 0) {
+container.innerHTML = '<div style="text-align: center; padding: 4rem; color: #a0aec0;">No hay horarios disponibles para
+    esta fecha</div>';
+return;
+}
 
-            let html = `
-                <table class="turnos-table">
-                    <thead>
-                        <tr>
-                            <th>Hora</th>
-                            <th>Paciente</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
+let html = `
+<table class="turnos-table">
+    <thead>
+        <tr>
+            <th>Hora</th>
+            <th>Paciente</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        `;
 
-            const dateFilter = document.getElementById('dateFilter');
-            const selectedDate = dateFilter && dateFilter.value ? dateFilter.value : new Date().toISOString().split('T')[0];
+        const dateFilter = document.getElementById('dateFilter');
+        const selectedDate = dateFilter && dateFilter.value ? dateFilter.value : new Date().toISOString().split('T')[0];
 
-            slots.forEach(slot => {
-                const turno = slot.turno;
-                const isOccupied = !!turno;
+        slots.forEach(slot => {
+        const turno = slot.turno;
+        const isOccupied = !!turno;
 
-                html += `<tr>
-                    <td><span style="font-weight: 500; color: #2d3748;">${slot.hora}</span></td>
-                    <td>`;
+        html += `<tr>
+            <td><span style="font-weight: 500; color: #2d3748;">${slot.hora}</span></td>
+            <td>`;
 
                 if (isOccupied) {
-                    const p = turno.paciente;
-                    const nombre = p ? `${p.nombre} ${p.apellido}` : 'ID: ' + turno.paciente_id;
-                    html += `<strong>${nombre}</strong>`;
-                    if (turno.patologia) html += `<br><small style="color: #718096;">${turno.patologia}</small>`;
+                const p = turno.paciente;
+                const nombre = p ? `${p.nombre} ${p.apellido}` : 'ID: ' + turno.paciente_id;
+                html += `<strong>${nombre}</strong>`;
+                if (turno.patologia) html += `<br><small style="color: #718096;">${turno.patologia}</small>`;
                 } else {
-                    html += `<span style="color: #a0aec0;">Disponible</span>`;
+                html += `<span style="color: #a0aec0;">Disponible</span>`;
                 }
 
                 html += `</td>
-                    <td>`;
+            <td>`;
 
                 if (isOccupied) {
-                    const estado = turno.estado ? turno.estado.toUpperCase() : 'DESCONOCIDO';
-                    const estadoClass = turno.estado ? turno.estado.toLowerCase() : 'unknown';
-                    html += `<span class="status-badge status-${estadoClass}">${estado}</span>`;
+                const estado = turno.estado ? turno.estado.toUpperCase() : 'DESCONOCIDO';
+                const estadoClass = turno.estado ? turno.estado.toLowerCase() : 'unknown';
+                html += `<span class="status-badge status-${estadoClass}">${estado}</span>`;
                 } else {
-                    html += `-`;
+                html += `-`;
                 }
 
                 html += `</td>
-                    <td>`;
+            <td>`;
 
                 if (isOccupied) {
-                    const estado = turno.estado ? turno.estado.toUpperCase().trim() : '';
-
-                    // Logic: Show Reschedule/Complete for everyone except Completed
-                    // BUT: Only show Absent button if not completed/absent? 
-                    // Wait, user wants Reschedule EVEN IF Absent.
-
-                    // 🟢 NEW: Edit Patient Button
-                    html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0; margin-right: 15px;">✏️</button>`;
-
-                    if (estado !== 'COMPLETADO') {
-                        html += `
-                                <button class="action-btn btn-complete" onclick="clickCompletar(${turno.id})" title="Completar" style="margin-right: 15px;">✅</button>
-                                <button class="action-btn btn-reschedule" onclick="clickReprogramar(${turno.id})" title="Reprogramar" style="margin-right: 15px;">📅</button>
-                            `;
-
-                        const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
-                        const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar WhatsApp';
-
-                        html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}" style="margin-right: 10px;">💬</button>`;
-
-                        // 🟢 NEW: Start Tracking Button
-                        html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030; margin-right: 10px;">☢️</button>`;
-
-                        if (estado !== 'AUSENTE') {
-                            html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente" style="margin-right: 10px;">❌</button>`;
-                        }
-
-                        html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0; margin-right: 10px;">📋</button>`;
-
-                        // NEW: Delete Button (Red Trash Can)
-                        html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
-                    }
-                } else {
-                    html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
-                }
-
-                html += `</td></tr>`;
-            });
-
-            html += `</tbody></table>`;
-            container.innerHTML = html;
-        }
-
-        // 🟢 NEW: Delete Turn Function
-        async function deleteTurno(id) {
-            if (!confirm("⚠️ ¿ESTÁ SEGURO DE QUE DESEA ELIMINAR ESTE TURNO?\n\nEsta acción es irreversible y borrará el turno de la base de datos para siempre.")) return;
-
-            // Optional second confirmation for safety
-            // if (!confirm("Confirme nuevamente: ¿Eliminar turno definitivamente?")) return;
-
-            try {
-                const response = await fetch(`/turnos/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.ok) {
-                    // Remove from UI immediately or reload
-                    // loadSlots(); 
-                    // Let's reload to be safe and sync state
-                    loadSlots();
-                    alert('Turno eliminado correctamente.');
-                } else {
-                    const err = await response.text();
-                    alert('Error al eliminar: ' + err);
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Error de conexión');
-            }
-        }
-
-        // 🟢 NEW: Start Radiotherapy Function
-        async function startRadiotherapy(id, btn) {
-            if (!confirm("¿Iniciar Seguimiento de Radioterapia para este paciente?\n\nEsto creará un registro activo si no existe.")) return;
-
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '...';
-            btn.disabled = true;
-
-            try {
-                const response = await fetch(`/turnos/${id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ crear_seguimiento: true })
-                });
-
-                if (response.ok) {
-                    alert('Seguimiento Iniciado / Verificado.');
-                    // Optional: Change icon to indicate success
-                    btn.style.background = "#C6F6D5";
-                    btn.style.borderColor = "#68D391";
-                    btn.style.color = "#22543D";
-                    btn.innerHTML = "☢️✅";
-                } else {
-                    const err = await response.text();
-                    alert('Error: ' + err);
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Error de conexión');
-            } finally {
-                if (btn.innerHTML === '...') {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }
-            }
-        }
-
-        function agendar(fechaIso, hora) {
-            if (!currentAgendaId) return;
-            const dateStr = fechaIso.split('T')[0];
-
-            const params = new URLSearchParams({
-                agenda_id: currentAgendaId,
-                fecha: dateStr,
-                hora: hora
-            });
-            window.location.href = `/static/nuevo_turno.html?${params.toString()}`;
-        }
-
-        function openReschedule(id) {
-            console.log("openReschedule called:", id);
-            currentTurnoId = id;
-            const modal = document.getElementById('rescheduleModal');
-            if (modal) {
-                modal.classList.add('active');
-                modal.style.display = 'flex';
-            }
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('rescheduleModal');
-            if (modal) {
-                modal.classList.remove('active');
-                modal.style.display = 'none';
-            }
-            currentTurnoId = null;
-        }
-
-        async function confirmReschedule() {
-            if (!currentTurnoId) return;
-
-            const newDate = document.getElementById('newDate').value;
-            const newTime = document.getElementById('newTime').value;
-
-            if (!newDate || !newTime) {
-                alert('Ingrese fecha y hora');
-                return;
-            }
-
-            const btn = document.querySelector('#rescheduleModal .btn-confirm');
-            const originalText = btn.textContent;
-            btn.textContent = 'Guardando...';
-            btn.disabled = true;
-
-            // Find current turno data
-            let foundTurno = null;
-            if (currentSlots) {
-                for (let s of currentSlots) {
-                    if (s.turno && s.turno.id === currentTurnoId) {
-                        foundTurno = s.turno;
-                        break;
-                    }
-                }
-            }
-
-            try {
-                // BRANCH LOGIC: If AUSENTE -> Create NEW Turno. Else -> PATCH.
-                if (foundTurno && foundTurno.estado === 'AUSENTE') {
-                    // Create Clone
-                    const payload = {
-                        paciente_id: foundTurno.paciente_id,
-                        agenda_id: foundTurno.agenda_id || parseInt(currentAgendaId), // 👈 FIX: Fallback to global
-                        fecha: newDate,
-                        hora: newTime,
-                        duracion: foundTurno.duracion || 20,
-                        estado: "PENDIENTE",
-                        medico_derivante_id: foundTurno.medico_derivante_id,
-                        patologia: foundTurno.patologia,
-                        crear_seguimiento: false, // Don't duplicate logic, but dates will update
-                        practicas_ids: foundTurno.practicas ? foundTurno.practicas.map(p => p.id) : []
-                    };
-
-                    const response = await fetch('/turnos/', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-                    if (response.ok) {
-                        alert('Nuevo turno creado (El anterior permanece como Ausente)');
-                        closeModal();
-                        loadSlots();
-                    } else {
-                        const err = await response.text();
-                        alert('Error al crear nuevo turno: ' + err);
-                    }
-
-                } else {
-                    // Standard Reschedule (PATCH)
-                    const response = await fetch(`/turnos/${currentTurnoId}`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            fecha: newDate,
-                            hora: newTime
-                        })
-                    });
-
-                    if (response.ok) {
-                        alert('Turno reprogramado exitosamente');
-                        closeModal();
-                        loadSlots();
-                    } else {
-                        const err = await response.text();
-                        alert('Error al reprogramar: ' + err);
-                    }
-                }
-
-            } catch (error) {
-                console.error(error);
-                alert('Error de conexión');
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        async function sendWhatsapp(turnoId, btnInfo) {
-            try {
-                // 1. Obtener enlace
-                const response = await fetch(`/whatsapp/link/${turnoId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-
-                    // 2. Abrir WhatsApp
-                    window.open(data.link, '_blank');
-
-                    // 3. Marcar como enviado en backend
-                    await markAsSent(turnoId, btnInfo);
-
-                } else {
-                    const err = await response.json();
-                    alert('Error: ' + err.detail);
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Error al generar enlace de WhatsApp');
-            }
-        }
-
-        async function markAsSent(turnoId, btnElement) {
-            try {
-                await fetch(`/whatsapp/mark-sent/${turnoId}`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                // Actualizar UI
-                if (btnElement) {
-                    btnElement.classList.remove('btn-whatsapp');
-                    btnElement.classList.add('btn-whatsapp-sent');
-                    btnElement.title = "Re-enviar WhatsApp (Ya enviado)";
-                    btnElement.innerHTML = "✅ Mensaje"; // O mantener icono pero cambiar color
-                }
-
-                // Opcional: recargar slots para estar seguros, o actualizar variable local
-                // loadSlots(); 
-            } catch (e) {
-                console.error("Error marcando como enviado", e);
-            }
-        }
-
-        // --- Logic for Status Update with Custom Modal ---
-
-        function requestUpdateStatus(id, status) {
-            console.log("requestUpdateStatus called:", id, status);
-            pendingId = id;
-            pendingStatus = status;
-            pendingAction = 'UPDATE_STATUS';
-
-            const msg = status === 'COMPLETADO'
-                ? '¿Desea marcar este turno como COMPLETADO?'
-                : '¿Desea marcar este turno como AUSENTE?';
-
-            const modal = document.getElementById('confirmationModal');
-            if (modal) {
-                document.getElementById('confirmationMessage').textContent = msg;
-                modal.classList.add('active');
-                modal.style.display = 'flex'; // Force display
-            } else {
-                console.error("Confirmation modal not found!");
-            }
-        }
-
-        function closeConfirmation() {
-            console.log("closeConfirmation called");
-            try {
-                const modal = document.getElementById('confirmationModal');
-                if (modal) {
-                    modal.classList.remove('active');
-                    modal.style.display = 'none'; // Force hide
-                }
-            } catch (e) {
-                console.error("Error closing modal:", e);
-            }
-            pendingId = null;
-            pendingStatus = null;
-            pendingAction = null;
-        }
-
-        async function executeAction() {
-            if (!pendingAction) return;
-
-            const btn = document.getElementById('btnConfirmAction');
-            const originalText = btn.textContent;
-            btn.textContent = '...';
-            btn.disabled = true;
-
-            try {
-                if (pendingAction === 'UPDATE_STATUS') {
-                    await performUpdateStatus(pendingId, pendingStatus);
-                }
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
-                closeConfirmation();
-            }
-        }
-
-        async function performUpdateStatus(id, status) {
-            if (!token) {
-                alert('Sesión expirada');
-                logout();
-                return;
-            }
-
-            try {
-                const response = await fetch(`/turnos/${id}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ estado: status })
-                });
-
-                if (response.status === 401) {
-                    logout();
-                    return;
-                }
-
-                if (response.ok) {
-                    loadSlots();
-                } else {
-                    const txt = await response.text();
-                    alert('Error al actualizar estado: ' + txt);
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Error de conexión');
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/static/login.html';
-        }
-
-        // --- Historia Clinica Logic ---
-        let currentHistoriaPacienteId = null;
-        let currentNoteId = null;
-        let eventsMap = {};
-
-        function openNoteModal(note = null, readOnly = false, patientData = null) {
-            const modal = document.getElementById('noteModal');
-            modal.classList.add('active');
-
-            // Setup Buttons & Title
-            const actionsDiv = modal.querySelector('.modal-actions');
-            const title = modal.querySelector('.modal-title');
-
-            // Reset Form
-            const form = document.getElementById('noteForm');
-            if (!note) form.reset();
-
-            // Handle Patient Data for new notes
-            if (patientData) {
-                currentHistoriaPacienteId = patientData.id;
-            }
-
-            if (readOnly) {
-                title.textContent = "Detalle de Evolución";
-                if (actionsDiv) actionsDiv.style.display = 'none';
-                form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = true);
-            } else {
-                title.textContent = "Nueva Evolución";
-                if (actionsDiv) actionsDiv.style.display = 'flex';
-                form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
-            }
-
-            if (note) {
-                const sc = note.structured_content || {};
-                document.getElementById('note-ecog').value = sc.ecog || '';
-                document.getElementById('note-tnm').value = sc.tnm || '';
-                document.getElementById('note-estadio').value = sc.estadio || '';
-                document.getElementById('note-toxicidad').value = sc.toxicidad || '';
-                document.getElementById('note-radio-check').checked = sc.requiere_radioterapia || false;
-
-                document.getElementById('note-motivo').value = sc.motivo || '';
-                document.getElementById('note-antecedentes').value = sc.antecedentes || '';
-                document.getElementById('note-examen').value = sc.examen || '';
-                document.getElementById('note-diagnostico').value = sc.dx_dif || '';
-                document.getElementById('note-plan').value = sc.plan || '';
-                document.getElementById('note-tratamiento').value = sc.tratamiento || '';
-            }
-        }
-
-        function closeNoteModal() {
-            document.getElementById('noteModal').classList.remove('active');
-            document.getElementById('noteForm').reset();
-            // Re-enable 
-            document.getElementById('noteForm').querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
-        }
-
-        function viewHistoryFromModal() {
-            if (currentHistoriaPacienteId) {
-                closeNoteModal();
-                // We need to fetch details if we don't have them easily, or relies on openHistoria doing it
-                // We don't have DNI/Name readily available here unless we store it.
-                // But openHistoria clears the timeline, so we might need to rely on what we have.
-                // Ideally we call openHistoria, but we lack parameters.
-                // Fallback: Just show modal and load timeline.
-                document.getElementById('historiaModal').classList.add('active');
-                loadHistoriaTimeline(currentHistoriaPacienteId);
-            }
-        }
-
-        async function submitNote(estado) {
-            if (!currentHistoriaPacienteId) { alert("Error: Paciente no identificado"); return; }
-            if (estado === 'FIRMADO' && !confirm("¿Firmar nota? No se podrá editar.")) return;
-
-            const structuredData = {
-                ecog: document.getElementById('note-ecog').value,
-                tnm: document.getElementById('note-tnm').value,
-                estadio: document.getElementById('note-estadio').value,
-                toxicidad: document.getElementById('note-toxicidad').value,
-                requiere_radioterapia: document.getElementById('note-radio-check').checked,
-
-                motivo: document.getElementById('note-motivo').value,
-                antecedentes: document.getElementById('note-antecedentes').value,
-                examen: document.getElementById('note-examen').value,
-                dx_dif: document.getElementById('note-diagnostico').value,
-                plan: document.getElementById('note-plan').value,
-                tratamiento: document.getElementById('note-tratamiento').value
-            };
-
-            // Basic Validation
-            if (!structuredData.motivo && !structuredData.examen) {
-                alert("Ingrese al menos Motivo o Examen Físico");
-                return;
-            }
-
-            const btn = document.querySelector(`.btn-confirm[onclick*="${estado}"]`);
-            const originalText = btn ? btn.textContent : 'Guardar';
-            if (btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
-
-            try {
-                const res = await fetch('/historia-clinica/', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        paciente_id: currentHistoriaPacienteId,
-                        estado: estado,
-                        servicio: currentAgendaType || 'CONSULTORIO',
-                        structured_content: structuredData
-                    })
-                });
-
-                if (res.ok) {
-                    alert("Nota guardada correctamente");
-                    closeNoteModal();
-                } else {
-                    const err = await res.json();
-                    alert("Error: " + (err.detail || "Error al guardar"));
-                }
-            } catch (e) {
-                console.error(e);
-                alert("Error de conexión");
-            } finally {
-                if (btn) { btn.textContent = originalText; btn.disabled = false; }
-            }
-        }
-
-        async function openHistoria(pacienteId, dni, nombre) {
-            currentHistoriaPacienteId = pacienteId;
-            // Update Badge
-            const badge = document.getElementById('historiaPacienteBadge');
-            badge.innerHTML = `<strong>${nombre}</strong> <span style="opacity: 0.7;">|</span> DNI: ${dni}`;
-
-            document.getElementById('historiaModal').classList.add('active');
-            await loadHistoriaTimeline(pacienteId);
-        }
-
-        function closeHistoria() {
-            document.getElementById('historiaModal').classList.remove('active');
-            currentHistoriaPacienteId = null;
-        }
-
-        async function loadHistoriaTimeline(pacienteId) {
-            const container = document.getElementById('historiaTimeline');
-            container.innerHTML = '<div style="text-align: center; padding: 3rem; color: #a0aec0;">Cargando historia...</div>';
-
-            try {
-                const res = await fetch(`/historia-clinica/paciente/${pacienteId}/timeline`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!res.ok) throw new Error('Error al cargar');
-
-                const data = await res.json();
-                renderTimeline(data.timeline);
-            } catch (e) {
-                console.error(e);
-                container.innerHTML = '<div style="color: #e53e3e; text-align: center; padding: 2rem;">Error al cargar historia clínica.</div>';
-            }
-        }
-
-        function renderTimeline(events) {
-            const container = document.getElementById('historiaTimeline');
-            eventsMap = {}; // Reset map
-
-            if (!events || events.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 4rem; color: #a0aec0;">
-                        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
-                        <p>No hay registros en la historia clínica.</p>
-                    </div>
+                const estado = turno.estado ? turno.estado.toUpperCase().trim() : '';
+
+                // Logic: Show Reschedule/Complete for everyone except Completed
+                // BUT: Only show Absent button if not completed/absent?
+                // Wait, user wants Reschedule EVEN IF Absent.
+
+                // 🟢 NEW: Edit Patient Button
+                html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})"
+                    title="Editar Datos Paciente" style="background: #e2e8f0; margin-right: 15px;">✏️</button>`;
+
+                if (estado !== 'COMPLETADO') {
+                html += `
+                <button class="action-btn btn-complete" onclick="clickCompletar(${turno.id})" title="Completar"
+                    style="margin-right: 15px;">✅</button>
+                <button class="action-btn btn-reschedule" onclick="clickReprogramar(${turno.id})" title="Reprogramar"
+                    style="margin-right: 15px;">📅</button>
                 `;
-                return;
-            }
 
-            container.innerHTML = events.map(ev => {
-                if (ev.id_referencia) eventsMap[ev.id_referencia] = ev; // Index
+                const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
+                const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar
+                WhatsApp';
 
-                const isNota = ev.tipo === 'NOTA';
-                let icon = '📝';
-                let typeClass = 'type-nota';
-                let title = isNota ? 'Nota de Evolución' : ev.descripcion;
+                html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)"
+                    title="${whatsappTitle}" style="margin-right: 10px;">💬</button>`;
 
-                // Determine Icon and Color based on content
-                if (!isNota) {
-                    const descUpper = ev.descripcion.toUpperCase();
-                    if (descUpper.includes('QUIMIO')) { icon = '💧'; typeClass = 'type-quimio'; }
-                    else if (descUpper.includes('TOMO') || descUpper.includes('RADIO')) { icon = '☢️'; typeClass = 'type-tomo'; }
-                    else { icon = '🏥'; typeClass = 'type-consult'; }
+                // 🟢 NEW: Start Tracking Button
+                html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)"
+                    title="Iniciar Seguimiento Radioterapia"
+                    style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030; margin-right: 10px;">☢️</button>`;
+
+                if (estado !== 'AUSENTE') {
+                html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')"
+                    title="Ausente" style="margin-right: 10px;">❌</button>`;
+                }
+
+                html += `<button class="action-btn"
+                    onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "
+                    \\'") : '' }'})" title="Nueva Evolución (Historia Clínica)"
+                    style="background: #e2e8f0; margin-right: 10px;">📋</button>`;
+
+                // NEW: Delete Button (Red Trash Can)
+                html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO"
+                    style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
+                }
                 } else {
-                    // Check service for manual notes
-                    const srv = (ev.servicio || '').toUpperCase();
-                    if (srv === 'QUIMIOTERAPIA') { typeClass = 'type-quimio'; }
-                    if (srv === 'TOMOGRAFIA') { typeClass = 'type-tomo'; }
+                html += `<button class="action-btn btn-confirm"
+                    onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
                 }
 
-                const dateObj = new Date(ev.fecha);
-                const dateStr = dateObj.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
-                const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+                html += `
+            </td>
+        </tr>`;
+        });
 
-                // Add View Detail Button for Notes
-                let actions = '';
-                if (isNota) {
-                    actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}], true)" 
-                     style="float:right;background:none;border:none;color:#2b6cb0;cursor:pointer;font-size:0.85rem">👁️ Ver Detalle</button>`;
-                }
+        html += `</tbody>
+</table>`;
+container.innerHTML = html;
+}
 
-                return `
-                    <div class="timeline-card">
-                        <div class="timeline-icon ${typeClass}">${icon}</div>
-                        
-                        <div class="timeline-header-row">
-                            <div class="timeline-title">${title} ${actions}</div>
-                            <div class="timeline-date">${dateStr} • ${timeStr}</div>
-                        </div>
+// 🟢 NEW: Delete Turn Function
+async function deleteTurno(id) {
+if (!confirm("⚠️ ¿ESTÁ SEGURO DE QUE DESEA ELIMINAR ESTE TURNO?\n\nEsta acción es irreversible y borrará el turno de la
+base de datos para siempre.")) return;
 
-                        <div class="timeline-body">${ev.detalle}</div>
-                        
-                        ${ev.servicio && ev.servicio !== 'GENERAL' ?
-                        `<span class="timeline-badge" style="background: #edf2f7; color: #718096; margin-top: 0.75rem;">${ev.servicio}</span>` : ''}
-                        
-                        ${ev.estado ?
-                        `<span class="timeline-badge" style="background: ${getStatusColor(ev.estado)}; color: white; margin-left: 0.5rem;">${ev.estado}</span>` : ''}
-                    </div>
-                `;
-            }).join('');
-        }
+// Optional second confirmation for safety
+// if (!confirm("Confirme nuevamente: ¿Eliminar turno definitivamente?")) return;
 
-        function getStatusColor(status) {
-            const s = status.toUpperCase();
-            if (s === 'COMPLETADO' || s === 'ASISTIÓ') return '#48bb78'; // Green
-            if (s === 'AUSENTE' || s === 'CANCELADO') return '#f56565'; // Red
-            if (s === 'PENDIENTE') return '#4299e1'; // Blue
-            return '#a0aec0'; // Gray
-        }
+try {
+const response = await fetch(`/turnos/${id}`, {
+method: 'DELETE',
+headers: {
+'Authorization': `Bearer ${token}`
+}
+});
 
-        async function saveHistoria() {
-            if (!currentHistoriaPacienteId) return;
-            const texto = document.getElementById('nuevaNotaTexto').value;
-            const servicio = document.getElementById('nuevaNotaServicio').value;
+if (response.ok) {
+// Remove from UI immediately or reload
+// loadSlots();
+// Let's reload to be safe and sync state
+loadSlots();
+alert('Turno eliminado correctamente.');
+} else {
+const err = await response.text();
+alert('Error al eliminar: ' + err);
+}
+} catch (e) {
+console.error(e);
+alert('Error de conexión');
+}
+}
 
-            if (!texto) return alert("Escriba una nota");
+// 🟢 NEW: Start Radiotherapy Function
+async function startRadiotherapy(id, btn) {
+if (!confirm("¿Iniciar Seguimiento de Radioterapia para este paciente?\n\nEsto creará un registro activo si no
+existe.")) return;
 
-            const btn = document.querySelector('#historiaModal .btn-primary');
-            const originalText = btn.textContent;
-            btn.textContent = 'Guardando...';
-            btn.disabled = true;
+const originalText = btn.innerHTML;
+btn.innerHTML = '...';
+btn.disabled = true;
 
-            try {
-                const res = await fetch('/historia-clinica/', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        paciente_id: currentHistoriaPacienteId,
-                        texto: texto,
-                        servicio: servicio
-                    })
-                });
+try {
+const response = await fetch(`/turnos/${id}`, {
+method: 'PATCH',
+headers: {
+'Authorization': `Bearer ${token}`,
+'Content-Type': 'application/json'
+},
+body: JSON.stringify({ crear_seguimiento: true })
+});
 
-                if (res.ok) {
-                    document.getElementById('nuevaNotaTexto').value = '';
-                    await loadHistoriaTimeline(currentHistoriaPacienteId);
-                } else {
-                    alert('Error al guardar nota');
-                }
-            } catch (e) {
-                console.error(e);
-                alert('Error de conexión');
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        }
+if (response.ok) {
+alert('Seguimiento Iniciado / Verificado.');
+// Optional: Change icon to indicate success
+btn.style.background = "#C6F6D5";
+btn.style.borderColor = "#68D391";
+btn.style.color = "#22543D";
+btn.innerHTML = "☢️✅";
+} else {
+const err = await response.text();
+alert('Error: ' + err);
+}
+} catch (e) {
+console.error(e);
+alert('Error de conexión');
+} finally {
+if (btn.innerHTML === '...') {
+btn.innerHTML = originalText;
+btn.disabled = false;
+}
+}
+}
 
-        function printHistoria() {
-            document.body.classList.add('printing-historia');
-            window.print();
-            document.body.classList.remove('printing-historia');
-        }
+function agendar(fechaIso, hora) {
+if (!currentAgendaId) return;
+const dateStr = fechaIso.split('T')[0];
 
-        // --- EDIT PATIENT LOGIC ---
-        let currentTurnoIdEdit = null; // New global to store the context
+const params = new URLSearchParams({
+agenda_id: currentAgendaId,
+fecha: dateStr,
+hora: hora
+});
+window.location.href = `/static/nuevo_turno.html?${params.toString()}`;
+}
 
-        async function openEditPatientModal(patientId, turnoId = null) {
-            currentPatientIdEdit = patientId;
-            currentTurnoIdEdit = turnoId;
+function openReschedule(id) {
+console.log("openReschedule called:", id);
+currentTurnoId = id;
+const modal = document.getElementById('rescheduleModal');
+if (modal) {
+modal.classList.add('active');
+modal.style.display = 'flex';
+}
+}
 
-            if (!currentPatientIdEdit) { alert("No hay paciente seleccionado"); return; }
+function closeModal() {
+const modal = document.getElementById('rescheduleModal');
+if (modal) {
+modal.classList.remove('active');
+modal.style.display = 'none';
+}
+currentTurnoId = null;
+}
 
-            // Load Lists if empty
-            if (document.getElementById('os-list').children.length === 0) {
-                try {
-                    const [osData, medData] = await Promise.all([
-                        fetch('/obras-sociales/', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
-                        fetch('/common/medicos-derivantes', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json())
-                    ]);
+async function confirmReschedule() {
+if (!currentTurnoId) return;
 
-                    const osList = document.getElementById('os-list');
-                    osData.forEach(item => {
-                        const op = document.createElement('option');
-                        op.value = item.nombre;
-                        osList.appendChild(op);
-                    });
+const newDate = document.getElementById('newDate').value;
+const newTime = document.getElementById('newTime').value;
 
-                    const medList = document.getElementById('medicos-list');
-                    medData.forEach(item => {
-                        const op = document.createElement('option');
-                        op.value = item.nombre;
-                        medList.appendChild(op);
-                    });
-                } catch (e) {
-                    console.error("Error loading lists", e);
-                }
-            }
+if (!newDate || !newTime) {
+alert('Ingrese fecha y hora');
+return;
+}
 
-            // Load Patient Data
-            try {
-                const res = await fetch(`/pacientes/${currentPatientIdEdit}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                if (!res.ok) throw new Error("Error loading patient");
-                const p = await res.json();
+const btn = document.querySelector('#rescheduleModal .btn-confirm');
+const originalText = btn.textContent;
+btn.textContent = 'Guardando...';
+btn.disabled = true;
 
-                document.getElementById('edit-nombre').value = p.nombre;
-                document.getElementById('edit-apellido').value = p.apellido;
-                const dniInput = document.getElementById('edit-dni');
-                dniInput.value = p.dni;
-                // 🟢 FIX: Explicitly unlock DNI
-                dniInput.readOnly = false;
-                dniInput.disabled = false;
-                dniInput.style.cursor = 'text';
-                dniInput.style.backgroundColor = 'white';
-                document.getElementById('edit-fecha-nacimiento').value = p.fecha_nacimiento || '';
-                document.getElementById('edit-telefono').value = p.telefono || '';
-                document.getElementById('edit-obra-social').value = p.obra_social ? p.obra_social.nombre : '';
-                document.getElementById('edit-medico').value = p.medico_derivante ? p.medico_derivante.nombre : '';
+// Find current turno data
+let foundTurno = null;
+if (currentSlots) {
+for (let s of currentSlots) {
+if (s.turno && s.turno.id === currentTurnoId) {
+foundTurno = s.turno;
+break;
+}
+}
+}
 
-                // Clear Patologia by default if no turn context
-                document.getElementById('edit-patologia').value = '';
+try {
+// BRANCH LOGIC: If AUSENTE -> Create NEW Turno. Else -> PATCH.
+if (foundTurno && foundTurno.estado === 'AUSENTE') {
+// Create Clone
+const payload = {
+paciente_id: foundTurno.paciente_id,
+agenda_id: foundTurno.agenda_id || parseInt(currentAgendaId), // 👈 FIX: Fallback to global
+fecha: newDate,
+hora: newTime,
+duracion: foundTurno.duracion || 20,
+estado: "PENDIENTE",
+medico_derivante_id: foundTurno.medico_derivante_id,
+patologia: foundTurno.patologia,
+crear_seguimiento: false, // Don't duplicate logic, but dates will update
+practicas_ids: foundTurno.practicas ? foundTurno.practicas.map(p => p.id) : []
+};
 
-                // If Context Turno exists, override/populate fields from Turno
-                if (currentTurnoIdEdit) {
-                    // Try to find turno in global cache first
-                    let foundTurno = null;
-                    if (currentSlots) {
-                        for (let s of currentSlots) {
-                            if (s.turno && s.turno.id === currentTurnoIdEdit) {
-                                foundTurno = s.turno;
-                                break;
-                            }
-                        }
-                    }
+const response = await fetch('/turnos/', {
+method: 'POST',
+headers: {
+'Authorization': `Bearer ${token}`,
+'Content-Type': 'application/json'
+},
+body: JSON.stringify(payload)
+});
+if (response.ok) {
+alert('Nuevo turno creado (El anterior permanece como Ausente)');
+closeModal();
+loadSlots();
+} else {
+const err = await response.text();
+alert('Error al crear nuevo turno: ' + err);
+}
 
-                    if (foundTurno) {
-                        if (foundTurno.patologia) document.getElementById('edit-patologia').value = foundTurno.patologia;
-                        // If Turno has a derivante, show THAT instead of Patient's default?
-                        // Yes, likely what user expects to edit for this appointment.
-                        // But we also want to update the patient's default? Maybe.
-                        // Let's pre-fill with Turno's data if valid.
-                        // Note: Turno doesn't give us the NAME of the medico directly in the standard schema sometimes 
-                        // unless we load it. checking schema... TurnoOut has `medico_derivante_id` but not nested object?
-                        // Wait, looking at `renderSlots`: `s.turno.medico_derivante_id`. No Name. 
-                        // Ah, patient has `medico_derivante`.
-                        // Use case: User wants to SET a medico for this turno. 
-                        // If the backend didn't send the name of the medico for the TURNO, we might show the patient's one.
-                        // But if we want to Edit it, we need to know what it is.
-                        // Let's stick to Patient's one if Turno's one is numeric/unknown, or fetch the turno details?
-                        // Simpler: Just rely on Patient's data for now unless we fetch unique turno info.
-                        // BUT Patologia IS on the turno.
-                    }
-                }
+} else {
+// Standard Reschedule (PATCH)
+const response = await fetch(`/turnos/${currentTurnoId}`, {
+method: 'PATCH',
+headers: {
+'Authorization': `Bearer ${token}`,
+'Content-Type': 'application/json'
+},
+body: JSON.stringify({
+fecha: newDate,
+hora: newTime
+})
+});
 
-                document.getElementById('editPatientModal').style.display = 'flex';
-            } catch (e) {
-                console.error(e);
-                alert("Error cargando datos del paciente");
-            }
-        }
+if (response.ok) {
+alert('Turno reprogramado exitosamente');
+closeModal();
+loadSlots();
+} else {
+const err = await response.text();
+alert('Error al reprogramar: ' + err);
+}
+}
 
-        function closeEditPatientModal() {
-            document.getElementById('editPatientModal').style.display = 'none';
-        }
+} catch (error) {
+console.error(error);
+alert('Error de conexión');
+} finally {
+btn.textContent = originalText;
+btn.disabled = false;
+}
+}
 
-        async function submitEditPatient() {
-            const nombre = document.getElementById('edit-nombre').value;
-            const apellido = document.getElementById('edit-apellido').value;
-            const fecha_nacimiento = document.getElementById('edit-fecha-nacimiento').value || null;
-            const telefono = document.getElementById('edit-telefono').value;
-            const dni = document.getElementById('edit-dni').value;
-            const obra_social_nombre = document.getElementById('edit-obra-social').value;
-            const medico_derivante_nombre = document.getElementById('edit-medico').value;
-            const patologia = document.getElementById('edit-patologia').value; // New Field
+async function sendWhatsapp(turnoId, btnInfo) {
+try {
+// 1. Obtener enlace
+const response = await fetch(`/whatsapp/link/${turnoId}`, {
+headers: { 'Authorization': `Bearer ${token}` }
+});
 
-            const payloadPaciente = {
-                nombre, apellido, fecha_nacimiento, telefono, dni,
-                obra_social_nombre, medico_derivante_nombre
-            };
+if (response.ok) {
+const data = await response.json();
 
-            try {
-                // 1. Update Patient
-                const res = await fetch(`/pacientes/${currentPatientIdEdit}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(payloadPaciente)
-                });
+// 2. Abrir WhatsApp
+window.open(data.link, '_blank');
 
-                if (!res.ok) {
-                    const err = await res.json();
-                    // Handle Error (reuse existing logic)
-                    let msg = "Error al actualizar Paciente";
-                    if (err.detail) msg = Array.isArray(err.detail) ? "Validation Error" : "Error: " + err.detail;
-                    throw new Error(msg);
-                }
+// 3. Marcar como enviado en backend
+await markAsSent(turnoId, btnInfo);
 
-                // 2. Update Turno (if context exists)
-                if (currentTurnoIdEdit) {
-                    const payloadTurno = {
-                        patologia: patologia,
-                        medico_derivante_nombre: medico_derivante_nombre // Sync Medico to Turno explicitly too
-                    };
+} else {
+const err = await response.json();
+alert('Error: ' + err.detail);
+}
+} catch (error) {
+console.error(error);
+alert('Error al generar enlace de WhatsApp');
+}
+}
 
-                    const resTurno = await fetch(`/turnos/${currentTurnoIdEdit}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                        body: JSON.stringify(payloadTurno)
-                    });
+async function markAsSent(turnoId, btnElement) {
+try {
+await fetch(`/whatsapp/mark-sent/${turnoId}`, {
+method: 'POST',
+headers: { 'Authorization': `Bearer ${token}` }
+});
 
-                    if (!resTurno.ok) {
-                        const errT = await resTurno.json();
-                        console.warn("Error updating Turno details:", errT);
-                        // Don't block success but warn? Or alert user?
-                        // alert("Datos del paciente guardados, pero hubo error al actualizar turno: " + errT.detail);
-                    }
-                }
+// Actualizar UI
+if (btnElement) {
+btnElement.classList.remove('btn-whatsapp');
+btnElement.classList.add('btn-whatsapp-sent');
+btnElement.title = "Re-enviar WhatsApp (Ya enviado)";
+btnElement.innerHTML = "✅ Mensaje"; // O mantener icono pero cambiar color
+}
 
-                alert("Datos guardados correctamente");
-                closeEditPatientModal();
-                loadSlots(); // Refresh Agenda View
+// Opcional: recargar slots para estar seguros, o actualizar variable local
+// loadSlots();
+} catch (e) {
+console.error("Error marcando como enviado", e);
+}
+}
 
-            } catch (e) {
-                console.error(e);
-                alert(e.message || "Error de conexión");
-            }
-        }
+// --- Logic for Status Update with Custom Modal ---
 
-        loadAgendas();
-        // PASTE IMAGE LOGIC
-        function enableImagePaste() {
-            // Use Event Delegation for better reliability
-            document.addEventListener('paste', async (e) => {
-                const target = e.target;
-                if (target.tagName === 'TEXTAREA') {
-                    console.log("Paste detected on textarea");
-                    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+function requestUpdateStatus(id, status) {
+console.log("requestUpdateStatus called:", id, status);
+pendingId = id;
+pendingStatus = status;
+pendingAction = 'UPDATE_STATUS';
 
-                    for (let index in items) {
-                        const item = items[index];
-                        if (item.kind === 'file') {
-                            const blob = item.getAsFile();
-                            console.log("File detected:", blob.type);
-                            if (blob.type.startsWith('image/')) {
-                                e.preventDefault();
-                                await uploadAndInsertImage(blob, target);
-                                return; // Stop after first image found
-                            }
-                        }
-                    }
-                }
-            });
-        }
+const msg = status === 'COMPLETADO'
+? '¿Desea marcar este turno como COMPLETADO?'
+: '¿Desea marcar este turno como AUSENTE?';
 
-        async function uploadAndInsertImage(blob, textarea) {
-            const formData = new FormData();
-            formData.append('file', blob);
+const modal = document.getElementById('confirmationModal');
+if (modal) {
+document.getElementById('confirmationMessage').textContent = msg;
+modal.classList.add('active');
+modal.style.display = 'flex'; // Force display
+} else {
+console.error("Confirmation modal not found!");
+}
+}
 
-            // Show uploading state
-            const originalPlaceholder = textarea.placeholder;
-            textarea.placeholder = "Subiendo imagen...";
+function closeConfirmation() {
+console.log("closeConfirmation called");
+try {
+const modal = document.getElementById('confirmationModal');
+if (modal) {
+modal.classList.remove('active');
+modal.style.display = 'none'; // Force hide
+}
+} catch (e) {
+console.error("Error closing modal:", e);
+}
+pendingId = null;
+pendingStatus = null;
+pendingAction = null;
+}
 
-            // Insert temporary text
-            const cursorPos = textarea.selectionStart;
-            const textBefore = textarea.value.substring(0, cursorPos);
-            const textAfter = textarea.value.substring(cursorPos);
-            textarea.value = textBefore + " [...Subiendo Imagen...] " + textAfter;
+async function executeAction() {
+if (!pendingAction) return;
 
-            try {
-                const res = await fetch('/uploads/image', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
+const btn = document.getElementById('btnConfirmAction');
+const originalText = btn.textContent;
+btn.textContent = '...';
+btn.disabled = true;
 
-                if (res.ok) {
-                    const data = await res.json();
-                    const link = `\n(Ver Imagen: [${data.filename}](${data.url}))\n`;
+try {
+if (pendingAction === 'UPDATE_STATUS') {
+await performUpdateStatus(pendingId, pendingStatus);
+}
+} finally {
+btn.textContent = originalText;
+btn.disabled = false;
+closeConfirmation();
+}
+}
 
-                    // Replace temp text with actual link
-                    textarea.value = textarea.value.replace(" [...Subiendo Imagen...] ", link);
-                } else {
-                    alert("Error al subir imagen");
-                    textarea.value = textarea.value.replace(" [...Subiendo Imagen...] ", "");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Error de conexión al subir imagen");
-                textarea.value = textarea.value.replace(" [...Subiendo Imagen...] ", "");
-            } finally {
-                textarea.placeholder = originalPlaceholder;
-            }
-        }
+async function performUpdateStatus(id, status) {
+if (!token) {
+alert('Sesión expirada');
+logout();
+return;
+}
 
-        // Wrappers to break cache/collision issues
-        function clickCompletar(id) {
-            console.log("clickCompletar wrapper called", id);
-            requestUpdateStatus(id, 'COMPLETADO');
-        }
+try {
+const response = await fetch(`/turnos/${id}`, {
+method: 'PATCH',
+headers: {
+'Authorization': `Bearer ${token}`,
+'Content-Type': 'application/json'
+},
+body: JSON.stringify({ estado: status })
+});
 
-        function clickReprogramar(id) {
-            console.log("clickReprogramar wrapper called", id);
-            openReschedule(id);
-        }
+if (response.status === 401) {
+logout();
+return;
+}
 
-        // Initialize Paste Listener
-        enableImagePaste();
-    </script>
+if (response.ok) {
+loadSlots();
+} else {
+const txt = await response.text();
+alert('Error al actualizar estado: ' + txt);
+}
+} catch (error) {
+console.error(error);
+alert('Error de conexión');
+}
+}
+
+function logout() {
+localStorage.removeItem('token');
+window.location.href = '/static/login.html';
+}
+
+// --- Historia Clinica Logic ---
+let currentHistoriaPacienteId = null;
+let currentNoteId = null;
+let eventsMap = {};
+
+function openNoteModal(note = null, readOnly = false, patientData = null) {
+const modal = document.getElementById('noteModal');
+modal.classList.add('active');
+
+// Setup Buttons & Title
+const actionsDiv = modal.querySelector('.modal-actions');
+const title = modal.querySelector('.modal-title');
+
+// Reset Form
+const form = document.getElementById('noteForm');
+if (!note) form.reset();
+
+// Handle Patient Data for new notes
+if (patientData) {
+currentHistoriaPacienteId = patientData.id;
+}
+
+if (readOnly) {
+title.textContent = "Detalle de Evolución";
+if (actionsDiv) actionsDiv.style.display = 'none';
+form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = true);
+} else {
+title.textContent = "Nueva Evolución";
+if (actionsDiv) actionsDiv.style.display = 'flex';
+form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
+}
+
+if (note) {
+const sc = note.structured_content || {};
+document.getElementById('note-ecog').value = sc.ecog || '';
+document.getElementById('note-tnm').value = sc.tnm || '';
+document.getElementById('note-estadio').value = sc.estadio || '';
+document.getElementById('note-toxicidad').value = sc.toxicidad || '';
+document.getElementById('note-radio-check').checked = sc.requiere_radioterapia || false;
+
+document.getElementById('note-motivo').value = sc.motivo || '';
+document.getElementById('note-antecedentes').value = sc.antecedentes || '';
+document.getElementById('note-examen').value = sc.examen || '';
+document.getElementById('note-diagnostico').value = sc.dx_dif || '';
+document.getElementById('note-plan').value = sc.plan || '';
+document.getElementById('note-tratamiento').value = sc.tratamiento || '';
+}
+}
+
+function closeNoteModal() {
+document.getElementById('noteModal').classList.remove('active');
+document.getElementById('noteForm').reset();
+// Re-enable
+document.getElementById('noteForm').querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
+}
+
+function viewHistoryFromModal() {
+if (currentHistoriaPacienteId) {
+closeNoteModal();
+// We need to fetch details if we don't have them easily, or relies on openHistoria doing it
+// We don't have DNI/Name readily available here unless we store it.
+// But openHistoria clears the timeline, so we might need to rely on what we have.
+// Ideally we call openHistoria, but we lack parameters.
+// Fallback: Just show modal and load timeline.
+document.getElementById('historiaModal').classList.add('active');
+loadHistoriaTimeline(currentHistoriaPacienteId);
+}
+}
+
+async function submitNote(estado) {
+if (!currentHistoriaPacienteId) { alert("Error: Paciente no identificado"); return; }
+if (estado === 'FIRMADO' && !confirm("¿Firmar nota? No se podrá editar.")) return;
+
+const structuredData = {
+ecog: document.getElementById('note-ecog').value,
+tnm: document.getElementById('note-tnm').value,
+estadio: document.getElementById('note-estadio').value,
+toxicidad: document.getElementById('note-toxicidad').value,
+requiere_radioterapia: document.getElementById('note-radio-check').checked,
+
+motivo: document.getElementById('note-motivo').value,
+antecedentes: document.getElementById('note-antecedentes').value,
+examen: document.getElementById('note-examen').value,
+dx_dif: document.getElementById('note-diagnostico').value,
+plan: document.getElementById('note-plan').value,
+tratamiento: document.getElementById('note-tratamiento').value
+};
+
+// Basic Validation
+if (!structuredData.motivo && !structuredData.examen) {
+alert("Ingrese al menos Motivo o Examen Físico");
+return;
+}
+
+const btn = document.querySelector(`.btn-confirm[onclick*="${estado}"]`);
+const originalText = btn ? btn.textContent : 'Guardar';
+if (btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
+
+try {
+const res = await fetch('/historia-clinica/', {
+method: 'POST',
+headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+body: JSON.stringify({
+paciente_id: currentHistoriaPacienteId,
+estado: estado,
+servicio: currentAgendaType || 'CONSULTORIO',
+structured_content: structuredData
+})
+});
+
+if (res.ok) {
+alert("Nota guardada correctamente");
+closeNoteModal();
+} else {
+const err = await res.json();
+alert("Error: " + (err.detail || "Error al guardar"));
+}
+} catch (e) {
+console.error(e);
+alert("Error de conexión");
+} finally {
+if (btn) { btn.textContent = originalText; btn.disabled = false; }
+}
+}
+
+async function openHistoria(pacienteId, dni, nombre) {
+currentHistoriaPacienteId = pacienteId;
+// Update Badge
+const badge = document.getElementById('historiaPacienteBadge');
+badge.innerHTML = `<strong>${nombre}</strong> <span style="opacity: 0.7;">|</span> DNI: ${dni}`;
+
+document.getElementById('historiaModal').classList.add('active');
+await loadHistoriaTimeline(pacienteId);
+}
+
+function closeHistoria() {
+document.getElementById('historiaModal').classList.remove('active');
+currentHistoriaPacienteId = null;
+}
+
+async function loadHistoriaTimeline(pacienteId) {
+const container = document.getElementById('historiaTimeline');
+container.innerHTML = '<div style="text-align: center; padding: 3rem; color: #a0aec0;">Cargando historia...</div>';
+
+try {
+const res = await fetch(`/historia-clinica/paciente/${pacienteId}/timeline`, {
+headers: { 'Authorization': `Bearer ${token}` }
+});
+if (!res.ok) throw new Error('Error al cargar');
+
+const data = await res.json();
+renderTimeline(data.timeline);
+} catch (e) {
+console.error(e);
+container.innerHTML = '<div style="color: #e53e3e; text-align: center; padding: 2rem;">Error al cargar historia clínica.
+</div>';
+}
+}
+
+function renderTimeline(events) {
+const container = document.getElementById('historiaTimeline');
+eventsMap = {}; // Reset map
+
+if (!events || events.length === 0) {
+container.innerHTML = `
+<div style="text-align: center; padding: 4rem; color: #a0aec0;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+    <p>No hay registros en la historia clínica.</p>
+</div>
+`;
+return;
+}
+
+container.innerHTML = events.map(ev => {
+if (ev.id_referencia) eventsMap[ev.id_referencia] = ev; // Index
+
+const isNota = ev.tipo === 'NOTA';
+let icon = '📝';
+let typeClass = 'type-nota';
+let title = isNota ? 'Nota de Evolución' : ev.descripcion;
+
+// Determine Icon and Color based on content
+if (!isNota) {
+const descUpper = ev.descripcion.toUpperCase();
+if (descUpper.includes('QUIMIO')) { icon = '💧'; typeClass = 'type-quimio'; }
+else if (descUpper.includes('TOMO') || descUpper.includes('RADIO')) { icon = '☢️'; typeClass = 'type-tomo'; }
+else { icon = '🏥'; typeClass = 'type-consult'; }
+} else {
+// Check service for manual notes
+const srv = (ev.servicio || '').toUpperCase();
+if (srv === 'QUIMIOTERAPIA') { typeClass = 'type-quimio'; }
+if (srv === 'TOMOGRAFIA') { typeClass = 'type-tomo'; }
+}
+
+const dateObj = new Date(ev.fecha);
+const dateStr = dateObj.toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' });
+const timeStr = dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+
+// Add View Detail Button for Notes
+let actions = '';
+if (isNota) {
+actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}], true)"
+    style="float:right;background:none;border:none;color:#2b6cb0;cursor:pointer;font-size:0.85rem">👁️ Ver
+    Detalle</button>`;
+}
+
+return `
+<div class="timeline-card">
+    <div class="timeline-icon ${typeClass}">${icon}</div>
+
+    <div class="timeline-header-row">
+        <div class="timeline-title">${title} ${actions}</div>
+        <div class="timeline-date">${dateStr} • ${timeStr}</div>
+    </div>
+
+    <div class="timeline-body">${ev.detalle}</div>
+
+    ${ev.servicio && ev.servicio !== 'GENERAL' ?
+    `<span class="timeline-badge"
+        style="background: #edf2f7; color: #718096; margin-top: 0.75rem;">${ev.servicio}</span>` : ''}
+
+    ${ev.estado ?
+    `<span class="timeline-badge"
+        style="background: ${getStatusColor(ev.estado)}; color: white; margin-left: 0.5rem;">${ev.estado}</span>` : ''}
+</div>
+`;
+}).join('');
+}
+
+function getStatusColor(status) {
+const s = status.toUpperCase();
+if (s === 'COMPLETADO' || s === 'ASISTIÓ') return '#48bb78'; // Green
+if (s === 'AUSENTE' || s === 'CANCELADO') return '#f56565'; // Red
+if (s === 'PENDIENTE') return '#4299e1'; // Blue
+return '#a0aec0'; // Gray
+}
+
+async function saveHistoria() {
+if (!currentHistoriaPacienteId) return;
+const texto = document.getElementById('nuevaNotaTexto').value;
+const servicio = document.getElementById('nuevaNotaServicio').value;
+
+if (!texto) return alert("Escriba una nota");
+
+const btn = document.querySelector('#historiaModal .btn-primary');
+const originalText = btn.textContent;
+btn.textContent = 'Guardando...';
+btn.disabled = true;
+
+try {
+const res = await fetch('/historia-clinica/', {
+method: 'POST',
+headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+body: JSON.stringify({
+paciente_id: currentHistoriaPacienteId,
+texto: texto,
+servicio: servicio
+})
+});
+
+if (res.ok) {
+document.getElementById('nuevaNotaTexto').value = '';
+await loadHistoriaTimeline(currentHistoriaPacienteId);
+} else {
+alert('Error al guardar nota');
+}
+} catch (e) {
+console.error(e);
+alert('Error de conexión');
+} finally {
+btn.textContent = originalText;
+btn.disabled = false;
+}
+}
+
+function printHistoria() {
+document.body.classList.add('printing-historia');
+window.print();
+document.body.classList.remove('printing-historia');
+}
+
+// --- EDIT PATIENT LOGIC ---
+let currentTurnoIdEdit = null; // New global to store the context
+
+async function openEditPatientModal(patientId, turnoId = null) {
+currentPatientIdEdit = patientId;
+currentTurnoIdEdit = turnoId;
+
+if (!currentPatientIdEdit) { alert("No hay paciente seleccionado"); return; }
+
+// Load Lists if empty
+if (document.getElementById('os-list').children.length === 0) {
+try {
+const [osData, medData] = await Promise.all([
+fetch('/obras-sociales/', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
+fetch('/common/medicos-derivantes', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json())
+]);
+
+const osList = document.getElementById('os-list');
+osData.forEach(item => {
+const op = document.createElement('option');
+op.value = item.nombre;
+osList.appendChild(op);
+});
+
+const medList = document.getElementById('medicos-list');
+medData.forEach(item => {
+const op = document.createElement('option');
+op.value = item.nombre;
+medList.appendChild(op);
+});
+} catch (e) {
+console.error("Error loading lists", e);
+}
+}
+
+// Load Patient Data
+try {
+const res = await fetch(`/pacientes/${currentPatientIdEdit}`, { headers: { 'Authorization': `Bearer ${token}` } });
+if (!res.ok) throw new Error("Error loading patient");
+const p = await res.json();
+
+document.getElementById('edit-nombre').value = p.nombre;
+document.getElementById('edit-apellido').value = p.apellido;
+const dniInput = document.getElementById('edit-dni');
+dniInput.value = p.dni;
+// 🟢 FIX: Explicitly unlock DNI
+dniInput.readOnly = false;
+dniInput.disabled = false;
+dniInput.style.cursor = 'text';
+dniInput.style.backgroundColor = 'white';
+document.getElementById('edit-fecha-nacimiento').value = p.fecha_nacimiento || '';
+document.getElementById('edit-telefono').value = p.telefono || '';
+document.getElementById('edit-obra-social').value = p.obra_social ? p.obra_social.nombre : '';
+document.getElementById('edit-medico').value = p.medico_derivante ? p.medico_derivante.nombre : '';
+
+// Clear Patologia by default if no turn context
+document.getElementById('edit-patologia').value = '';
+
+// If Context Turno exists, override/populate fields from Turno
+if (currentTurnoIdEdit) {
+// Try to find turno in global cache first
+let foundTurno = null;
+if (currentSlots) {
+for (let s of currentSlots) {
+if (s.turno && s.turno.id === currentTurnoIdEdit) {
+foundTurno = s.turno;
+break;
+}
+}
+}
+
+if (foundTurno) {
+if (foundTurno.patologia) document.getElementById('edit-patologia').value = foundTurno.patologia;
+// If Turno has a derivante, show THAT instead of Patient's default?
+// Yes, likely what user expects to edit for this appointment.
+// But we also want to update the patient's default? Maybe.
+// Let's pre-fill with Turno's data if valid.
+// Note: Turno doesn't give us the NAME of the medico directly in the standard schema sometimes
+// unless we load it. checking schema... TurnoOut has `medico_derivante_id` but not nested object?
+// Wait, looking at `renderSlots`: `s.turno.medico_derivante_id`. No Name.
+// Ah, patient has `medico_derivante`.
+// Use case: User wants to SET a medico for this turno.
+// If the backend didn't send the name of the medico for the TURNO, we might show the patient's one.
+// But if we want to Edit it, we need to know what it is.
+// Let's stick to Patient's one if Turno's one is numeric/unknown, or fetch the turno details?
+// Simpler: Just rely on Patient's data for now unless we fetch unique turno info.
+// BUT Patologia IS on the turno.
+}
+}
+
+document.getElementById('editPatientModal').style.display = 'flex';
+} catch (e) {
+console.error(e);
+alert("Error cargando datos del paciente");
+}
+}
+
+function closeEditPatientModal() {
+document.getElementById('editPatientModal').style.display = 'none';
+}
+
+async function submitEditPatient() {
+const nombre = document.getElementById('edit-nombre').value;
+const apellido = document.getElementById('edit-apellido').value;
+const fecha_nacimiento = document.getElementById('edit-fecha-nacimiento').value || null;
+const telefono = document.getElementById('edit-telefono').value;
+const dni = document.getElementById('edit-dni').value;
+const obra_social_nombre = document.getElementById('edit-obra-social').value;
+const medico_derivante_nombre = document.getElementById('edit-medico').value;
+const patologia = document.getElementById('edit-patologia').value; // New Field
+
+const payloadPaciente = {
+nombre, apellido, fecha_nacimiento, telefono, dni,
+obra_social_nombre, medico_derivante_nombre
+};
+
+try {
+// 1. Update Patient
+const res = await fetch(`/pacientes/${currentPatientIdEdit}`, {
+method: 'PUT',
+headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+body: JSON.stringify(payloadPaciente)
+});
+
+if (!res.ok) {
+const err = await res.json();
+// Handle Error (reuse existing logic)
+let msg = "Error al actualizar Paciente";
+if (err.detail) msg = Array.isArray(err.detail) ? "Validation Error" : "Error: " + err.detail;
+throw new Error(msg);
+}
+
+// 2. Update Turno (if context exists)
+if (currentTurnoIdEdit) {
+const payloadTurno = {
+patologia: patologia,
+medico_derivante_nombre: medico_derivante_nombre // Sync Medico to Turno explicitly too
+};
+
+const resTurno = await fetch(`/turnos/${currentTurnoIdEdit}`, {
+method: 'PATCH',
+headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+body: JSON.stringify(payloadTurno)
+});
+
+if (!resTurno.ok) {
+const errT = await resTurno.json();
+console.warn("Error updating Turno details:", errT);
+// Don't block success but warn? Or alert user?
+// alert("Datos del paciente guardados, pero hubo error al actualizar turno: " + errT.detail);
+}
+}
+
+alert("Datos guardados correctamente");
+closeEditPatientModal();
+loadSlots(); // Refresh Agenda View
+
+} catch (e) {
+console.error(e);
+alert(e.message || "Error de conexión");
+}
+}
+
+loadAgendas();
+// PASTE IMAGE LOGIC
+function enableImagePaste() {
+// Use Event Delegation for better reliability
+document.addEventListener('paste', async (e) => {
+const target = e.target;
+if (target.tagName === 'TEXTAREA') {
+console.log("Paste detected on textarea");
+const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+
+for (let index in items) {
+const item = items[index];
+if (item.kind === 'file') {
+const blob = item.getAsFile();
+console.log("File detected:", blob.type);
+if (blob.type.startsWith('image/')) {
+e.preventDefault();
+await uploadAndInsertImage(blob, target);
+return; // Stop after first image found
+}
+}
+}
+}
+});
+}
+
+async function uploadAndInsertImage(blob, textarea) {
+const formData = new FormData();
+formData.append('file', blob);
+
+// Show uploading state
+const originalPlaceholder = textarea.placeholder;
+textarea.placeholder = "Subiendo imagen...";
+
+// Insert temporary text
+const cursorPos = textarea.selectionStart;
+const textBefore = textarea.value.substring(0, cursorPos);
+const textAfter = textarea.value.substring(cursorPos);
+textarea.value = textBefore + " [...Subiendo Imagen...] " + textAfter;
+
+try {
+const res = await fetch('/uploads/image', {
+method: 'POST',
+headers: { 'Authorization': `Bearer ${token}` },
+body: formData
+});
+
+if (res.ok) {
+const data = await res.json();
+const link = `\n(Ver Imagen: [${data.filename}](${data.url}))\n`;
+
+// Replace temp text with actual link
+textarea.value = textarea.value.replace(" [...Subiendo Imagen...] ", link);
+} else {
+alert("Error al subir imagen");
+textarea.value = textarea.value.replace(" [...Subiendo Imagen...] ", "");
+}
+} catch (err) {
+console.error(err);
+alert("Error de conexión al subir imagen");
+textarea.value = textarea.value.replace(" [...Subiendo Imagen...] ", "");
+} finally {
+textarea.placeholder = originalPlaceholder;
+}
+}
+
+// Wrappers to break cache/collision issues
+function clickCompletar(id) {
+console.log("clickCompletar wrapper called", id);
+requestUpdateStatus(id, 'COMPLETADO');
+}
+
+function clickReprogramar(id) {
+console.log("clickReprogramar wrapper called", id);
+openReschedule(id);
+}
+
+// Initialize Paste Listener
+enableImagePaste();
+</script>
 </body>
 
 </html>
