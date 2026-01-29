@@ -659,27 +659,27 @@
                     // Wait, user wants Reschedule EVEN IF Absent.
 
                     // 🟢 NEW: Edit Patient Button - AVAILABLE FOR ALL STATUSES (Even Completed)
-                    html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0;">✏️</button>`;
+                    html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0; margin-right: 0.5rem;">✏️</button>`;
 
                     if (estado !== 'COMPLETADO') {
                         html += `
-                                <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar">✅</button>
-                                <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar">📅</button>
+                                <button class="action-btn btn-complete" onclick="requestUpdateStatus(${turno.id}, 'COMPLETADO')" title="Completar" style="margin-right: 0.5rem;">✅</button>
+                                <button class="action-btn btn-reschedule" onclick="openReschedule(${turno.id})" title="Reprogramar" style="margin-right: 0.5rem;">📅</button>
                             `;
 
                         const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
                         const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar WhatsApp';
 
-                        html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}">💬</button>`;
+                        html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}" style="margin-right: 0.5rem;">💬</button>`;
 
                         // 🟢 NEW: Start Tracking Button
-                        html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030;">☢️</button>`;
+                        html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030; margin-right: 0.5rem;">☢️</button>`;
 
                         if (estado !== 'AUSENTE') {
-                            html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>`;
+                            html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente" style="margin-right: 0.5rem;">❌</button>`;
                         }
 
-                        html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0;">📋</button>`;
+                        html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0; margin-right: 0.5rem;">📋</button>`;
 
                         // NEW: Delete Button (Red Trash Can)
                         html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 0.25rem;">🗑️</button>`;
@@ -779,12 +779,21 @@
         }
 
         function openReschedule(id) {
+            console.log("openReschedule called:", id);
             currentTurnoId = id;
-            document.getElementById('rescheduleModal').classList.add('active');
+            const modal = document.getElementById('rescheduleModal');
+            if (modal) {
+                modal.classList.add('active');
+                modal.style.display = 'flex';
+            }
         }
 
         function closeModal() {
-            document.getElementById('rescheduleModal').classList.remove('active');
+            const modal = document.getElementById('rescheduleModal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }
             currentTurnoId = null;
         }
 
@@ -933,6 +942,7 @@
         // --- Logic for Status Update with Custom Modal ---
 
         function requestUpdateStatus(id, status) {
+            console.log("requestUpdateStatus called:", id, status);
             pendingId = id;
             pendingStatus = status;
             pendingAction = 'UPDATE_STATUS';
@@ -941,12 +951,27 @@
                 ? '¿Desea marcar este turno como COMPLETADO?'
                 : '¿Desea marcar este turno como AUSENTE?';
 
-            document.getElementById('confirmationMessage').textContent = msg;
-            document.getElementById('confirmationModal').classList.add('active');
+            const modal = document.getElementById('confirmationModal');
+            if (modal) {
+                document.getElementById('confirmationMessage').textContent = msg;
+                modal.classList.add('active');
+                modal.style.display = 'flex'; // Force display
+            } else {
+                console.error("Confirmation modal not found!");
+            }
         }
 
         function closeConfirmation() {
-            document.getElementById('confirmationModal').classList.remove('active');
+            console.log("closeConfirmation called");
+            try {
+                const modal = document.getElementById('confirmationModal');
+                if (modal) {
+                    modal.classList.remove('active');
+                    modal.style.display = 'none'; // Force hide
+                }
+            } catch (e) {
+                console.error("Error closing modal:", e);
+            }
             pendingId = null;
             pendingStatus = null;
             pendingAction = null;
