@@ -406,310 +406,79 @@
     <script src="/static/js/agendas_main.js?v=20260129-2"></script>
 </body>
 
-</html>
-// Load Patologias
-fetch('/common/patologias', { headers: { 'Authorization': `Bearer ${token}` } })
-.then(r => r.json())
-.then(data => {
-const dl = document.getElementById('cancer-types-list');
-dl.innerHTML = '';
-data.forEach(item => {
-const op = document.createElement('option');
-op.value = item;
-dl.appendChild(op);
-});
-})
-.catch(e => console.error("Could not load pathologies", e));
-
-
-let currentAgendaId = null;
-let currentAgendaType = null;
-let currentTurnoId = null;
-
-// Variables for confirmation modal
-let pendingAction = null;
-let pendingId = null;
-let pendingStatus = null;
-
-// Set default date to today
-document.getElementById('dateFilter').valueAsDate = new Date();
-
-async function loadUser() {
-if (!token) return;
-try {
-const res = await fetch('/users/me', {
-headers: { 'Authorization': `Bearer ${token}` }
-});
-
-if (!res.ok) {
-throw new Error(`Error ${res.status}`);
+html += `<span style="color: #a0aec0;">Disponible</span>`;
 }
 
-const user = await res.json();
-document.getElementById('user-name-display').textContent = `${user.username} (${user.role})`;
+html += `</td>
+<td>`;
 
-if (user.role === 'ADMIN') {
-const al = document.getElementById('admin-links');
-if (al) al.style.display = 'block';
-}
+    if (isOccupied) {
+    const estado = turno.estado ? turno.estado.toUpperCase() : 'DESCONOCIDO';
+    const estadoClass = turno.estado ? turno.estado.toLowerCase() : 'unknown';
+    html += `<span class="status-badge status-${estadoClass}">${estado}</span>`;
+    } else {
+    html += `-`;
+    }
 
-} catch (e) {
-console.error("Auth Error:", e);
-document.getElementById('user-name-display').textContent = 'Error al cargar';
-document.getElementById('user-name-display').style.color = 'red';
-document.getElementById('user-name-display').style.fontSize = '0.8rem';
-// Optionally redirect to login if 401
-}
-}
+    html += `</td>
+<td>`;
 
-loadUser();
+    if (isOccupied) {
+    const estado = turno.estado ? turno.estado.toUpperCase().trim() : '';
 
-async function loadAgendas() {
-try {
-const response = await fetch(`/agendas/?_=${new Date().getTime()}`, {
-headers: { 'Authorization': `Bearer ${token}` }
-});
+    // Logic: Show Reschedule/Complete for everyone except Completed
+    // BUT: Only show Absent button if not completed/absent?
+    // Wait, user wants Reschedule EVEN IF Absent.
 
-if (response.status === 401) {
-logout();
-return;
-}
+    // 🟢 NEW: Edit Patient Button
+    html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})"
+        title="Editar Datos Paciente" style="background: #e2e8f0; margin-right: 15px;">✏️</button>`;
 
-const agendas = await response.json();
-renderAgendaList(agendas);
+    if (estado !== 'COMPLETADO') {
+    html += `
+    <button class="action-btn btn-complete" onclick="clickCompletar(${turno.id})" title="Completar"
+        style="margin-right: 15px;">✅</button>
+    <button class="action-btn btn-reschedule" onclick="clickReprogramar(${turno.id})" title="Reprogramar"
+        style="margin-right: 15px;">📅</button>
+    `;
 
-// ✨ Auto-select logic if only 1 agenda exists (Fix for Doctors)
-if (agendas.length === 1) {
-const firstAgenda = agendas[0];
-const item = document.querySelector(`.agenda-item[data-id="${firstAgenda.id}"]`);
-if (item) selectAgendaFromClick(item);
-}
+    const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
+    const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar
+    WhatsApp';
 
-} catch (error) {
-console.error('Error loading agendas:', error);
-document.getElementById('agendaList').innerHTML = '<div style="text-align: center; padding: 1rem; color: #f56565;">Error
-    al cargar agendas</div>';
-}
-}
+    html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)"
+        title="${whatsappTitle}" style="margin-right: 10px;">💬</button>`;
 
-function renderAgendaList(agendas) {
-const container = document.getElementById('agendaList');
-container.innerHTML = agendas.map(agenda => `
-<div class="agenda-item" data-id="${agenda.id}" data-name="${agenda.nombre.replace(/" /g, '&quot;' )}"
-    data-type="${agenda.tipo}" onclick="selectAgendaFromClick(this)">
-    <div class="dot"></div>
-    <div>
-        <div style="font-weight: 500;">${agenda.nombre}</div>
-        <div style="font-size: 0.75rem; color: #718096; text-transform: uppercase;">${agenda.tipo}</div>
-    </div>
-</div>
-`).join('');
-}
+    // 🟢 NEW: Start Tracking Button
+    html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)"
+        title="Iniciar Seguimiento Radioterapia"
+        style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030; margin-right: 10px;">☢️</button>`;
 
-function selectAgendaFromClick(element) {
-const id = element.dataset.id;
-const name = element.dataset.name;
-const type = element.dataset.type;
+    if (estado !== 'AUSENTE') {
+    html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente"
+        style="margin-right: 10px;">❌</button>`;
+    }
 
-document.querySelectorAll('.agenda-item').forEach(el => el.classList.remove('active'));
-element.classList.add('active');
+    html += `<button class="action-btn"
+        onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "
+        \\'") : '' }'})" title="Nueva Evolución (Historia Clínica)"
+        style="background: #e2e8f0; margin-right: 10px;">📋</button>`;
 
-document.getElementById('currentAgendaTitle').textContent = name;
-document.getElementById('filtersBar').style.display = 'flex';
+    // NEW: Delete Button (Red Trash Can)
+    html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO"
+        style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
+    }
+    } else {
+    html += `<button class="action-btn btn-confirm"
+        onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
+    }
 
-currentAgendaId = id;
-currentAgendaType = type;
-
-loadPracticas(type);
-loadSlots();
-}
-
-async function loadPracticas(tipo) {
-const select = document.getElementById('practicaFilter');
-select.innerHTML = '<option value="">Cargando...</option>';
-
-try {
-const response = await fetch(`/practicas/?categoria=${tipo}`, {
-headers: { 'Authorization': `Bearer ${token}` }
-});
-const practicas = await response.json();
-select.innerHTML = '<option value="">Todas las prácticas</option>' +
-practicas.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
-} catch (error) {
-console.error('Error loading practicas:', error);
-select.innerHTML = '<option value="">Error al cargar</option>';
-}
-}
-
-let currentSlots = []; // Global store
-
-async function loadSlots() {
-if (!currentAgendaId) return;
-
-const container = document.getElementById('turnosContainer');
-container.innerHTML = '<div style="text-align: center; padding: 4rem; color: #718096;">Cargando disponibilidad...</div>
-';
-
-const date = document.getElementById('dateFilter').value;
-const practicaId = document.getElementById('practicaFilter').value;
-
-try {
-let url = `/agendas/${currentAgendaId}/slots?fecha=${date}&_=${new Date().getTime()}`;
-if (practicaId) url += `&practica_id=${practicaId}`;
-
-const response = await fetch(url, {
-headers: { 'Authorization': `Bearer ${token}` }
+    html += `
+</td>
+</tr>`;
 });
 
-const slots = await response.json();
-currentSlots = slots; // Store for access
-renderSlots(slots);
-} catch (error) {
-console.error(error);
-container.innerHTML = '<p style="color: #f56565; text-align: center; padding: 2rem;">Error al cargar disponibilidad</p>
-';
-}
-}
-
-function renderSlots(slots) {
-const container = document.getElementById('turnosContainer');
-const statsContainer = document.getElementById('agendaStats');
-
-// 🟢 Statistics Logic
-let occupiedCount = 0;
-let availableCount = 0;
-
-slots.forEach(s => {
-if (s.turno) occupiedCount++;
-else if (s.disponible) availableCount++;
-});
-
-// Update UI Stats
-if (slots.length > 0 || currentAgendaId) {
-statsContainer.style.display = 'flex';
-statsContainer.innerHTML = `
-<div
-    style="background: #EBF8FF; color: #2B6CB0; padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; border: 1px solid #BEE3F8;">
-    Otorgados: ${occupiedCount}
-</div>
-<div
-    style="background: #F0FFF4; color: #2F855A; padding: 0.25rem 0.75rem; border-radius: 999px; font-weight: 600; border: 1px solid #C6F6D5;">
-    Disponibles: ${availableCount}
-</div>
-`;
-} else {
-statsContainer.style.display = 'none';
-}
-
-if (slots.length === 0) {
-container.innerHTML = '<div style="text-align: center; padding: 4rem; color: #a0aec0;">No hay horarios disponibles para
-    esta fecha</div>';
-return;
-}
-
-let html = `
-<table class="turnos-table">
-    <thead>
-        <tr>
-            <th>Hora</th>
-            <th>Paciente</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        `;
-
-        const dateFilter = document.getElementById('dateFilter');
-        const selectedDate = dateFilter && dateFilter.value ? dateFilter.value : new Date().toISOString().split('T')[0];
-
-        slots.forEach(slot => {
-        const turno = slot.turno;
-        const isOccupied = !!turno;
-
-        html += `<tr>
-            <td><span style="font-weight: 500; color: #2d3748;">${slot.hora}</span></td>
-            <td>`;
-
-                if (isOccupied) {
-                const p = turno.paciente;
-                const nombre = p ? `${p.nombre} ${p.apellido}` : 'ID: ' + turno.paciente_id;
-                html += `<strong>${nombre}</strong>`;
-                if (turno.patologia) html += `<br><small style="color: #718096;">${turno.patologia}</small>`;
-                } else {
-                html += `<span style="color: #a0aec0;">Disponible</span>`;
-                }
-
-                html += `</td>
-            <td>`;
-
-                if (isOccupied) {
-                const estado = turno.estado ? turno.estado.toUpperCase() : 'DESCONOCIDO';
-                const estadoClass = turno.estado ? turno.estado.toLowerCase() : 'unknown';
-                html += `<span class="status-badge status-${estadoClass}">${estado}</span>`;
-                } else {
-                html += `-`;
-                }
-
-                html += `</td>
-            <td>`;
-
-                if (isOccupied) {
-                const estado = turno.estado ? turno.estado.toUpperCase().trim() : '';
-
-                // Logic: Show Reschedule/Complete for everyone except Completed
-                // BUT: Only show Absent button if not completed/absent?
-                // Wait, user wants Reschedule EVEN IF Absent.
-
-                // 🟢 NEW: Edit Patient Button
-                html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})"
-                    title="Editar Datos Paciente" style="background: #e2e8f0; margin-right: 15px;">✏️</button>`;
-
-                if (estado !== 'COMPLETADO') {
-                html += `
-                <button class="action-btn btn-complete" onclick="clickCompletar(${turno.id})" title="Completar"
-                    style="margin-right: 15px;">✅</button>
-                <button class="action-btn btn-reschedule" onclick="clickReprogramar(${turno.id})" title="Reprogramar"
-                    style="margin-right: 15px;">📅</button>
-                `;
-
-                const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
-                const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar
-                WhatsApp';
-
-                html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)"
-                    title="${whatsappTitle}" style="margin-right: 10px;">💬</button>`;
-
-                // 🟢 NEW: Start Tracking Button
-                html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)"
-                    title="Iniciar Seguimiento Radioterapia"
-                    style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030; margin-right: 10px;">☢️</button>`;
-
-                if (estado !== 'AUSENTE') {
-                html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')"
-                    title="Ausente" style="margin-right: 10px;">❌</button>`;
-                }
-
-                html += `<button class="action-btn"
-                    onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "
-                    \\'") : '' }'})" title="Nueva Evolución (Historia Clínica)"
-                    style="background: #e2e8f0; margin-right: 10px;">📋</button>`;
-
-                // NEW: Delete Button (Red Trash Can)
-                html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO"
-                    style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
-                }
-                } else {
-                html += `<button class="action-btn btn-confirm"
-                    onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
-                }
-
-                html += `
-            </td>
-        </tr>`;
-        });
-
-        html += `</tbody>
+html += `</tbody>
 </table>`;
 container.innerHTML = html;
 }
