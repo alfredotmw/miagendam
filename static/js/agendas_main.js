@@ -1141,15 +1141,10 @@ async function uploadAndInsertImage(blob, textarea) {
 // Wrappers to break cache/collision issues
 // Wrappers to break cache/collision issues
 window.clickCompletar = function (id) {
-    // DIAGNOSTIC ALERT
-    alert("DEBUG: Click Completar ID: " + id);
     requestUpdateStatus(id, 'COMPLETADO');
 };
 
 window.clickReprogramar = function (id) {
-    // DIAGNOSTIC ALERT
-    alert("DEBUG: Click Reprogramar ID: " + id);
-    // Explicitly nullify any pending action to be safe
     pendingAction = null;
     openReschedule(id);
 };
