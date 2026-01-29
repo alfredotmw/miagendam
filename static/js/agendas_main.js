@@ -268,8 +268,8 @@ function renderSlots(slots) {
 
             if (estado !== 'COMPLETADO') {
                 html += `
-                        <button class="action-btn btn-complete" onclick="clickCompletar(${turno.id})" title="Completar" style="margin-right: 15px;">✅</button>
-                        <button class="action-btn btn-reschedule" onclick="clickReprogramar(${turno.id})" title="Reprogramar" style="margin-right: 15px;">📅</button>
+                        <button class="action-btn btn-complete" onclick="triggerComplete(${turno.id})" title="Completar" style="margin-right: 15px;">✅</button>
+                        <button class="action-btn btn-reschedule" onclick="triggerReschedule(${turno.id})" title="Reprogramar" style="margin-right: 15px;">📅</button>
                     `;
 
                 const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
@@ -1140,11 +1140,13 @@ async function uploadAndInsertImage(blob, textarea) {
 
 // Wrappers to break cache/collision issues
 // Wrappers to break cache/collision issues
-window.clickCompletar = function (id) {
+window.triggerComplete = function (id) {
+    console.log("triggerComplete called", id);
     requestUpdateStatus(id, 'COMPLETADO');
 };
 
-window.clickReprogramar = function (id) {
+window.triggerReschedule = function (id) {
+    console.log("triggerReschedule called", id);
     pendingAction = null;
     openReschedule(id);
 };
