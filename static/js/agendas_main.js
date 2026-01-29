@@ -111,7 +111,7 @@ function renderAgendaList(agendas) {
     `).join('');
 }
 
-function selectAgendaFromClick(element) {
+window.selectAgendaFromClick = function (element) {
     const id = element.dataset.id;
     const name = element.dataset.name;
     const type = element.dataset.type;
@@ -301,7 +301,7 @@ function renderSlots(slots) {
 }
 
 // 🟢 NEW: Delete Turn Function
-async function deleteTurno(id) {
+window.deleteTurno = async function (id) {
     if (!confirm("⚠️ ¿ESTÁ SEGURO DE QUE DESEA ELIMINAR ESTE TURNO?\n\nEsta acción es irreversible y borrará el turno de la base de datos para siempre.")) return;
 
     try {
@@ -326,7 +326,7 @@ async function deleteTurno(id) {
 }
 
 // 🟢 NEW: Start Radiotherapy Function
-async function startRadiotherapy(id, btn) {
+window.startRadiotherapy = async function (id, btn) {
     if (!confirm("¿Iniciar Seguimiento de Radioterapia para este paciente?\n\nEsto creará un registro activo si no existe.")) return;
 
     const originalText = btn.innerHTML;
@@ -365,7 +365,7 @@ async function startRadiotherapy(id, btn) {
     }
 }
 
-function agendar(fechaIso, hora) {
+window.agendar = function (fechaIso, hora) {
     if (!currentAgendaId) return;
     const dateStr = fechaIso.split('T')[0];
 
@@ -377,7 +377,7 @@ function agendar(fechaIso, hora) {
     window.location.href = `/static/nuevo_turno.html?${params.toString()}`;
 }
 
-function openReschedule(id) {
+window.openReschedule = function (id) {
     console.log("openReschedule called:", id);
     currentTurnoId = id;
     const modal = document.getElementById('rescheduleModal');
@@ -387,7 +387,7 @@ function openReschedule(id) {
     }
 }
 
-function closeModal() {
+window.closeModal = function () {
     const modal = document.getElementById('rescheduleModal');
     if (modal) {
         modal.classList.remove('active');
@@ -396,7 +396,7 @@ function closeModal() {
     currentTurnoId = null;
 }
 
-async function confirmReschedule() {
+window.confirmReschedule = async function () {
     if (!currentTurnoId) return;
 
     const newDate = document.getElementById('newDate').value;
@@ -490,7 +490,7 @@ async function confirmReschedule() {
     }
 }
 
-async function sendWhatsapp(turnoId, btnInfo) {
+window.sendWhatsapp = async function (turnoId, btnInfo) {
     try {
         // 1. Obtener enlace
         const response = await fetch(`/whatsapp/link/${turnoId}`, {
@@ -540,7 +540,7 @@ async function markAsSent(turnoId, btnElement) {
 
 // --- Logic for Status Update with Custom Modal ---
 
-function requestUpdateStatus(id, status) {
+window.requestUpdateStatus = function (id, status) {
     console.log("requestUpdateStatus called:", id, status);
     pendingId = id;
     pendingStatus = status;
@@ -560,7 +560,7 @@ function requestUpdateStatus(id, status) {
     }
 }
 
-function closeConfirmation() {
+window.closeConfirmation = function () {
     console.log("closeConfirmation called");
     try {
         const modal = document.getElementById('confirmationModal');
@@ -576,7 +576,7 @@ function closeConfirmation() {
     pendingAction = null;
 }
 
-async function executeAction() {
+window.executeAction = async function () {
     if (!pendingAction) return;
 
     const btn = document.getElementById('btnConfirmAction');
@@ -595,7 +595,7 @@ async function executeAction() {
     }
 }
 
-async function performUpdateStatus(id, status) {
+window.performUpdateStatus = async function (id, status) {
     if (!token) {
         alert('Sesión expirada');
         logout();
@@ -629,7 +629,7 @@ async function performUpdateStatus(id, status) {
     }
 }
 
-function logout() {
+window.logout = function () {
     localStorage.removeItem('token');
     window.location.href = '/static/login.html';
 }
@@ -639,7 +639,7 @@ let currentHistoriaPacienteId = null;
 let currentNoteId = null;
 let eventsMap = {};
 
-function openNoteModal(note = null, readOnly = false, patientData = null) {
+window.openNoteModal = function (note = null, readOnly = false, patientData = null) {
     const modal = document.getElementById('noteModal');
     if (modal) modal.classList.add('active');
 
@@ -685,7 +685,7 @@ function openNoteModal(note = null, readOnly = false, patientData = null) {
     }
 }
 
-function closeNoteModal() {
+window.closeNoteModal = function () {
     const modal = document.getElementById('noteModal');
     if (modal) modal.classList.remove('active');
     const form = document.getElementById('noteForm');
@@ -696,7 +696,7 @@ function closeNoteModal() {
     }
 }
 
-function viewHistoryFromModal() {
+window.viewHistoryFromModal = function () {
     if (currentHistoriaPacienteId) {
         closeNoteModal();
         // We need to fetch details if we don't have them easily, or relies on openHistoria doing it
@@ -712,7 +712,7 @@ function viewHistoryFromModal() {
     }
 }
 
-async function submitNote(estado) {
+window.submitNote = async function (estado) {
     if (!currentHistoriaPacienteId) { alert("Error: Paciente no identificado"); return; }
     if (estado === 'FIRMADO' && !confirm("¿Firmar nota? No se podrá editar.")) return;
 
@@ -768,7 +768,7 @@ async function submitNote(estado) {
     }
 }
 
-async function openHistoria(pacienteId, dni, nombre) {
+window.openHistoria = async function (pacienteId, dni, nombre) {
     currentHistoriaPacienteId = pacienteId;
     // Update Badge
     const badge = document.getElementById('historiaPacienteBadge');
@@ -779,13 +779,13 @@ async function openHistoria(pacienteId, dni, nombre) {
     await loadHistoriaTimeline(pacienteId);
 }
 
-function closeHistoria() {
+window.closeHistoria = function () {
     const modal = document.getElementById('historiaModal');
     if (modal) modal.classList.remove('active');
     currentHistoriaPacienteId = null;
 }
 
-async function loadHistoriaTimeline(pacienteId) {
+window.loadHistoriaTimeline = async function (pacienteId) {
     const container = document.getElementById('historiaTimeline');
     if (container) container.innerHTML = '<div style="text-align: center; padding: 3rem; color: #a0aec0;">Cargando historia...</div>';
 
@@ -879,7 +879,7 @@ function getStatusColor(status) {
     return '#a0aec0'; // Gray
 }
 
-async function saveHistoria() {
+window.saveHistoria = async function () {
     if (!currentHistoriaPacienteId) return;
     const texto = document.getElementById('nuevaNotaTexto').value;
     const servicio = document.getElementById('nuevaNotaServicio').value;
@@ -917,7 +917,7 @@ async function saveHistoria() {
     }
 }
 
-function printHistoria() {
+window.printHistoria = function () {
     document.body.classList.add('printing-historia');
     window.print();
     document.body.classList.remove('printing-historia');
@@ -926,7 +926,7 @@ function printHistoria() {
 // --- EDIT PATIENT LOGIC ---
 let currentTurnoIdEdit = null; // New global to store the context
 
-async function openEditPatientModal(patientId, turnoId = null) {
+window.openEditPatientModal = async function (patientId, turnoId = null) {
     currentPatientIdEdit = patientId;
     currentTurnoIdEdit = turnoId;
 
@@ -1142,15 +1142,16 @@ async function uploadAndInsertImage(blob, textarea) {
 }
 
 // Wrappers to break cache/collision issues
-function clickCompletar(id) {
+// Wrappers to break cache/collision issues
+window.clickCompletar = function (id) {
     console.log("clickCompletar wrapper called", id);
     requestUpdateStatus(id, 'COMPLETADO');
-}
+};
 
-function clickReprogramar(id) {
+window.clickReprogramar = function (id) {
     console.log("clickReprogramar wrapper called", id);
     openReschedule(id);
-}
+};
 
 // Initialize Paste Listener
 enableImagePaste();
