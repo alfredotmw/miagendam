@@ -388,11 +388,12 @@ window.openReschedule = function (id) {
 }
 
 window.closeModal = function () {
-    const modal = document.getElementById('rescheduleModal');
-    if (modal) {
-        modal.classList.remove('active');
-        modal.style.display = 'none';
-    }
+    console.log("closeModal called");
+    // Aggressive cleanup
+    document.querySelectorAll('.modal').forEach(m => {
+        m.classList.remove('active');
+        m.style.display = 'none';
+    });
     currentTurnoId = null;
 }
 
@@ -562,15 +563,11 @@ window.requestUpdateStatus = function (id, status) {
 
 window.closeConfirmation = function () {
     console.log("closeConfirmation called");
-    try {
-        const modal = document.getElementById('confirmationModal');
-        if (modal) {
-            modal.classList.remove('active');
-            modal.style.display = 'none'; // Force hide
-        }
-    } catch (e) {
-        console.error("Error closing modal:", e);
-    }
+    // Aggressive cleanup
+    document.querySelectorAll('.modal').forEach(m => {
+        m.classList.remove('active');
+        m.style.display = 'none';
+    });
     pendingId = null;
     pendingStatus = null;
     pendingAction = null;
@@ -1144,12 +1141,16 @@ async function uploadAndInsertImage(blob, textarea) {
 // Wrappers to break cache/collision issues
 // Wrappers to break cache/collision issues
 window.clickCompletar = function (id) {
-    console.log("clickCompletar wrapper called", id);
+    // DIAGNOSTIC ALERT
+    alert("DEBUG: Click Completar ID: " + id);
     requestUpdateStatus(id, 'COMPLETADO');
 };
 
 window.clickReprogramar = function (id) {
-    console.log("clickReprogramar wrapper called", id);
+    // DIAGNOSTIC ALERT
+    alert("DEBUG: Click Reprogramar ID: " + id);
+    // Explicitly nullify any pending action to be safe
+    pendingAction = null;
     openReschedule(id);
 };
 
