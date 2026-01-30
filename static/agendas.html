@@ -139,9 +139,8 @@
             </div>
             <div class="filters" id="filtersBar" style="display: none;">
                 <input type="date" id="dateFilter" class="form-input" onchange="loadSlots()">
-                <select id="practicaFilter" class="form-input" onchange="loadSlots()">
-                    <option value="">Todas las prácticas</option>
-                </select>
+                <input type="text" id="pacienteFilter" class="form-input" placeholder="Buscar paciente..."
+                    oninput="filterSlots()" style="min-width: 200px;">
             </div>
         </div>
 

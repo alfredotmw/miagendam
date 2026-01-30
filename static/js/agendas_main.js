@@ -126,29 +126,35 @@ window.selectAgendaFromClick = function (element) {
     currentAgendaId = id;
     currentAgendaType = type;
 
-    loadPracticas(type);
+    // loadPracticas(type); // Eliminado
     loadSlots();
 }
 
-async function loadPracticas(tipo) {
-    const select = document.getElementById('practicaFilter');
-    if (!select) return;
-    select.innerHTML = '<option value="">Cargando...</option>';
+window.filterSlots = function () {
+    const term = document.getElementById('pacienteFilter').value.toLowerCase();
 
-    try {
-        const response = await fetch(`/practicas/?categoria=${tipo}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const practicas = await response.json();
-        select.innerHTML = '<option value="">Todas las prácticas</option>' +
-            practicas.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
-    } catch (error) {
-        console.error('Error loading practicas:', error);
-        select.innerHTML = '<option value="">Error al cargar</option>';
+    if (!currentSlots) return;
+
+    // If empty, show all (re-render original fetched slots)
+    if (!term) {
+        renderSlots(currentSlots);
+        return;
     }
-}
 
-let currentSlots = []; // Global store
+    const filtered = currentSlots.filter(s => {
+        if (!s.turno) return false; // Hide empty slots when searching
+
+        const p = s.turno.paciente;
+        if (!p) return false;
+
+        const fullName = `${p.nombre} ${p.apellido}`.toLowerCase();
+        const dni = p.dni ? p.dni.toString() : '';
+
+        return fullName.includes(term) || dni.includes(term);
+    });
+
+    renderSlots(filtered);
+}
 
 async function loadSlots() {
     if (!currentAgendaId) return;
@@ -157,11 +163,9 @@ async function loadSlots() {
     if (container) container.innerHTML = '<div style="text-align: center; padding: 4rem; color: #718096;">Cargando disponibilidad...</div>';
 
     const date = document.getElementById('dateFilter').value;
-    const practicaId = document.getElementById('practicaFilter').value;
 
     try {
         let url = `/agendas/${currentAgendaId}/slots?fecha=${date}&_=${new Date().getTime()}`;
-        if (practicaId) url += `&practica_id=${practicaId}`;
 
         const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
