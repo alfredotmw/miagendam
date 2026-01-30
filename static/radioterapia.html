@@ -139,8 +139,12 @@
                         <option value="SIN_ASIGNAR">Sin Asignar</option>
                     </select>
                 </div>
-                <div style="display: flex; align-items: flex-end;">
+                <div style="display: flex; align-items: flex-end; gap: 1rem;">
                     <button onclick="loadData()" class="btn-secondary" style="height: 38px;">🔄 Actualizar</button>
+                    <span id="total-counter"
+                        style="font-weight: 600; color: #2c5282; align-self: center; background: #ebf8ff; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.9rem;">
+                        - Pacientes
+                    </span>
                 </div>
             </div>
 
@@ -295,6 +299,13 @@
 
         function renderTable(data) {
             const tbody = document.getElementById('table-body');
+            const counter = document.getElementById('total-counter');
+
+            // Update Counter
+            if (counter) {
+                counter.textContent = `${data.length} Paciente${data.length !== 1 ? 's' : ''}`;
+            }
+
             tbody.innerHTML = '';
             if (data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#a0aec0;">No hay registros.</td></tr>';
