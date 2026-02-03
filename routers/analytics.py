@@ -148,7 +148,7 @@ def get_excel_feed(
 
     # Query all turns
     # We join with relevant tables to optimize fetching
-    turnos = db.query(Turno).join(Paciente).join(Agenda).outerjoin(MedicoDerivante).order_by(Turno.fecha.desc()).all()
+    turnos = db.query(Turno).join(Paciente).join(Agenda).outerjoin(Turno.medico_derivante).order_by(Turno.fecha.desc()).all()
     
     data = []
     for t in turnos:
@@ -203,7 +203,7 @@ def get_dashboard_data(
     
     # Base Query
     # 🟢 FIX: Use DISTINCT to avoid double counting if multiple practices or joins multiply rows
-    query = db.query(Turno).distinct().join(Agenda).join(Paciente).outerjoin(MedicoDerivante).outerjoin(TurnoPractica).outerjoin(Practica)
+    query = db.query(Turno).distinct().join(Agenda).join(Paciente).outerjoin(Turno.medico_derivante).outerjoin(TurnoPractica).outerjoin(Practica)
     
     if start_date:
         query = query.filter(Turno.fecha >= start_date)
