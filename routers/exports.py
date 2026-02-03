@@ -60,6 +60,9 @@ def export_turnos(
         # Obtener médico derivante
         medico_derivante = t.medico_derivante.nombre if t.medico_derivante else ""
 
+        # Obra Social
+        obra_social_nombre = t.paciente.obra_social.nombre if t.paciente and t.paciente.obra_social else ""
+
         # Patología: ya existe columna t.patologia
         patologia_val = t.patologia if t.patologia else ""
 
@@ -115,6 +118,7 @@ def export_turnos(
                 "Hora": t.hora,
                 "Paciente": paciente_nombre,
                 "DNI": t.paciente.dni if t.paciente else "",
+                "Obra Social": obra_social_nombre, # ✅ Nueva columna
                 "Edad": edad_paciente,           
                 "Celular": contacto,
                 "Agenda": t.agenda.nombre if t.agenda else "", # ✅ Volvemos al nombre original de la Agenda
@@ -138,7 +142,7 @@ def export_turnos(
         if data:
             fieldnames = data[0].keys()
         else:
-             fieldnames = ["Fecha", "Día", "Hora", "Paciente", "DNI", "Edad", "Celular", "Agenda", "Tipo", "Medico Derivante", "Patologia", "Estado", "Duracion", "Práctica"]
+             fieldnames = ["Fecha", "Día", "Hora", "Paciente", "DNI", "Obra Social", "Edad", "Celular", "Agenda", "Tipo", "Medico Derivante", "Patologia", "Estado", "Duracion", "Práctica"]
 
         writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
