@@ -428,6 +428,15 @@ window.confirmReschedule = async function () {
         }
     }
 
+    // 🟢 VALIDATE SUNDAY
+    const d = new Date(newDate + 'T00:00:00');
+    if (d.getDay() === 0) { // 0 = Sunday
+        alert('No se pueden agendar turnos los días Domingo.');
+        btn.textContent = originalText;
+        btn.disabled = false;
+        return;
+    }
+
     try {
         // BRANCH LOGIC: If AUSENTE -> Create NEW Turno. Else -> PATCH.
         if (foundTurno && foundTurno.estado === 'AUSENTE') {

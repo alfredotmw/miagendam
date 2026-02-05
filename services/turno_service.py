@@ -97,7 +97,6 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
             status_code=400, 
             detail=f"No hay disponibilidad en este horario. Capacidad máxima: {capacidad_maxima}, Turnos actuales: {count_solapados}"
         )
-
 def check_availability_boolean(db: Session, agenda_id: int, fecha_hora_inicio: datetime, duracion_minutos: int, agenda_tipo: str) -> bool:
     """
     Versión booleana de check_availability. Retorna True si hay lugar, False si no.
@@ -107,3 +106,12 @@ def check_availability_boolean(db: Session, agenda_id: int, fecha_hora_inicio: d
         return True
     except HTTPException:
         return False
+
+def validate_date_rules(fecha: datetime):
+    """
+    Valida reglas de negocio generales para fechas.
+    - Rechaza Domingos (weekday == 6)
+    """
+    if fecha.weekday() == 6: # 0=Monday, 6=Sunday
+        raise HTTPException(status_code=400, detail="No se pueden agendar turnos los días Domingo.")
+    return True

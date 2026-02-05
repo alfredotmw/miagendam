@@ -453,8 +453,14 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
             fecha_solo = nueva_fecha_base.date()
             fecha_hora_real = datetime.combine(fecha_solo, dt_time(h, m))
             
+            # 🟢 VALIDACIÓN DE REGLAS DE NEGOCIO (e.g. Domingos)
+            from services.turno_service import validate_date_rules
+            validate_date_rules(fecha_hora_real)
+
             turno.fecha = fecha_hora_real
             turno.hora = nueva_hora_str
+        except HTTPException as he:
+            raise he
         except Exception as e:
              print(f"Error actualizando fecha/hora: {e}")
              raise HTTPException(status_code=400, detail="Formato de hora inválido")
