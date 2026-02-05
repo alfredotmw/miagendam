@@ -38,6 +38,44 @@ def get_patologias(db: Session = Depends(get_db), current_user: dict = Depends(g
     return all_patologias
 
 
+from schemas.check_duplicates import CheckDuplicates
+
+@router.post("/verificar_duplicados")
+def verificar_duplicados(check: CheckDuplicates, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """
+    Verifica si un paciente ya tiene turnos activos en las fechas proporcionadas.
+    Retorna una lista de alertas si hay coincidencias.
+    """
+    # Buscar turnos activos (no cancelados) para el paciente en las fechas dadas
+    coincidencias = db.query(Turno).filter(
+        Turno.paciente_id == check.paciente_id,
+        Turno.estado != "CANCELADO",
+        # Cast fecha datetime to date for comparison logic, or check range
+        # SQLite might need string comparison or specific func. 
+        # Postgres uses generic fn.
+        # Let's use Python filtering for safety/portability if list is small, or SQL IN if date type matches.
+        # Turno.fecha is datetime.
+        # Efficient SQL: WHERE user_id AND CAST(fecha AS DATE) IN (...)
+    ).all()
+    
+    # Filter in Python to avoid DB-specific complications with Cast/Date matching
+    fechas_input_set = set(check.fechas)
+    duplicados = []
+    
+    for t in coincidencias:
+        if t.fecha.date() in fechas_input_set:
+            duplicados.append(t.fecha.strftime("%d/%m/%Y"))
+            
+    if duplicados:
+        fechas_str = ", ".join(sorted(list(set(duplicados))))
+        return {
+            "status": "alerta",
+            "mensaje": f"El paciente ya tiene turnos asignados en las siguientes fechas: {fechas_str}. ¿Desea continuar y agendar turnos dobles?"
+        }
+    
+    return {"status": "ok"}
+
+
 @router.post("/", response_model=TurnoOut)
 def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     try:

@@ -755,7 +755,7 @@
             const hora = document.getElementById('hora').value;
             const medicoDerivante = document.getElementById('medico_derivante').value.toUpperCase();
             const obraSocial = document.getElementById('obra_social_input').value.toUpperCase();
-            const celular = document.getElementById('celular').value; // Nueva validación
+            const celular = document.getElementById('celular').value;
 
             if (!dni || !nombre || !apellido || !agendaId || !hora || !medicoDerivante || !obraSocial || !celular) {
                 return alert('Por favor complete todos los campos obligatorios (*). Incluyendo Celular y Obra Social.');
@@ -775,6 +775,49 @@
             }
             if (selectedDates.length === 0) return alert('Seleccione al menos una fecha');
 
+            // 🟢 SECURITY CHECK: Verify Duplicates
+            const pacienteIdVal = document.getElementById('paciente_id').value;
+            if (pacienteIdVal) {
+                try {
+                    const btn = document.querySelector('.submit-btn');
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Verificando...';
+                    btn.disabled = true;
+
+                    const checkRes = await fetch('/turnos/verificar_duplicados', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({
+                            paciente_id: parseInt(pacienteIdVal),
+                            fechas: selectedDates
+                        })
+                    });
+
+                    if (checkRes.ok) {
+                        const checkData = await checkRes.json();
+                        if (checkData.status === 'alerta') {
+                            const userConfirmed = confirm("⚠️ ATENCIÓN POSIBLE DUPLICADO\n\n" + checkData.mensaje);
+                            if (!userConfirmed) {
+                                btn.textContent = originalText;
+                                btn.disabled = false;
+                                return; // Stop
+                            }
+                        }
+                    }
+                    // Restore button for processSubmission
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                } catch (e) {
+                    console.error("Error verificando duplicados", e);
+                    // On error, we proceed? Or block? Better proceed to avoid blocking work if check fails.
+                }
+            }
+
+            // Validations Passed => Process
+            await processSubmission(dni, nombre, apellido, agendaId, hora, medicoDerivante, obraSocial, celular, practicasIds, selectedDates);
+        }
+
+        async function processSubmission(dni, nombre, apellido, agendaId, hora, medicoDerivante, obraSocial, celular, practicasIds, selectedDates) {
             // UI Feedback
             const btn = document.querySelector('.submit-btn');
             const originalText = btn.textContent;
@@ -789,7 +832,7 @@
                     fecha_nacimiento: document.getElementById('fecha_nacimiento').value || null,
                     sexo: document.getElementById('sexo').value || null,
                     telefono: document.getElementById('telefono').value || null,
-                    celular: celular, // Nuevo campo
+                    celular: celular,
                     obra_social_nombre: obraSocial
                 };
 
