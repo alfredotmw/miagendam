@@ -34,8 +34,9 @@ if (dateFilter) dateFilter.valueAsDate = new Date();
 // Global user variable
 window.currentUser = null;
 
+// 🟢 FIX: Return user for proper async handling
 async function loadUser() {
-    if (!token) return;
+    if (!token) return null;
     try {
         const res = await fetch('/users/me', {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -49,19 +50,17 @@ async function loadUser() {
         window.currentUser = user; // Store globally
 
         const userNameDisplay = document.getElementById('user-name-display');
-        if (userNameDisplay) userNameDisplay.textContent = `${user.username} (${user.role})`;
+        // Robust Display
+        const role = user.role ? user.role.toUpperCase() : 'USER';
+        if (userNameDisplay) userNameDisplay.textContent = `${user.username} (${role})`;
 
-        if (user.role === 'ADMIN') {
+        // Robust Check for Admin Links
+        if (role === 'ADMIN') {
             const al = document.getElementById('admin-links');
             if (al) al.style.display = 'block';
         }
 
-        // 🟢 FIX: Trigger Re-Render of Slots if they are already loaded
-        // This ensures the "Delete" button appears if User loads AFTER Slots.
-        if (typeof currentSlots !== 'undefined' && currentSlots) {
-            console.log("User loaded after slots, re-rendering...");
-            renderSlots(currentSlots);
-        }
+        return user;
 
     } catch (e) {
         console.error("Auth Error:", e);
@@ -71,10 +70,9 @@ async function loadUser() {
             userNameDisplay.style.color = 'red';
             userNameDisplay.style.fontSize = '0.8rem';
         }
+        return null;
     }
 }
-
-loadUser();
 
 async function loadAgendas() {
     try {
@@ -103,6 +101,20 @@ async function loadAgendas() {
         if (agendaList) agendaList.innerHTML = '<div style="text-align: center; padding: 1rem; color: #f56565;">Error al cargar agendas</div>';
     }
 }
+
+// 🚀 SEQUENTIAL INITIALIZATION
+// This guarantees that User Permissions are loaded BEFORE Agendas/Slots are ever requested.
+async function init() {
+    console.log("🚀 Starting App Initialization...");
+    await loadUser();
+    console.log("✅ User Loaded. Current User:", window.currentUser);
+    await loadAgendas();
+    console.log("✅ Agendas Loaded.");
+}
+
+// Start the sequence
+init();
+
 
 function renderAgendaList(agendas) {
     const container = document.getElementById('agendaList');
@@ -303,7 +315,10 @@ function renderSlots(slots) {
 
                 // NEW: Delete Button (Red Trash Can)
                 // Visible if NOT Completed OR if User is ADMIN
-                const isAdmin = window.currentUser && window.currentUser.role === 'ADMIN';
+                // 🟢 ROBUST CHECK: toLowerCase()
+                // Safely access role even if null
+                const isAdmin = window.currentUser && window.currentUser.role && window.currentUser.role.toLowerCase() === 'admin';
+
                 if (estado !== 'COMPLETADO' || isAdmin) {
                     html += `<button class="action-btn" onclick="deleteTurno(${turno.id}, '${estado}')" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
                 }
