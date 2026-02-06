@@ -459,6 +459,23 @@ def eliminar_turno(turno_id: int, db: Session = Depends(get_db), current_user: d
     if not turno:
         raise HTTPException(status_code=404, detail="Turno no encontrado")
     
+    # 🛡️ SECURTY CHECK: Solo ADMIN puede borrar completados
+    if turno.estado == "COMPLETADO" and current_user.get("role") != "ADMIN":
+        raise HTTPException(
+            status_code=403, 
+            detail="⚠️ ACCESO DENEGADO: No tiene permisos para eliminar un turno COMPLETADO. Contacte al administrador."
+        )
+
+    # 📝 AUDIT LOG
+    try:
+        log_msg = f"[AUDIT] TURN DELETED | ID: {turno.id} | USER: {current_user.get('username')} ({current_user.get('role')}) | PACIENTE: {turno.paciente_id} | FECHA: {turno.fecha} | ESTADO_PREVIO: {turno.estado}"
+        print(log_msg)
+        # Opcional: Escribir a archivo si se desea persistencia simple
+        with open("audit_log.txt", "a") as f:
+            f.write(f"{datetime.now()} - {log_msg}\n")
+    except Exception as e:
+        print(f"Error logging audit: {e}")
+
     db.delete(turno)
     db.commit()
     return {"mensaje": f"Turno {turno_id} eliminado correctamente"}

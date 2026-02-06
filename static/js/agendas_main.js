@@ -31,6 +31,9 @@ let pendingStatus = null;
 const dateFilter = document.getElementById('dateFilter');
 if (dateFilter) dateFilter.valueAsDate = new Date();
 
+// Global user variable
+window.currentUser = null;
+
 async function loadUser() {
     if (!token) return;
     try {
@@ -43,6 +46,8 @@ async function loadUser() {
         }
 
         const user = await res.json();
+        window.currentUser = user; // Store globally
+
         const userNameDisplay = document.getElementById('user-name-display');
         if (userNameDisplay) userNameDisplay.textContent = `${user.username} (${user.role})`;
 
@@ -59,11 +64,9 @@ async function loadUser() {
             userNameDisplay.style.color = 'red';
             userNameDisplay.style.fontSize = '0.8rem';
         }
-        // Optionally redirect to login if 401
     }
 }
 
-loadUser();
 
 async function loadAgendas() {
     try {
@@ -291,7 +294,11 @@ function renderSlots(slots) {
                 html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0; margin-right: 10px;">📋</button>`;
 
                 // NEW: Delete Button (Red Trash Can)
-                html += `<button class="action-btn" onclick="deleteTurno(${turno.id})" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
+                // Visible if NOT Completed OR if User is ADMIN
+                const isAdmin = window.currentUser && window.currentUser.role === 'ADMIN';
+                if (estado !== 'COMPLETADO' || isAdmin) {
+                    html += `<button class="action-btn" onclick="deleteTurno(${turno.id}, '${estado}')" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
+                }
             }
         } else {
             html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
@@ -305,8 +312,15 @@ function renderSlots(slots) {
 }
 
 // 🟢 NEW: Delete Turn Function
-window.deleteTurno = async function (id) {
-    if (!confirm("⚠️ ¿ESTÁ SEGURO DE QUE DESEA ELIMINAR ESTE TURNO?\n\nEsta acción es irreversible y borrará el turno de la base de datos para siempre.")) return;
+window.deleteTurno = async function (id, estado) {
+    let msg = "⚠️ ¿ESTÁ SEGURO DE QUE DESEA ELIMINAR ESTE TURNO?\n\nEsta acción es irreversible y borrará el turno de la base de datos para siempre.";
+
+    // Strict Warning for Completed
+    if (estado === 'COMPLETADO') {
+        msg = "🛑 ¡ADVERTENCIA CRÍTICA! 🛑\n\nEste turno ya figura como COMPLETADO.\n\n¿Está seguro de que desea eliminarlo?\nEsta acción podría afectar las estadísticas de atención y el historial del paciente.";
+    }
+
+    if (!confirm(msg)) return;
 
     try {
         const response = await fetch(`/turnos/${id}`, {
