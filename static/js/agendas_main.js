@@ -56,6 +56,13 @@ async function loadUser() {
             if (al) al.style.display = 'block';
         }
 
+        // 🟢 FIX: Trigger Re-Render of Slots if they are already loaded
+        // This ensures the "Delete" button appears if User loads AFTER Slots.
+        if (typeof currentSlots !== 'undefined' && currentSlots) {
+            console.log("User loaded after slots, re-rendering...");
+            renderSlots(currentSlots);
+        }
+
     } catch (e) {
         console.error("Auth Error:", e);
         const userNameDisplay = document.getElementById('user-name-display');
