@@ -313,15 +313,16 @@ function renderSlots(slots) {
 
                 html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0; margin-right: 10px;">📋</button>`;
 
-                // NEW: Delete Button (Red Trash Can)
-                // Visible if NOT Completed OR if User is ADMIN
-                // 🟢 ROBUST CHECK: toLowerCase()
-                // Safely access role even if null
-                const isAdmin = window.currentUser && window.currentUser.role && window.currentUser.role.toLowerCase() === 'admin';
+            }
 
-                if (estado !== 'COMPLETADO' || isAdmin) {
-                    html += `<button class="action-btn" onclick="deleteTurno(${turno.id}, '${estado}')" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
-                }
+            // NEW: Delete Button (Red Trash Can)
+            // Visible if NOT Completed OR if User is ADMIN
+            // 🟢 ROBUST CHECK: toLowerCase()
+            // Safely access role even if null
+            const isAdmin = window.currentUser && window.currentUser.role && window.currentUser.role.toLowerCase() === 'admin';
+
+            if (estado !== 'COMPLETADO' || isAdmin) {
+                html += `<button class="action-btn" onclick="deleteTurno(${turno.id}, '${estado}')" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
             }
         } else {
             html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
