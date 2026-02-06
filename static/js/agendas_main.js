@@ -67,6 +67,7 @@ async function loadUser() {
     }
 }
 
+loadUser();
 
 async function loadAgendas() {
     try {
