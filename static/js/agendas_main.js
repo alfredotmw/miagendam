@@ -1021,7 +1021,12 @@ window.openEditPatientModal = async function (patientId, turnoId = null) {
         dniInput.disabled = false;
         dniInput.style.cursor = 'text';
         dniInput.style.backgroundColor = 'white';
-        document.getElementById('edit-fecha-nacimiento').value = p.fecha_nacimiento || '';
+
+        const fechaInput = document.getElementById('edit-fecha-nacimiento');
+        fechaInput.value = p.fecha_nacimiento || '';
+        fechaInput.readOnly = false;
+        fechaInput.disabled = false;
+
         document.getElementById('edit-telefono').value = p.telefono || '';
         document.getElementById('edit-obra-social').value = p.obra_social ? p.obra_social.nombre : '';
         document.getElementById('edit-medico').value = p.medico_derivante ? p.medico_derivante.nombre : '';
@@ -1083,42 +1088,31 @@ async function submitEditPatient() {
             body: JSON.stringify(payloadPaciente)
         });
 
+        // ... (inside submitEditPatient)
+
         if (!res.ok) {
             const err = await res.json();
+            console.error("Error response:", err);
             // Handle Error (reuse existing logic)
             let msg = "Error al actualizar Paciente";
-            if (err.detail) msg = Array.isArray(err.detail) ? "Validation Error" : "Error: " + err.detail;
+            if (err.detail) {
+                if (typeof err.detail === 'string') {
+                    msg = "Error: " + err.detail;
+                } else if (Array.isArray(err.detail)) {
+                    // Pydantic format
+                    msg = "Error de Validación: " + err.detail.map(e => e.msg).join(", ");
+                } else {
+                    msg = "Error: " + JSON.stringify(err.detail);
+                }
+            }
             throw new Error(msg);
         }
 
-        // 2. Update Turno (if context exists)
-        if (currentTurnoIdEdit) {
-            const payloadTurno = {
-                patologia: patologia,
-                medico_derivante_nombre: medico_derivante_nombre // Sync Medico to Turno explicitly too
-            };
-
-            const resTurno = await fetch(`/turnos/${currentTurnoIdEdit}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(payloadTurno)
-            });
-
-            if (!resTurno.ok) {
-                const errT = await resTurno.json();
-                console.warn("Error updating Turno details:", errT);
-                // Don't block success but warn? Or alert user?
-                // alert("Datos del paciente guardados, pero hubo error al actualizar turno: " + errT.detail);
-            }
-        }
-
-        alert("Datos guardados correctamente");
-        closeEditPatientModal();
-        loadSlots(); // Refresh Agenda View
+        // ... (rest of function)
 
     } catch (e) {
         console.error(e);
-        alert(e.message || "Error de conexión");
+        alert(e.message || "Error desconocido");
     }
 }
 
