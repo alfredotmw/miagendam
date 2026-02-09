@@ -1,3 +1,4 @@
+console.log("Agendas Main.js Loaded - Version 1.2 (Fix Date Edit)");
 const token = localStorage.getItem('token');
 if (!token) window.location.href = '/static/login.html';
 
