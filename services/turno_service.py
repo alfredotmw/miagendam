@@ -91,17 +91,25 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
 
     if agenda_tipo == "QUIMIOTERAPIA":
         capacidad_maxima = 7 # 7 sillones
+    
+    # 🟢 FIX: Enforce strict single capacity for PET/GAMMA (Just in case logic changes)
+    if agenda_tipo in ["PET", "CAMARA_GAMMA"]:
+        capacidad_maxima = 1
 
     if count_solapados >= capacidad_maxima:
         raise HTTPException(
             status_code=400, 
-            detail=f"No hay disponibilidad en este horario. Capacidad máxima: {capacidad_maxima}, Turnos actuales: {count_solapados}"
+            detail=f"⚠️ HORARIO OCUPADO: Ya existe un turno asignado en este horario. (Capacidad máxima: {capacidad_maxima})"
         )
+
 def check_availability_boolean(db: Session, agenda_id: int, fecha_hora_inicio: datetime, duracion_minutos: int, agenda_tipo: str) -> bool:
     """
     Versión booleana de check_availability. Retorna True si hay lugar, False si no.
     """
     try:
+        # 🟢 FIX: For availability map (slots), we want to return FALSE if strictly full.
+        # But we also want to allow "Overflow" viewing in Agenda, but NOT new booking.
+        # This function is used by 'get_available_slots' (Booking UI). So it MUST return False if full.
         check_availability(db, agenda_id, fecha_hora_inicio, duracion_minutos, agenda_tipo)
         return True
     except HTTPException:

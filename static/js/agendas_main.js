@@ -258,75 +258,148 @@ function renderSlots(slots) {
     const selectedDate = dateFilter && dateFilter.value ? dateFilter.value : new Date().toISOString().split('T')[0];
 
     slots.forEach(slot => {
-        const turno = slot.turno;
-        const isOccupied = !!turno;
+        // 🟢 FIX: Handle Multiple Turnos (Overflow)
+        // Backend now returns all turnos in the slot logic if we changed it, 
+        // OR we need to adapt if the backend returns a list in 'turno' or if it returns multiple slots with same time?
+        // CURRENT BACKEND FIX (routers/agendas.py): It returns multiple objects in 'slots' array with SAME time if overflow exists.
+        // So 'slots' array might have:
+        // { time: 09:00, turno: T1 }
+        // { time: 09:00, turno: T2 }
+        // We need to GROUP them by time to render in the same row, or render them as separate rows?
+        // Standard Agenda View usually expects 1 row per time slot.
+        // Let's Group by Time first.
+    });
+
+    // Group slots by time
+    const groupedSlots = {};
+    slots.forEach(s => {
+        if (!groupedSlots[s.hora]) groupedSlots[s.hora] = [];
+        groupedSlots[s.hora].push(s);
+    });
+
+    Object.keys(groupedSlots).sort().forEach(time => {
+        const group = groupedSlots[time];
+        // Render 1 row, but checking if we need multiple lines in the cells
+
+        // Strategy: If multiple slots at same time, verify if they are empty or occupied.
+        // If all are available, just show 1 available line? Or capacity?
+        // If mixed, show all occupied + available count?
+
+        // For Single Capacity agendas (PET) that have Double Booking:
+        // We will see 2 occupied slots at 09:00.
+
+        // Let's iterate over the group and render a <div> for each non-null turno, 
+        // or a single "Disponible" if all are null?
+
+        const turnosInSlot = group.filter(s => s.turno);
+        const availableInSlot = group.filter(s => !s.turno && s.disponible);
+
+        // If we have turnos, we render them.
+        // If we have NO turnos, we render 1 available line (or as many as capacity, but usually 1 is enough for UI).
+
+        // COMPACT MODE: If multiple turnos, stack them in the same row's cell.
+
+        const isOccupied = turnosInSlot.length > 0;
 
         html += `<tr>
-            <td><span style="font-weight: 500; color: #2d3748;">${slot.hora}</span></td>
-            <td>`;
+            <td style="vertical-align: top; padding-top: 12px;"><span style="font-weight: 500; color: #2d3748;">${time}</span>`;
 
-        if (isOccupied) {
-            const p = turno.paciente;
-            const nombre = p ? `${p.nombre} ${p.apellido}` : 'ID: ' + turno.paciente_id;
-            html += `<strong>${nombre}</strong>`;
-            if (turno.patologia) html += `<br><small style="color: #718096;">${turno.patologia}</small>`;
-        } else {
-            html += `<span style="color: #a0aec0;">Disponible</span>`;
+        if (turnosInSlot.length > 1) {
+            html += `<br><span style="background: #FEB2B2; color: #C53030; font-size: 0.65rem; padding: 2px 4px; border-radius: 4px; font-weight: bold;">DOBLE RESERVA</span>`;
         }
 
         html += `</td>
-            <td>`;
+            <td style="vertical-align: top;">`;
 
         if (isOccupied) {
-            const estado = turno.estado ? turno.estado.toUpperCase() : 'DESCONOCIDO';
-            const estadoClass = turno.estado ? turno.estado.toLowerCase() : 'unknown';
-            html += `<span class="status-badge status-${estadoClass}">${estado}</span>`;
+            turnosInSlot.forEach((s, index) => {
+                const turno = s.turno;
+                const p = turno.paciente;
+                const nombre = p ? `${p.nombre} ${p.apellido}` : 'ID: ' + turno.paciente_id;
+
+                const mb = index < turnosInSlot.length - 1 ? 'margin-bottom: 8px; border-bottom: 1px dashed #cbd5e0; padding-bottom: 8px;' : '';
+
+                html += `<div style="${mb}">`;
+                html += `<strong>${nombre}</strong>`;
+                if (turno.patologia) html += `<br><small style="color: #718096;">${turno.patologia}</small>`;
+                html += `</div>`;
+            });
+        } else {
+            // Show Available
+            // If capacity > 1 (Quimio), maybe show "X Disponibles"?
+            if (availableInSlot.length > 1) {
+                html += `<span style="color: #38A169; font-weight:500;">${availableInSlot.length} Lugares Disponibles</span>`;
+            } else {
+                html += `<span style="color: #a0aec0;">Disponible</span>`;
+            }
+        }
+
+        html += `</td>
+            <td style="vertical-align: top;">`;
+
+        if (isOccupied) {
+            turnosInSlot.forEach((s, index) => {
+                const turno = s.turno;
+                const estado = turno.estado ? turno.estado.toUpperCase() : 'DESCONOCIDO';
+                const estadoClass = turno.estado ? turno.estado.toLowerCase() : 'unknown';
+
+                const mb = index < turnosInSlot.length - 1 ? 'margin-bottom: 8px; padding-bottom: 8px; height: 40px;' : ''; // Try to align height
+
+                html += `<div style="${mb} display: flex; align-items: center;">`;
+                html += `<span class="status-badge status-${estadoClass}">${estado}</span>`;
+                html += `</div>`;
+            });
         } else {
             html += `-`;
         }
 
         html += `</td>
-            <td>`;
+            <td style="vertical-align: top;">`;
 
         if (isOccupied) {
-            const estado = turno.estado ? turno.estado.toUpperCase().trim() : '';
+            turnosInSlot.forEach((s, index) => {
+                const turno = s.turno;
+                const estado = turno.estado ? turno.estado.toUpperCase().trim() : '';
+                const isAdmin = window.currentUser && window.currentUser.role && window.currentUser.role.toLowerCase() === 'admin';
 
-            // 🟢 NEW: Edit Patient Button
-            html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0; margin-right: 15px;">✏️</button>`;
+                const mb = index < turnosInSlot.length - 1 ? 'margin-bottom: 8px; border-bottom: 1px dashed #cbd5e0; padding-bottom: 8px;' : '';
 
-            if (estado !== 'COMPLETADO') {
-                html += `
-                        <button class="action-btn btn-complete" onclick="triggerComplete(${turno.id})" title="Completar" style="margin-right: 15px;">✅</button>
-                        <button class="action-btn btn-reschedule" onclick="triggerReschedule(${turno.id})" title="Reprogramar" style="margin-right: 15px;">📅</button>
+                html += `<div style="${mb} display: flex; flex-wrap: wrap; gap: 4px;">`;
+
+                // 🟢 NEW: Edit Patient Button
+                html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0;">✏️</button>`;
+
+                if (estado !== 'COMPLETADO') {
+                    html += `
+                        <button class="action-btn btn-complete" onclick="triggerComplete(${turno.id})" title="Completar">✅</button>
+                        <button class="action-btn btn-reschedule" onclick="triggerReschedule(${turno.id})" title="Reprogramar">📅</button>
                     `;
 
-                const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
-                const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar WhatsApp';
+                    const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
+                    const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar WhatsApp';
 
-                html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}" style="margin-right: 10px;">💬</button>`;
+                    html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}">💬</button>`;
 
-                // 🟢 NEW: Start Tracking Button
-                html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030; margin-right: 10px;">☢️</button>`;
+                    // 🟢 NEW: Start Tracking Button
+                    html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030;">☢️</button>`;
 
-                if (estado !== 'AUSENTE') {
-                    html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente" style="margin-right: 10px;">❌</button>`;
+                    if (estado !== 'AUSENTE') {
+                        html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>`;
+                    }
+
+                    html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0;">📋</button>`;
+
                 }
 
-                html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0; margin-right: 10px;">📋</button>`;
+                if (estado !== 'COMPLETADO' || isAdmin) {
+                    html += `<button class="action-btn" onclick="deleteTurno(${turno.id}, '${estado}')" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030;">🗑️</button>`;
+                }
 
-            }
-
-            // NEW: Delete Button (Red Trash Can)
-            // Visible if NOT Completed OR if User is ADMIN
-            // 🟢 ROBUST CHECK: toLowerCase()
-            // Safely access role even if null
-            const isAdmin = window.currentUser && window.currentUser.role && window.currentUser.role.toLowerCase() === 'admin';
-
-            if (estado !== 'COMPLETADO' || isAdmin) {
-                html += `<button class="action-btn" onclick="deleteTurno(${turno.id}, '${estado}')" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030; margin-left: 5px;">🗑️</button>`;
-            }
+                html += `</div>`;
+            });
         } else {
-            html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${slot.hora}')">Agendar</button>`;
+            // Button to schedule (use the slot's time)
+            html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${time}')">Agendar</button>`;
         }
 
         html += `</td></tr>`;

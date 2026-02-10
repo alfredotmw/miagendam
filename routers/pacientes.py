@@ -19,9 +19,13 @@ from auth.jwt import get_current_user
 
 @router.post("/", response_model=PacienteOut)
 def crear_paciente(paciente: PacienteCreate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    # 🟢 Normalize DNI: Remove dots, spaces, dashes
+    if paciente.dni:
+        paciente.dni = paciente.dni.replace('.', '').replace(' ', '').replace('-', '').strip()
+
     existente = db.query(Paciente).filter(Paciente.dni == paciente.dni).first()
     if existente:
-        raise HTTPException(status_code=400, detail="Ya existe un paciente con ese DNI")
+        raise HTTPException(status_code=400, detail=f"Ya existe un paciente con ese DNI ({paciente.dni})")
     
     # Manejo de Obra Social dinámica (OBLIGATORIO)
     if not paciente.obra_social_id and not paciente.obra_social_nombre:
@@ -100,7 +104,8 @@ def obtener_paciente(paciente_id: int, db: Session = Depends(get_db)):
 # 🟢 Obtener un paciente por DNI
 @router.get("/dni/{dni}", response_model=PacienteOut)
 def obtener_paciente_por_dni(dni: str, db: Session = Depends(get_db)):
-    paciente = db.query(Paciente).filter(Paciente.dni == dni).first()
+    dni_norm = dni.replace('.', '').replace(' ', '').replace('-', '').strip()
+    paciente = db.query(Paciente).filter(Paciente.dni == dni_norm).first()
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
     return paciente
@@ -112,6 +117,16 @@ def actualizar_paciente(paciente_id: int, datos: PacienteUpdate, db: Session = D
     paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
+
+    # 🟢 Normalize DNI if being updated
+    if datos.dni:
+        datos.dni = datos.dni.replace('.', '').replace(' ', '').replace('-', '').strip()
+        # Optional: Check if new DNI collides with another patient?
+        # The unique constraint in DB might catch it, but manual check is cleaner
+        if datos.dni != paciente.dni:
+            existente = db.query(Paciente).filter(Paciente.dni == datos.dni).first()
+            if existente:
+                raise HTTPException(status_code=400, detail=f"El DNI {datos.dni} ya lo tiene otro paciente.")
 
     # Manejo de Obra Social dinámica en update
     if datos.obra_social_nombre:

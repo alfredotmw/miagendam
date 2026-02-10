@@ -103,7 +103,18 @@ def get_agenda_slots(
         
         # Generar slots según capacidad
         # Primero llenamos con los turnos existentes
-        for i in range(capacity):
+        # 🟢 FIX: Si hay más turnos que la capacidad, los mostramos igual (overflow)
+        # La estructura ahora soportará una lista de turnos en el frontend si es necesario, 
+        # pero para mantener compatibilidad, el "turno" principal será el primero, 
+        # y agregaremos un campo "turnos_adicionales" o simplemente retornaremos una lista si cambiamos el frontend.
+        
+        # ESTRATEGIA: Mantenemos la estructura de slots por horarios fijos.
+        # Si capacity=1 pero hay 2 turnos, el loop de 'i in range(capacity)' solo tomaría 1.
+        # CAMBIO: Iteramos sobre MAX(capacity, len(turnos_en_slot)) para no perder ninguno.
+        
+        max_slots = max(capacity, len(turnos_en_slot))
+        
+        for i in range(max_slots):
             slot_data = {
                 "hora": current_time.strftime("%H:%M"),
                 "fecha": current_time.isoformat(),
@@ -125,15 +136,18 @@ def get_agenda_slots(
                         "dni": turno_ocupante.paciente.dni
                     } if turno_ocupante.paciente else None,
                     "estado": turno_ocupante.estado,
-                    "agenda_id": turno_ocupante.agenda_id, # 👈 Added
-                    "duracion": turno_ocupante.duracion,   # 👈 Added
-                    "medico_derivante_id": turno_ocupante.medico_derivante_id, # 👈 Added
-                    "patologia": turno_ocupante.patologia, # 👈 Added
+                    "agenda_id": turno_ocupante.agenda_id,
+                    "duracion": turno_ocupante.duracion,
+                    "medico_derivante_id": turno_ocupante.medico_derivante_id,
+                    "patologia": turno_ocupante.patologia,
                     "practicas": [{"nombre": p.nombre, "id": p.id} for p in turno_ocupante.practicas],
-                    "recordatorio_enviado": turno_ocupante.recordatorio_enviado # ✅ Para el check de WhatsApp
+                    "recordatorio_enviado": turno_ocupante.recordatorio_enviado
                 }
             
-            slots.append(slot_data)
+            # Solo agregamos slots vacíos si estamos dentro de la capacidad nominal
+            # Si estamos en overflow (i >= capacity), solo agregamos si hay turno real.
+            if i < capacity or slot_data["turno"] is not None:
+                 slots.append(slot_data)
 
         current_time = slot_end
 
