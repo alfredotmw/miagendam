@@ -789,7 +789,8 @@
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                         body: JSON.stringify({
                             paciente_id: parseInt(pacienteIdVal),
-                            fechas: selectedDates
+                            fechas: selectedDates,
+                            agenda_id: parseInt(agendaId)
                         })
                     });
 

@@ -47,16 +47,15 @@ def verificar_duplicados(check: CheckDuplicates, db: Session = Depends(get_db), 
     Retorna una lista de alertas si hay coincidencias.
     """
     # Buscar turnos activos (no cancelados) para el paciente en las fechas dadas
-    coincidencias = db.query(Turno).filter(
+    query = db.query(Turno).filter(
         Turno.paciente_id == check.paciente_id,
-        Turno.estado != "CANCELADO",
-        # Cast fecha datetime to date for comparison logic, or check range
-        # SQLite might need string comparison or specific func. 
-        # Postgres uses generic fn.
-        # Let's use Python filtering for safety/portability if list is small, or SQL IN if date type matches.
-        # Turno.fecha is datetime.
-        # Efficient SQL: WHERE user_id AND CAST(fecha AS DATE) IN (...)
-    ).all()
+        Turno.estado != "CANCELADO"
+    )
+
+    if check.agenda_id:
+        query = query.filter(Turno.agenda_id == check.agenda_id)
+
+    coincidencias = query.all()
     
     # Filter in Python to avoid DB-specific complications with Cast/Date matching
     fechas_input_set = set(check.fechas)
