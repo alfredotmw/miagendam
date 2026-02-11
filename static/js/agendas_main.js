@@ -279,98 +279,78 @@ function renderSlots(slots) {
 
     Object.keys(groupedSlots).sort().forEach(time => {
         const group = groupedSlots[time];
-        // Render 1 row, but checking if we need multiple lines in the cells
-
-        // Strategy: If multiple slots at same time, verify if they are empty or occupied.
-        // If all are available, just show 1 available line? Or capacity?
-        // If mixed, show all occupied + available count?
-
-        // For Single Capacity agendas (PET) that have Double Booking:
-        // We will see 2 occupied slots at 09:00.
-
-        // Let's iterate over the group and render a <div> for each non-null turno, 
-        // or a single "Disponible" if all are null?
-
         const turnosInSlot = group.filter(s => s.turno);
         const availableInSlot = group.filter(s => !s.turno && s.disponible);
 
-        // If we have turnos, we render them.
-        // If we have NO turnos, we render 1 available line (or as many as capacity, but usually 1 is enough for UI).
-
-        // COMPACT MODE: If multiple turnos, stack them in the same row's cell.
-
-        const isOccupied = turnosInSlot.length > 0;
-
-        html += `<tr>
-            <td style="vertical-align: top; padding-top: 12px;"><span style="font-weight: 500; color: #2d3748;">${time}</span>`;
-
-        // Determines capacity based on agenda type (Mirrors backend logic)
+        // Calculate Capacity
         let capacity = 1;
         if (currentAgendaType === 'QUIMIOTERAPIA') capacity = 7;
 
-        if (turnosInSlot.length > capacity) {
-            html += `<br><span style="background: #FEB2B2; color: #C53030; font-size: 0.65rem; padding: 2px 4px; border-radius: 4px; font-weight: bold;">SOBRETURNO (${turnosInSlot.length}/${capacity})</span>`;
-        }
+        // --- Render Logic ---
 
-        html += `</td>
-            <td style="vertical-align: top;">`;
+        // Case A: No appointments (Empty Slot)
+        if (turnosInSlot.length === 0) {
+            html += `<tr>
+                <td style="vertical-align: top; padding-top: 12px;">
+                    <span style="font-weight: 500; color: #2d3748;">${time}</span>
+                </td>
+                <td style="vertical-align: top;">`;
 
-        if (isOccupied) {
-            turnosInSlot.forEach((s, index) => {
-                const turno = s.turno;
-                const p = turno.paciente;
-                const nombre = p ? `${p.nombre} ${p.apellido}` : 'ID: ' + turno.paciente_id;
-
-                const mb = index < turnosInSlot.length - 1 ? 'margin-bottom: 8px; border-bottom: 1px dashed #cbd5e0; padding-bottom: 8px;' : '';
-
-                html += `<div style="${mb}">`;
-                html += `<strong>${nombre}</strong>`;
-                if (turno.patologia) html += `<br><small style="color: #718096;">${turno.patologia}</small>`;
-                html += `</div>`;
-            });
-        } else {
-            // Show Available
-            // If capacity > 1 (Quimio), maybe show "X Disponibles"?
+            // Available Message
             if (availableInSlot.length > 1) {
                 html += `<span style="color: #38A169; font-weight:500;">${availableInSlot.length} Lugares Disponibles</span>`;
             } else {
                 html += `<span style="color: #a0aec0;">Disponible</span>`;
             }
-        }
 
-        html += `</td>
-            <td style="vertical-align: top;">`;
+            html += `</td>
+                <td>-</td>
+                <td style="vertical-align: top;">
+                    <button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${time}')">Agendar</button>
+                </td>
+            </tr>`;
 
-        if (isOccupied) {
+        } else {
+            // Case B: Appointments Exist (Render 1 Row per Patient)
             turnosInSlot.forEach((s, index) => {
+                html += `<tr>`;
+
+                // 1. Time Column (Only on first row, with RowSpan)
+                if (index === 0) {
+                    html += `<td rowspan="${turnosInSlot.length}" style="vertical-align: top; padding-top: 12px; border-right: 1px solid #edf2f7;">`;
+                    html += `<span style="font-weight: 500; color: #2d3748;">${time}</span>`;
+
+                    if (turnosInSlot.length > capacity) {
+                        html += `<br><span style="background: #FEB2B2; color: #C53030; font-size: 0.65rem; padding: 2px 4px; border-radius: 4px; font-weight: bold; display: inline-block; margin-top: 4px;">SOBRETURNO (${turnosInSlot.length}/${capacity})</span>`;
+                    }
+                    html += `</td>`;
+                }
+
+                // 2. Patient Column
                 const turno = s.turno;
+                const p = turno.paciente;
+                const nombre = p ? `${p.nombre} ${p.apellido}` : 'ID: ' + turno.paciente_id;
+
+                html += `<td style="vertical-align: top; padding: 12px 0 border-bottom: 1px solid #edf2f7;">
+                    <div style="font-weight: 600; color: #1a202c;">${nombre}</div>
+                    ${turno.patologia ? `<div style="font-size: 0.8rem; color: #718096; margin-top: 2px;">${turno.patologia}</div>` : ''}
+                </td>`;
+
+                // 3. Status Column
                 const estado = turno.estado ? turno.estado.toUpperCase() : 'DESCONOCIDO';
                 const estadoClass = turno.estado ? turno.estado.toLowerCase() : 'unknown';
 
-                const mb = index < turnosInSlot.length - 1 ? 'margin-bottom: 8px; padding-bottom: 8px; height: 40px;' : ''; // Try to align height
+                html += `<td style="vertical-align: top; padding-top: 12px;">
+                    <span class="status-badge status-${estadoClass}">${estado}</span>
+                </td>`;
 
-                html += `<div style="${mb} display: flex; align-items: center;">`;
-                html += `<span class="status-badge status-${estadoClass}">${estado}</span>`;
-                html += `</div>`;
-            });
-        } else {
-            html += `-`;
-        }
-
-        html += `</td>
-            <td style="vertical-align: top;">`;
-
-        if (isOccupied) {
-            turnosInSlot.forEach((s, index) => {
-                const turno = s.turno;
-                const estado = turno.estado ? turno.estado.toUpperCase().trim() : '';
+                // 4. Actions Column
                 const isAdmin = window.currentUser && window.currentUser.role && window.currentUser.role.toLowerCase() === 'admin';
 
-                const mb = index < turnosInSlot.length - 1 ? 'margin-bottom: 8px; border-bottom: 1px dashed #cbd5e0; padding-bottom: 8px;' : '';
+                html += `<td style="vertical-align: top; padding-top: 12px;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">`;
 
-                html += `<div style="${mb} display: flex; flex-wrap: wrap; gap: 4px;">`;
-
-                // 🟢 NEW: Edit Patient Button
+                // Edit Btn
                 html += `<button class="action-btn" onclick="openEditPatientModal(${turno.paciente_id}, ${turno.id})" title="Editar Datos Paciente" style="background: #e2e8f0;">✏️</button>`;
 
                 if (estado !== 'COMPLETADO') {
@@ -381,32 +361,30 @@ function renderSlots(slots) {
 
                     const whatsappClass = turno.recordatorio_enviado ? 'btn-whatsapp-sent' : 'btn-whatsapp';
                     const whatsappTitle = turno.recordatorio_enviado ? 'Re-enviar WhatsApp (Ya enviado)' : 'Enviar WhatsApp';
-
                     html += `<button class="action-btn ${whatsappClass}" onclick="sendWhatsapp(${turno.id}, this)" title="${whatsappTitle}">💬</button>`;
 
-                    // 🟢 NEW: Start Tracking Button
+                    // Radiotherapy Tracking
                     html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030;">☢️</button>`;
 
                     if (estado !== 'AUSENTE') {
                         html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>`;
                     }
 
-                    html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${turno.paciente ? turno.paciente.dni : ''}', nombre: '${turno.paciente ? (turno.paciente.nombre + ' ' + turno.paciente.apellido).replace(/'/g, "\\'") : ''}'})" title="Nueva Evolución (Historia Clínica)" style="background: #e2e8f0;">📋</button>`;
-
+                    // Clinical History / Evolution
+                    // Safely escape quotes for the onclick handler
+                    const safeNombre = p ? (p.nombre + ' ' + p.apellido).replace(/'/g, "\\'") : '';
+                    const safeDni = p ? p.dni : '';
+                    html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${safeDni}', nombre: '${safeNombre}'})" title="Nueva Evolución" style="background: #e2e8f0;">📋</button>`;
                 }
 
                 if (estado !== 'COMPLETADO' || isAdmin) {
                     html += `<button class="action-btn" onclick="deleteTurno(${turno.id}, '${estado}')" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030;">🗑️</button>`;
                 }
 
-                html += `</div>`;
+                html += `</div></td>`;
+                html += `</tr>`;
             });
-        } else {
-            // Button to schedule (use the slot's time)
-            html += `<button class="action-btn btn-confirm" onclick="agendar('${selectedDate}', '${time}')">Agendar</button>`;
         }
-
-        html += `</td></tr>`;
     });
 
     html += `</tbody></table>`;
