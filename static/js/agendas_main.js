@@ -304,8 +304,12 @@ function renderSlots(slots) {
         html += `<tr>
             <td style="vertical-align: top; padding-top: 12px;"><span style="font-weight: 500; color: #2d3748;">${time}</span>`;
 
-        if (turnosInSlot.length > 1) {
-            html += `<br><span style="background: #FEB2B2; color: #C53030; font-size: 0.65rem; padding: 2px 4px; border-radius: 4px; font-weight: bold;">DOBLE RESERVA</span>`;
+        // Determines capacity based on agenda type (Mirrors backend logic)
+        let capacity = 1;
+        if (currentAgendaType === 'QUIMIOTERAPIA') capacity = 7;
+
+        if (turnosInSlot.length > capacity) {
+            html += `<br><span style="background: #FEB2B2; color: #C53030; font-size: 0.65rem; padding: 2px 4px; border-radius: 4px; font-weight: bold;">SOBRETURNO (${turnosInSlot.length}/${capacity})</span>`;
         }
 
         html += `</td>
