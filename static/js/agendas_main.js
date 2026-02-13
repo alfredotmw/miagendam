@@ -1129,12 +1129,17 @@ async function submitEditPatient() {
     const dni = document.getElementById('edit-dni').value;
     const obra_social_nombre = document.getElementById('edit-obra-social').value;
     const medico_derivante_nombre = document.getElementById('edit-medico').value;
-    const patologia = document.getElementById('edit-patologia').value; // New Field
+    const patologia = document.getElementById('edit-patologia').value;
 
     const payloadPaciente = {
         nombre, apellido, fecha_nacimiento, telefono, dni,
         obra_social_nombre, medico_derivante_nombre
     };
+
+    const btn = document.querySelector('#editPatientModal .btn-primary');
+    const originalText = btn.textContent;
+    btn.textContent = 'Guardando...';
+    btn.disabled = true;
 
     try {
         // 1. Update Patient
@@ -1144,18 +1149,14 @@ async function submitEditPatient() {
             body: JSON.stringify(payloadPaciente)
         });
 
-        // ... (inside submitEditPatient)
-
         if (!res.ok) {
             const err = await res.json();
             console.error("Error response:", err);
-            // Handle Error (reuse existing logic)
             let msg = "Error al actualizar Paciente";
             if (err.detail) {
                 if (typeof err.detail === 'string') {
                     msg = "Error: " + err.detail;
                 } else if (Array.isArray(err.detail)) {
-                    // Pydantic format
                     msg = "Error de Validación: " + err.detail.map(e => e.msg).join(", ");
                 } else {
                     msg = "Error: " + JSON.stringify(err.detail);
@@ -1164,11 +1165,29 @@ async function submitEditPatient() {
             throw new Error(msg);
         }
 
-        // ... (rest of function)
+        // 2. Update Turno (if context exists)
+        if (currentTurnoIdEdit) {
+            const resTurno = await fetch(`/turnos/${currentTurnoIdEdit}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ patologia: patologia })
+            });
+
+            if (!resTurno.ok) {
+                console.warn("Patient updated but error updating Turno pathology");
+            }
+        }
+
+        alert("Datos actualizados correctamente");
+        closeEditPatientModal();
+        loadSlots(); // Refresh UI
 
     } catch (e) {
         console.error(e);
         alert(e.message || "Error desconocido");
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
     }
 }
 
