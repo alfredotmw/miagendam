@@ -40,8 +40,7 @@ def startup_event():
     print("🚀 STARTING APP - FLUSHING LOGS")
     try:
         # Create Tables first!
-        from database import engine
-        from models.base import Base # Ensure Base is imported if needed
+        from database import Base, engine
         Base.metadata.create_all(bind=engine) 
         from migration_utils import check_and_migrate_db
         check_and_migrate_db(engine) # 👈 FORCE MIGRATION CHECK
