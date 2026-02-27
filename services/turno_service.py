@@ -60,6 +60,7 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
     Verifica si hay disponibilidad para el turno.
     Maneja la capacidad de sillones para Quimioterapia.
     """
+    validate_time_rules(fecha_hora_inicio.strftime("%H:%M:%S"))
     fecha_hora_fin = fecha_hora_inicio + timedelta(minutes=duracion_minutos)
 
     # Buscar turnos que se solapen en esa agenda
@@ -101,6 +102,57 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
             status_code=400, 
             detail=f"⚠️ HORARIO OCUPADO: Ya existe un turno asignado en este horario. (Capacidad máxima: {capacidad_maxima})"
         )
+
+def validate_time_rules(hora: str):
+    """
+    Valida que el horario esté dentro del rango comercial (07:00 a 21:00).
+    Bloquea explícitamente el horario 00:00:00.
+    """
+    try:
+        # Formatos posibles: "HH:MM", "HH:MM:SS"
+        # Si viene "00:00:00" o "00:00", lo bloqueamos
+        if hora.startswith("00:00"):
+            raise HTTPException(status_code=400, detail="⚠️ Horario no habilitado (00:00 es inválido)")
+
+        h = int(hora.split(':')[0])
+        if h < 7 or h >= 21:
+            raise HTTPException(status_code=400, detail="⚠️ Horario no habilitado (Rango permitido: 07:00–21:00)")
+    except (ValueError, IndexError):
+        raise HTTPException(status_code=400, detail="⚠️ Formato de hora inválido")
+    return True
+
+def validate_duplicate_rules(db: Session, paciente_id: int, agenda_id: int, fecha: datetime, practicas_ids: list, exclude_turno_id: int = None):
+    """
+    Bloquea mismo paciente + misma agenda + misma práctica + mismo día.
+    Especialmente crítico para Quimioterapia.
+    """
+    from models.turno_practica import TurnoPractica
+    
+    # Query: Buscar turnos del paciente en esa agenda para ese día (sin contar el turno actual si es update)
+    query = db.query(Turno).filter(
+        Turno.paciente_id == paciente_id,
+        Turno.agenda_id == agenda_id,
+        Turno.fecha >= datetime.combine(fecha.date(), datetime.min.time()),
+        Turno.fecha <= datetime.combine(fecha.date(), datetime.max.time()),
+        Turno.estado != "cancelado"
+    )
+    
+    if exclude_turno_id:
+        query = query.filter(Turno.id != exclude_turno_id)
+        
+    turnos_dia = query.all()
+    
+    for t in turnos_dia:
+        # Chequear prácticas
+        t_practicas_ids = [p.id for p in t.practicas]
+        # Si alguno de los practicas_ids solicitados ya está en este turno, es un duplicado
+        duplicadas = set(practicas_ids).intersection(set(t_practicas_ids))
+        if duplicadas:
+             raise HTTPException(
+                status_code=409, 
+                detail="⚠️ Turno duplicado: el paciente ya tiene esa práctica en esa agenda para esa fecha."
+            )
+    return True
 
 def check_availability_boolean(db: Session, agenda_id: int, fecha_hora_inicio: datetime, duracion_minutos: int, agenda_tipo: str) -> bool:
     """

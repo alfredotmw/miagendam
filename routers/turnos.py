@@ -113,13 +113,21 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
         duracion = calculate_duration(agenda.tipo, practicas, turno_in.duracion_custom)
 
         # Combinar fecha y hora para tener el datetime correcto
-        # turno_in.fecha viene como datetime (pero con hora 00:00 si viene de un date input)
-        # turno_in.hora viene como string "HH:MM" o "HH:MM:SS"
         try:
             h, m = map(int, turno_in.hora.split(':')[:2])
             fecha_hora_real = turno_in.fecha.replace(hour=h, minute=m)
         except Exception:
              raise HTTPException(status_code=400, detail="Formato de hora inválido")
+
+        # 🟢 VALIDACIÓN DE REGLAS DE NEGOCIO (Rango Horario y Duplicados)
+        from services.turno_service import validate_time_rules, validate_duplicate_rules, validate_date_rules
+        
+        # Validar Domingo
+        validate_date_rules(fecha_hora_real)
+        # Validar Horario Comercial (07-21)
+        validate_time_rules(turno_in.hora)
+        # Validar Duplicados (Mismo Paciente/Agenda/Práctica/Día)
+        validate_duplicate_rules(db, turno_in.paciente_id, agenda.id, fecha_hora_real, turno_in.practicas_ids)
 
         # Verificar disponibilidad con la fecha y hora REAL
         check_availability(db, agenda.id, fecha_hora_real, duracion, agenda.tipo)
@@ -507,9 +515,14 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
             fecha_solo = nueva_fecha_base.date()
             fecha_hora_real = datetime.combine(fecha_solo, dt_time(h, m))
             
-            # 🟢 VALIDACIÓN DE REGLAS DE NEGOCIO (e.g. Domingos)
-            from services.turno_service import validate_date_rules
+            # 🟢 VALIDACIÓN DE REGLAS DE NEGOCIO (e.g. Domingos, Horarios, Duplicados)
+            from services.turno_service import validate_date_rules, validate_time_rules, validate_duplicate_rules
             validate_date_rules(fecha_hora_real)
+            validate_time_rules(nueva_hora_str)
+            
+            # Validar Duplicados (si cambia fecha/hora)
+            practicas_ids = [p.id for p in turno.practicas]
+            validate_duplicate_rules(db, turno.paciente_id, turno.agenda_id, fecha_hora_real, practicas_ids, exclude_turno_id=turno.id)
 
             turno.fecha = fecha_hora_real
             turno.hora = nueva_hora_str
