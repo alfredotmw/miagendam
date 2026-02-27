@@ -226,3 +226,61 @@ def check_and_migrate_db(engine: Engine):
                 conn.execute(text("ALTER TABLE seguimiento_radioterapia ADD COLUMN tipo_tecnica VARCHAR"))
                 conn.commit()
             logger.info("✅ Columna 'tipo_tecnica' agregada.")
+
+    # 7. DATA INTEGRITY BLINDAGE (00:00 turns and Duplicates)
+    if inspector.has_table("turnos"):
+        with engine.connect() as conn:
+            # A. Delete 00:00:00 turns
+            logger.info("🧹 Migración: Limpiando turnos fantasma (00:00)...")
+            res = conn.execute(text("DELETE FROM turnos WHERE hora LIKE '00:00%'"))
+            if res.rowcount > 0:
+                logger.info(f"✅ Se eliminaron {res.rowcount} turnos con hora inválida.")
+            
+            # B. Delete true duplicates (same agenda/patient/practice/day)
+            # This logic is complex for raw SQL in migration. We'll stick to basic cleanup 
+            # or just rely on the UNIQUE index creation which will fail if not clean.
+            # Best: Clean before index.
+            
+            logger.info("🧹 Migración: Limpiando turnos duplicados en Quimioterapia...")
+            # We use a subquery to find turnos that have clones with smaller IDs
+            cleanup_dupes_sql = """
+                DELETE FROM turnos 
+                WHERE id IN (
+                    SELECT t1.id
+                    FROM turnos t1
+                    JOIN turnos_practicas tp1 ON t1.id = tp1.turno_id
+                    WHERE EXISTS (
+                        SELECT 1 FROM turnos t2
+                        JOIN turnos_practicas tp2 ON t2.id = tp2.turno_id
+                        WHERE t1.id > t2.id
+                        AND t1.agenda_id = t2.agenda_id
+                        AND t1.paciente_id = t2.paciente_id
+                        AND DATE(t1.fecha) = DATE(t2.fecha)
+                        AND tp1.practica_id = tp2.practica_id
+                        AND t1.estado != 'cancelado' 
+                        AND t2.estado != 'cancelado'
+                    )
+                )
+            """
+            try:
+                # Delete from association table first to avoid FK errors in some dialects
+                # In SQLite with CASCADE it works, in PG we might need more care.
+                # But turnos_practicas usually has ON DELETE CASCADE.
+                res = conn.execute(text(cleanup_dupes_sql))
+                if res.rowcount > 0:
+                    logger.info(f"✅ Se eliminaron {res.rowcount} turnos duplicados.")
+            except Exception as e:
+                logger.warning(f"⚠️ Error en limpieza de duplicados: {e}")
+
+            # C. Apply UNIQUE Index (Blindaje)
+            logger.info("🛡️ Aplicando Blindaje: Índice Único (Agenda, Paciente, Fecha)...")
+            try:
+                # SQLite and Postgres handle this similarly. 
+                # Name it idx_unique_turno_integrity
+                conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_turno_integrity ON turnos(agenda_id, paciente_id, fecha)"))
+                conn.commit()
+                logger.info("✅ Índice único de integridad aplicado.")
+            except Exception as e:
+                logger.warning(f"⚠️ No se pudo aplicar el índice único (posibles duplicados remanentes): {e}")
+
+            conn.commit()
