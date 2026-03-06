@@ -3,6 +3,7 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
+from models.user_agenda import user_agendas
 
 class Agenda(Base):
     __tablename__ = "agendas"
@@ -16,4 +17,7 @@ class Agenda(Base):
 
     # Relación de agenda → turnos (correcta)
     turnos = relationship("Turno", back_populates="agenda")
+
+    # Relación Many-to-Many con Usuarios (Permisos)
+    usuarios_permitidos = relationship("User", secondary=user_agendas, back_populates="agendas")
 

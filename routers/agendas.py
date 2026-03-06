@@ -6,6 +6,7 @@ from database import get_db
 from models.agenda import Agenda
 from models.turno import Turno
 from models.practica import Practica
+from models.user import User
 from auth.jwt import get_current_user
 from services.turno_service import calculate_duration
 
@@ -13,29 +14,26 @@ router = APIRouter(prefix="/agendas", tags=["Agendas"])
 
 @router.get("/")
 def listar_agendas(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    query = db.query(Agenda)
+    # 🛡️ New Agenda-Centric Permission Logic
     
-    # 🛡️ Service Selector Logic
+    # 1. ADMIN Bypass: See everything
+    if current_user["role"] == "ADMIN":
+        return db.query(Agenda).all()
     
-    # 1. Check for Explicitly Allowed Agendas (Priority)
-    allowed_ids_str = current_user.get("allowed_agendas")
-    if allowed_ids_str:
-        # "1,2,5" -> [1, 2, 5]
-        try:
-            allowed_ids = [int(x.strip()) for x in allowed_ids_str.split(",") if x.strip()]
-            if allowed_ids:
-                query = query.filter(Agenda.id.in_(allowed_ids))
-                return query.all()
-        except ValueError:
-            pass # Malformed string, ignore and fallback
-
-    # 2. Check for Role-Based Filtering (Fallback)
-    if current_user["role"] == "MEDICO":
-        # Flexible Name Matching
+    # 2. Non-Admins: See only agendas where they are explicitly permitted
+    user_id = db.query(User.id).filter(User.username == current_user["username"]).scalar()
+    if not user_id:
+        return []
+    
+    # Use relationship to find only allowed agendas
+    agendas = db.query(Agenda).join(Agenda.usuarios_permitidos).filter(User.id == user_id).all()
+    
+    # 3. Fallback for Medicos (Existing logic preservation if needed)
+    # If no explicitly allowed agendas, try professional name matching for Medicos
+    if not agendas and current_user["role"] == "MEDICO":
         search_term = f"%{current_user['username']}%"
-        query = query.filter(Agenda.profesional.ilike(search_term))
+        agendas = db.query(Agenda).filter(Agenda.profesional.ilike(search_term)).all()
         
-    agendas = query.all()
     return agendas
 
 @router.get("/{agenda_id}/slots")
@@ -164,23 +162,31 @@ def create_agenda(
     db: Session = Depends(get_db),
     current_user: dict = Depends(require_roles(["ADMIN"]))
 ):
-    # Professional is automatically set to the Agenda Name for simplicity if not provided,
-    # or we can extract it. Since schema doesn't have 'profesional', we'll assume name is descriptive enough 
-    # OR update schema. For now, let's use name as profesional if type is MEDICO.
-    
     profesional = agenda.nombre if agenda.tipo == "MEDICO" else None
 
     nueva_agenda = Agenda(
         nombre=agenda.nombre,
         tipo=agenda.tipo,
         slot_minutos=agenda.slot_minutos,
-        activo=agenda.activo, # Pass boolean directly
+        activo=agenda.activo,
         profesional=profesional
     )
+    
+    # 🛡️ Sync permissions if user_ids are provided
+    # Note: AgendaCreate might not have allowed_user_ids yet in some views, adding it as optional fallback
+    allowed_user_ids = getattr(agenda, 'allowed_user_ids', [])
+    if allowed_user_ids:
+        permitted_users = db.query(User).filter(User.id.in_(allowed_user_ids)).all()
+        nueva_agenda.usuarios_permitidos = permitted_users
+
     db.add(nueva_agenda)
     db.commit()
     db.refresh(nueva_agenda)
-    return nueva_agenda
+    
+    # Manual conversion for Pydantic (or relationship will handle it if mapped)
+    response = AgendaOut.from_orm(nueva_agenda)
+    response.allowed_user_ids = [u.id for u in nueva_agenda.usuarios_permitidos]
+    return response
 
 
 @router.put("/{agenda_id}", response_model=AgendaOut)
@@ -199,9 +205,17 @@ def update_agenda(
     if agenda_update.slot_minutos is not None: db_agenda.slot_minutos = agenda_update.slot_minutos
     if agenda_update.activo is not None: db_agenda.activo = agenda_update.activo
     
+    # 🛡️ Sync permissions
+    if agenda_update.allowed_user_ids is not None:
+        permitted_users = db.query(User).filter(User.id.in_(agenda_update.allowed_user_ids)).all()
+        db_agenda.usuarios_permitidos = permitted_users
+
     db.commit()
     db.refresh(db_agenda)
-    return db_agenda
+    
+    response = AgendaOut.from_orm(db_agenda)
+    response.allowed_user_ids = [u.id for u in db_agenda.usuarios_permitidos]
+    return response
 
 
 @router.delete("/{agenda_id}", status_code=204)

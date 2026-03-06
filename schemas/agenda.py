@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 
 class AgendaBase(BaseModel):
@@ -18,11 +18,13 @@ class AgendaUpdate(BaseModel):
     tipo: Optional[str] = None
     slot_minutos: Optional[int] = None
     activo: Optional[bool] = None
+    allowed_user_ids: Optional[List[int]] = None # List of User IDs to permit
 
 
 class AgendaOut(AgendaBase):
     id: int
     profesional: Optional[str] = None
+    allowed_user_ids: List[int] = [] # For output
 
     class Config:
         from_attributes = True

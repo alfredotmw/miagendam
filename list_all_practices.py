@@ -6,14 +6,8 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 db = SessionLocal()
 
-print("--- ALL TURNOS SORTED BY DATE DESC ---")
-query = text("""
-    SELECT t.id, t.fecha, t.hora, t.agenda_id, a.nombre as agenda_nombre, p.nombre, p.apellido
-    FROM turnos t
-    JOIN agendas a ON t.agenda_id = a.id
-    JOIN pacientes p ON t.paciente_id = p.id
-    ORDER BY t.fecha DESC
-""")
+print("--- ALL PRACTICES ---")
+query = text("SELECT id, nombre, categoria FROM practicas")
 results = db.execute(query).fetchall()
 for r in results:
     print(r)

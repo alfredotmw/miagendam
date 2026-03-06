@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Enum as SqlEnum
 from database import Base
 from enum import Enum
+from sqlalchemy.orm import relationship
+from models.user_agenda import user_agendas
 
 
 class UserRole(str, Enum):
@@ -19,3 +21,6 @@ class User(Base):
     allowed_agendas = Column(String, nullable=True) # Comma separated IDs: "1,2,5"
     matricula = Column(String, nullable=True) # M.N. / M.P.
     full_name = Column(String, nullable=True) # Nombre Real del Profesional
+
+    # Relación Many-to-Many con Agendas
+    agendas = relationship("Agenda", secondary=user_agendas, back_populates="usuarios_permitidos")

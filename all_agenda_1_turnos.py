@@ -6,12 +6,12 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 db = SessionLocal()
 
-print("--- ALL TURNOS SORTED BY DATE DESC ---")
+print("--- ALL TURNOS FOR AGENDA 1 (QUIMIOTERAPIA SAN MARTIN) ---")
 query = text("""
-    SELECT t.id, t.fecha, t.hora, t.agenda_id, a.nombre as agenda_nombre, p.nombre, p.apellido
+    SELECT t.id, t.fecha, t.hora, t.paciente_id, p.nombre, p.apellido, t.practica_id 
     FROM turnos t
-    JOIN agendas a ON t.agenda_id = a.id
-    JOIN pacientes p ON t.paciente_id = p.id
+    LEFT JOIN pacientes p ON t.paciente_id = p.id
+    WHERE t.agenda_id = 1
     ORDER BY t.fecha DESC
 """)
 results = db.execute(query).fetchall()

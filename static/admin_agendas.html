@@ -140,6 +140,22 @@
                     </select>
                 </div>
 
+                <div class="form-group" style="margin-top: 1.5rem; border-top: 1px solid #e2e8f0; padding-top: 1rem;">
+                    <label style="font-weight: 600; color: #1e293b; display: block; margin-bottom: 0.5rem;">
+                        Usuarios con Acceso
+                    </label>
+                    <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem;">
+                        Seleccione los usuarios que podrán ver y gestionar esta agenda. Los administradores tienen
+                        acceso total por defecto.
+                    </p>
+                    <div id="users-selection-list"
+                        style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; background: #f8fafc;">
+                        <!-- Checkboxes loaded via JS -->
+                        <div style="text-align: center; color: #94a3b8; font-size: 0.8rem; padding: 1rem;">Cargando
+                            usuarios...</div>
+                    </div>
+                </div>
+
                 <div id="form-error" style="color: red; font-size: 0.85rem; margin-bottom: 1rem; display: none;"></div>
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
@@ -170,10 +186,35 @@
                     <span>${user.username}</span>
                 `;
 
+                await loadUsersForSelection();
                 loadAgendasList();
             } catch (e) {
                 console.error(e);
                 window.location.href = '/static/login.html';
+            }
+        }
+
+        let allUsers = [];
+        async function loadUsersForSelection() {
+            try {
+                const res = await fetch('/users/', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    allUsers = await res.json();
+                    const list = document.getElementById('users-selection-list');
+                    list.innerHTML = allUsers
+                        .filter(u => u.role !== 'ADMIN') // Admins implied
+                        .map(u => `
+                            <label style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 4px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='transparent'">
+                                <input type="checkbox" name="allowed_user" value="${u.id}" style="width: 16px; height: 16px;">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="font-size: 0.9rem; font-weight: 500; color: #1e293b;">${u.full_name || u.username}</span>
+                                    <span style="font-size: 0.75rem; color: #64748b;">${u.role}</span>
+                                </div>
+                            </label>
+                        `).join('') || '<div style="text-align: center; color: #94a3b8; font-size: 0.8rem; padding: 1rem;">No hay usuarios no-admin registrados</div>';
+                }
+            } catch (e) {
+                console.error("Error loading users:", e);
             }
         }
 
@@ -207,7 +248,10 @@
             const slot = parseInt(document.getElementById('new-agenda-slot').value);
             const activo = document.getElementById('new-agenda-activo').value === 'true';
 
-            const payload = { nombre, tipo, slot_minutos: slot, activo };
+            const userCheckboxes = document.querySelectorAll('input[name="allowed_user"]:checked');
+            const allowed_user_ids = Array.from(userCheckboxes).map(cb => parseInt(cb.value));
+
+            const payload = { nombre, tipo, slot_minutos: slot, activo, allowed_user_ids };
             const url = isEditing ? `/agendas/${editingId}` : '/agendas/';
             const method = isEditing ? 'PUT' : 'POST';
 
@@ -246,6 +290,13 @@
             document.getElementById('new-agenda-tipo').value = agenda.tipo;
             document.getElementById('new-agenda-slot').value = agenda.slot_minutos || 20;
             document.getElementById('new-agenda-activo').value = agenda.activo ? 'true' : 'false';
+
+            // Set Checkboxes correctly
+            const allowedIds = agenda.allowed_user_ids || [];
+            document.querySelectorAll('input[name="allowed_user"]').forEach(cb => {
+                cb.checked = allowedIds.includes(parseInt(cb.value));
+            });
+
             document.getElementById('new-agenda-modal').classList.add('active');
         }
 
