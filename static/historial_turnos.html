@@ -536,98 +536,7 @@
         </div>
     </div>
 
-    <!-- Note Modal -->
-    <div id="noteModal" class="modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Nueva Evolución</h3>
-                <span class="close-modal" onclick="closeNoteModal()">&times;</span>
-            </div>
-            <form id="noteForm">
-                <div class="form-grid">
-                    <!-- P1: Oncology Section -->
-                    <div
-                        style="grid-column: 1 / -1; background: #ebf8ff; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
-                        <h4 style="margin: 0 0 0.5rem 0; color: #2b6cb0;">📊 Estado Oncológico (P1)</h4>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
-                            <div class="form-group">
-                                <label>ECOG (0-5)</label>
-                                <select id="note-ecog" class="form-input">
-                                    <option value="">-</option>
-                                    <option value="0">0 - Activo</option>
-                                    <option value="1">1 - Restringido</option>
-                                    <option value="2">2 - Incapaz laboral</option>
-                                    <option value="3">3 - Capaz autocuidado</option>
-                                    <option value="4">4 - Incapaz autocuidado</option>
-                                    <option value="5">5 - Fallecido</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>TNM</label>
-                                <input type="text" id="note-tnm" class="form-input" placeholder="ej. T2N0M0">
-                            </div>
-                            <div class="form-group">
-                                <label>Estadio</label>
-                                <select id="note-estadio" class="form-input">
-                                    <option value="">-</option>
-                                    <option value="IA">IA</option>
-                                    <option value="IB">IB</option>
-                                    <option value="IIA">IIA</option>
-                                    <option value="IIB">IIB</option>
-                                    <option value="IIIA">IIIA</option>
-                                    <option value="IIIB">IIIB</option>
-                                    <option value="IIIC">IIIC</option>
-                                    <option value="IV">IV</option>
-                                    <option value="IVA">IVA</option>
-                                    <option value="IVB">IVB</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group" style="margin-top: 0.5rem;">
-                            <label>Toxicidad (CTCAE)</label>
-                            <input type="text" id="note-toxicidad" class="form-input" placeholder="ej. Neutropenia G2">
-                        </div>
-                        <div class="form-group"
-                            style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; background: #fffbe6; padding: 0.5rem; border: 1px solid #fefcbf; border-radius: 4px;">
-                            <input type="checkbox" id="note-radio-check" style="width: 1.2rem; height: 1.2rem;">
-                            <label for="note-radio-check"
-                                style="font-weight: 700; color: #b7791f; margin: 0; cursor: pointer;">☢️ Indicar
-                                Radioterapia (Crear registro automático)</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="grid-column: 1 / -1; margin-top: 1rem;">
-                        <label style="font-weight: 600; color: #2d3748;">Patología (Diagnóstico
-                            Principal)</label>
-                        <input type="text" id="note-patologia" class="form-input" list="cancer-types-list"
-                            placeholder="Escriba para buscar o ingrese una nueva..." style="width: 100%;">
-                    </div>
-
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label>Motivo de Consulta</label>
-                        <textarea id="note-motivo" class="form-input" rows="2" style="width:100%"></textarea>
-                    </div>
-                    <div class="form-group"><label>Antecedentes</label><textarea id="note-antecedentes"
-                            class="form-input" rows="3"></textarea></div>
-                    <div class="form-group"><label>Examen Físico</label><textarea id="note-examen" class="form-input"
-                            rows="3"></textarea></div>
-                    <div class="form-group"><label>Diagnóstico Diferencial</label><textarea id="note-diagnostico"
-                            class="form-input" rows="3"></textarea></div>
-                    <div class="form-group"><label>Plan de Estudio</label><textarea id="note-plan" class="form-input"
-                            rows="3"></textarea></div>
-                    <div class="form-group"><label>Tratamiento</label><textarea id="note-tratamiento" class="form-input"
-                            rows="3"></textarea></div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeNoteModal()">Cancelar</button>
-                    <button type="button" class="btn-secondary" onclick="submitNote('GUARDAR')"
-                        style="width: auto;">Guardar Borrador</button>
-                    <button type="button" class="btn-primary" onclick="submitNote('FIRMAR')"
-                        style="width: auto; background-color: #e53e3e;">Firmar y Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- Note Modal (Removed - Now redirects to nueva_evolucion.html) -->
 
     <!-- Edit Patient Modal -->
     <div id="editPatientModal" class="modal">
@@ -950,6 +859,15 @@
 
         function openNoteModal(note = null, readOnly = false) {
             if (!currentPatientId && !note) { alert("Seleccione paciente"); return; }
+
+            // Forzar ocultamiento del modal viejo por si acaso
+            const oldModal = document.getElementById('noteModal');
+            if (oldModal) {
+                oldModal.style.display = 'none';
+                oldModal.classList.remove('active');
+            }
+
+            console.log("Navegando a la nueva evolución...");
 
             if (note) {
                 // If editing or viewing an existing note
