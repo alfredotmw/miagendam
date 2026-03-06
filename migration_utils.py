@@ -9,6 +9,14 @@ def check_and_migrate_db(engine: Engine):
     Verifica si faltan columnas en la base de datos y las agrega.
     Esto es una migración simple 'manual' para evitar usar Alembic por ahora.
     """
+    try:
+        if engine.dialect.name == "postgresql":
+            with engine.connect() as conn:
+                conn.execute(text("SET lock_timeout = '5s';"))
+                conn.commit()
+    except Exception as e:
+        logger.warning(f"No se pudo establecer lock_timeout: {e}")
+        
     inspector = inspect(engine)
     
     # 1. Verificar tabla 'turnos'
@@ -265,37 +273,12 @@ def check_and_migrate_db(engine: Engine):
             # or just rely on the UNIQUE index creation which will fail if not clean.
             # Best: Clean before index.
             
-            logger.info("🧹 Migración: Limpiando turnos duplicados en Quimioterapia...")
-            # We use a subquery to find turnos that have clones with smaller IDs
-            cleanup_dupes_sql = """
-                DELETE FROM turnos 
-                WHERE id IN (
-                    SELECT t1.id
-                    FROM turnos t1
-                    JOIN turnos_practicas tp1 ON t1.id = tp1.turno_id
-                    WHERE EXISTS (
-                        SELECT 1 FROM turnos t2
-                        JOIN turnos_practicas tp2 ON t2.id = tp2.turno_id
-                        WHERE t1.id > t2.id
-                        AND t1.agenda_id = t2.agenda_id
-                        AND t1.paciente_id = t2.paciente_id
-                        AND DATE(t1.fecha) = DATE(t2.fecha)
-                        AND tp1.practica_id = tp2.practica_id
-                        AND t1.estado != 'cancelado' 
-                        AND t2.estado != 'cancelado'
-                    )
-                )
-            """
-            try:
-                # Delete from association table first to avoid FK errors in some dialects
-                # In SQLite with CASCADE it works, in PG we might need more care.
-                # But turnos_practicas usually has ON DELETE CASCADE.
-                res = conn.execute(text(cleanup_dupes_sql))
-                if res.rowcount > 0:
-                    logger.info(f"✅ Se eliminaron {res.rowcount} turnos duplicados.")
-            except Exception as e:
-                logger.warning(f"⚠️ Error en limpieza de duplicados: {e}")
-
+            logger.info("🧹 Migración: Limpiando turnos duplicados en Quimioterapia (OMITIDO POR TIMEOUT)...")
+            # --- ELIMINADO EL CÓDIGO DE LIMPIEZA DE DUPLICADOS O(N^2) ---
+            # La limpieza se hizo el 27 de febrero y el índice único ya previene duplicados.
+            # Ejecutar esta consulta en cada inicio causaba un timeout de más de 30 segundos
+            # en Render al crecer la base de datos.
+            
             # C. Apply UNIQUE Index (Blindaje)
             logger.info("🛡️ Aplicando Blindaje: Índice Único (Agenda, Paciente, Fecha)...")
             try:
