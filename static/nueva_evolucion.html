@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Evolución - Centro Oncológico Corrientes</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=4">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --header-height: 70px;
+            --footer-height: 60px;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            line-height: 1.5;
+        }
+
+        /* --- Global Header --- */
+        .patient-sticky-header {
+            height: var(--header-height);
+            background: var(--sidebar-bg);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .patient-info-summary {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .patient-info-summary strong {
+            color: var(--sidebar-text);
+            margin-right: 0.5rem;
+            font-weight: 500;
+        }
+
+        .patient-info-summary span {
+            font-weight: 600;
+        }
+
+        /* --- Main Layout --- */
+        .evolution-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Column: Form */
+        .form-panel {
+            padding: 2rem;
+            overflow-y: auto;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        /* Right Column: History */
+        .history-panel {
+            padding: 2rem;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        /* --- Sections --- */
+        .collapsible-section {
+            margin-bottom: 1.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #f8fafc;
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .section-content {
+            padding: 1.5rem;
+            display: block;
+            /* Toggle with JS */
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        /* --- Form Elements --- */
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        textarea.form-control {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* ECOG Selector */
+        .ecog-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .ecog-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #cbd5e1;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .ecog-btn.active {
+            background: var(--blue-500);
+            color: white;
+            border-color: var(--blue-600);
+        }
+
+        /* --- Signos Vitales --- */
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+        }
+
+        /* --- Footer --- */
+        .evolution-footer {
+            height: var(--footer-height);
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+
+        .autosave-indicator {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .footer-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* --- Print Styles --- */
+        @media print {
+
+            .patient-sticky-header,
+            .history-panel,
+            .evolution-footer,
+            .sidebar,
+            .sidebar-nav {
+                display: none !important;
+            }
+
+            body {
+                overflow: visible !important;
+                background: white !important;
+                height: auto !important;
+            }
+
+            .evolution-layout {
+                display: block !important;
+            }
+
+            .form-panel {
+                padding: 0 !important;
+                border: none !important;
+                overflow: visible !important;
+            }
+
+            .collapsible-section {
+                border: none !important;
+                margin-bottom: 2rem !important;
+                page-break-inside: avoid;
+            }
+
+            .section-header {
+                border-bottom: 2px solid #000 !important;
+                padding-left: 0 !important;
+                background: none !important;
+            }
+
+            .section-header span {
+                display: none;
+                /* Hide chevron */
+            }
+
+            .section-content {
+                display: block !important;
+                padding: 0.5rem 0 !important;
+            }
+
+            .form-group label {
+                color: black !important;
+            }
+
+            .form-control {
+                border: none !important;
+                padding: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .ecog-buttons {
+                display: block !important;
+            }
+
+            .ecog-btn:not(.active) {
+                display: none !important;
+            }
+
+            .ecog-btn.active {
+                background: none !important;
+                color: black !important;
+                border: 1px solid black !important;
+                padding: 2px 5px !important;
+            }
+
+            /* Custom print header/footer logic in JS */
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="patient-sticky-header">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="/static/logo_ccm_coc.jpg" alt="Logo" height="40" style="border-radius: 4px; background: white;">
+            <div id="patient-name-header" style="font-size: 1.2rem; font-weight: 700;">Cargando paciente...</div>
+        </div>
+        <div class="patient-info-summary">
+            <div><strong>Obra Social:</strong> <span id="patient-os-header">-</span></div>
+            <div><strong>Diagnóstico:</strong> <span id="patient-dx-header">-</span></div>
+            <div><strong>ECOG:</strong> <span id="patient-ecog-header">-</span></div>
+        </div>
+        <div id="user-display" style="font-size: 0.9rem; opacity: 0.8;">Dr. -</div>
+    </header>
+
+    <main class="evolution-layout">
+        <div class="form-panel">
+            <form id="evolution-form">
+
+                <!-- 1. Datos del Paciente -->
+                <div class="collapsible-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        1. Datos del Paciente <span>▼</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="field-grid">
+                            <div class="form-group">
+                                <label>DNI</label>
+                                <input type="text" id="form-dni" class="form-control" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Obra Social</label>
+                                <input type="text" id="form-os" class="form-control" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Nº Afiliado</label>
+                                <input type="text" id="form-nro-afiliado" class="form-control" readonly>
+                            </div>
+                        </div>
+                        <div class="field-grid">
+                            <div class="form-group">
+                                <label>Médico Solicitante</label>
+                                <input type="text" id="form-medico" class="form-control" placeholder="Médico derivante">
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha</label>
+                                <input type="date" id="form-fecha" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Estado Oncológico -->
+                <div class="collapsible-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        2. Estado Oncológico <span>▼</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Diagnóstico (Autocompletado)</label>
+                            <input type="text" id="form-dx" class="form-control" list="patologias-list"
+                                placeholder="Ingrese diagnóstico principal...">
+                            <datalist id="patologias-list"></datalist>
+                        </div>
+                        <div class="field-grid">
+                            <div class="form-group">
+                                <label>TNM</label>
+                                <input type="text" id="form-tnm" class="form-control" placeholder="cT2N1M0">
+                            </div>
+                            <div class="form-group">
+                                <label>Estadio</label>
+                                <select id="form-estadio" class="form-control">
+                                    <option value="">-</option>
+                                    <option value="I">I</option>
+                                    <option value="II">II</option>
+                                    <option value="III">III</option>
+                                    <option value="IV">IV</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Protocolo / Ciclo</label>
+                                <input type="text" id="form-protocolo" class="form-control"
+                                    placeholder="Ej: AC-T Ciclo 1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>ECOG (Estado Funcional)</label>
+                            <div class="ecog-buttons">
+                                <button type="button" class="ecog-btn" onclick="setEcog(0)">0 (Normal)</button>
+                                <button type="button" class="ecog-btn" onclick="setEcog(1)">1 (Sintomático)</button>
+                                <button type="button" class="ecog-btn" onclick="setEcog(2)">2 (Cama <50%)< /button>
+                                        <button type="button" class="ecog-btn" onclick="setEcog(3)">3 (Cama
+                                            >50%)</button>
+                                        <button type="button" class="ecog-btn" onclick="setEcog(4)">4
+                                            (Postrado)</button>
+                                        <button type="button" class="ecog-btn" onclick="setEcog(5)">5
+                                            (Fallecido)</button>
+                            </div>
+                            <input type="hidden" id="val-ecog">
+                        </div>
+                        <div class="form-group">
+                            <label>Toxicidad (CTCAE v5.0)</label>
+                            <textarea id="form-toxicidad" class="form-control"
+                                placeholder="Reporte de toxicidades..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Indicaciones Rápidas</label>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <label style="display: flex; align-items: center; gap: 0.4rem; font-weight: normal;">
+                                    <input type="checkbox" name="ind-quimio"> Quimioterapia
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.4rem; font-weight: normal;">
+                                    <input type="checkbox" name="ind-radio"> Radioterapia
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.4rem; font-weight: normal;">
+                                    <input type="checkbox" name="ind-inmuno"> Inmunoterapia
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.4rem; font-weight: normal;">
+                                    <input type="checkbox" name="ind-lab"> Solicitar Laboratorio
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.4rem; font-weight: normal;">
+                                    <input type="checkbox" name="ind-imagen"> Solicitar Imagen
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Antecedentes -->
+                <div class="collapsible-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        3. Antecedentes de Enfermedad Actual <span>▼</span>
+                    </div>
+                    <div class="section-content">
+                        <textarea id="form-antecedentes" class="form-control" style="min-height: 120px;"
+                            placeholder="Relato cronológico del evento actual..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 4. Examen Físico -->
+                <div class="collapsible-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        4. Examen Físico y Signos Vitales <span>▼</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="vitals-grid">
+                            <div class="form-group">
+                                <label>TA (mmHg)</label>
+                                <input type="text" id="vit-ta" class="form-control" placeholder="120/80">
+                            </div>
+                            <div class="form-group">
+                                <label>FC (lpm)</label>
+                                <input type="number" id="vit-fc" class="form-control" placeholder="75">
+                            </div>
+                            <div class="form-group">
+                                <label>FR (rpm)</label>
+                                <input type="number" id="vit-fr" class="form-control" placeholder="18">
+                            </div>
+                            <div class="form-group">
+                                <label>Tº (ºC)</label>
+                                <input type="text" id="vit-temp" class="form-control" placeholder="36.5">
+                            </div>
+                            <div class="form-group">
+                                <label>SatO2 (%)</label>
+                                <input type="number" id="vit-sat" class="form-control" placeholder="98">
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem;">
+                            <div class="form-group">
+                                <label>Aparato Respiratorio</label>
+                                <textarea id="ex-respiratorio"
+                                    class="form-control">Buena entrada de aire bilateral, sin ruidos agregados.</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Aparato Cardiovascular</label>
+                                <textarea id="ex-cardio"
+                                    class="form-control">Ruidos normofonéticos, silencios libres. Sin edemas.</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Abdomen</label>
+                                <textarea id="ex-abdomen"
+                                    class="form-control">Blando, deprensible, indoloro. RHA presentes.</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Genitourinario</label>
+                                <textarea id="ex-gu" class="form-control">PPL negativa, sin particularidades.</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Sistema Nervioso</label>
+                                <textarea id="ex-sn"
+                                    class="form-control">Vigil, orientado globalmente, sin foco neurológico.</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Evolución y Plan -->
+                <div class="collapsible-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        5. Evolución y Plan <span>▼</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-group">
+                            <label>Situación al Cierre</label>
+                            <select id="form-situacion" class="form-control">
+                                <option value="ESTABLE">Paciente estable, continúa mismo plan</option>
+                                <option value="MEJORIA">Mejoría clínica evidente</option>
+                                <option value="CAMBIO_PLAN">Requiere cambio de estrategia / protocolo</option>
+                                <option value="ESTUDIOS_PENDIENTES">A la espera de resultados críticos</option>
+                                <option value="INTERNACION">Criterio de internación</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Evolución Cronológica / Comentario</label>
+                            <textarea id="form-evolucion" class="form-control" style="min-height: 150px;"
+                                placeholder="Detalle la evolución del paciente hoy..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Conducta / Plan Terapéutico</label>
+                            <textarea id="form-plan" class="form-control" style="min-height: 100px;"
+                                placeholder="Defina los pasos a seguir..."></textarea>
+                        </div>
+                        <div class="field-grid">
+                            <div class="form-group">
+                                <label>Próximo Control</label>
+                                <input type="date" id="form-proximo" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Pautas de Alarma</label>
+                                <input type="text" id="form-pautas" class="form-control"
+                                    value="Fiebre, Disnea, Dolor incoercible, Hemorragia.">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="history-panel">
+            <h3 style="margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; color: #1e293b;">
+                Historial Clínico Resumido
+            </h3>
+            <div id="patient-timeline" style="font-size: 0.9rem;">
+                <!-- Loaded via JS -->
+            </div>
+        </div>
+    </main>
+
+    <footer class="evolution-footer">
+        <div class="autosave-indicator">
+            <span id="save-status-icon" style="color: var(--green-500);">●</span>
+            <span id="save-status-text">Listo. Autoguardado habilitado.</span>
+        </div>
+        <div class="footer-actions">
+            <button type="button" class="btn-cancel" onclick="goBack()">Cancelar</button>
+            <button type="button" class="btn-secondary" onclick="saveAsDraft()"
+                style="background: #94a3b8; box-shadow: none;">Guardar Borrador</button>
+            <button type="button" class="btn-secondary" onclick="handlePrint()"
+                style="background: var(--blue-500); box-shadow: none;">🖨️ Imprimir / PDF</button>
+            <button type="button" class="btn-primary" onclick="signAndSave()">🖋️ Firmar y Guardar</button>
+        </div>
+    </footer>
+
+    <!-- Print Template (Hidden) -->
+    <div id="print-template" style="display: none;">
+        <!-- Logic to fill this with B&W content -->
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const pacienteId = urlParams.get('paciente_id');
+        const token = localStorage.getItem('token');
+        let currentNoteId = urlParams.get('note_id') || null;
+
+        if (!token) window.location.href = '/static/login.html';
+        if (!pacienteId) { alert("Paciente no especificado"); window.location.href = '/static/historial_turnos.html' }
+
+        // --- Initialization ---
+        async function init() {
+            await loadPatientInfo();
+            await loadPatologias();
+            await loadHistory();
+
+            if (currentNoteId) {
+                await loadExistingNote(currentNoteId);
+            } else {
+                document.getElementById('form-fecha').valueAsDate = new Date();
+            }
+
+            // Start Autosave (Every 30s)
+            setInterval(autosave, 30000);
+        }
+
+        async function loadPatientInfo() {
+            try {
+                const res = await fetch(`/pacientes/${pacienteId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const p = await res.json();
+
+                document.getElementById('patient-name-header').textContent = `${p.apellido}, ${p.nombre}`;
+                document.getElementById('patient-os-header').textContent = p.obra_social?.nombre || "-";
+
+                document.getElementById('form-dni').value = p.dni;
+                document.getElementById('form-os').value = p.obra_social?.nombre || "";
+                document.getElementById('form-nro-afiliado').value = p.nro_afiliado || "";
+
+            } catch (e) {
+                console.error("Error loading patient", e);
+            }
+        }
+
+        async function loadPatologias() {
+            // Mock or fetch from backend
+            const list = document.getElementById('patologias-list');
+            const patos = ["CA Mama", "CA Colon", "CA Pulmón (NSCLC)", "Cáncer de Próstata", "Melanoma"];
+            list.innerHTML = patos.map(p => `<option value="${p}">`).join('');
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch(`/historia-clinica/paciente/${pacienteId}/timeline`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const container = document.getElementById('patient-timeline');
+
+                container.innerHTML = data.timeline.map(ev => `
+                    <div style="margin-bottom: 1.5rem; padding-left: 1rem; border-left: 2px solid #e2e8f0;">
+                        <div style="font-weight: 700; color: #475569; font-size: 0.8rem;">
+                            ${new Date(ev.fecha).toLocaleDateString()}
+                        </div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">${ev.descripcion}</div>
+                        <div style="color: #64748b; margin-top: 0.3rem;">${ev.detalle.substring(0, 150)}...</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error("Error loading history", e);
+            }
+        }
+
+        // --- UI Utilities ---
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            content.classList.toggle('collapsed');
+            header.querySelector('span').textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+        }
+
+        function setEcog(val) {
+            document.querySelectorAll('.ecog-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.ecog-btn')[val].classList.add('active');
+            document.getElementById('val-ecog').value = val;
+            document.getElementById('patient-ecog-header').textContent = val;
+        }
+
+        function goBack() {
+            window.location.href = '/static/historial_turnos.html?dni=' + document.getElementById('form-dni').value;
+        }
+
+        // --- Logic: Data Gathering ---
+        function getPayload() {
+            return {
+                paciente_id: parseInt(pacienteId),
+                servicio: "CONSULTA ONC.",
+                fecha: document.getElementById('form-fecha').value,
+                motivo_consulta: "Evolución Programada",
+                antecedentes: document.getElementById('form-antecedentes').value,
+                examen_clinico: "Examen físico sistémico realizado.", // Label for old field
+                patologia: document.getElementById('form-dx').value,
+                tnm: document.getElementById('form-tnm').value,
+                estadio: document.getElementById('form-estadio').value,
+                ecog: document.getElementById('val-ecog').value ? parseInt(document.getElementById('val-ecog').value) : null,
+                toxicidad: document.getElementById('form-toxicidad').value,
+                indicaciones: {
+                    quimio: document.querySelector('[name="ind-quimio"]').checked,
+                    radio: document.querySelector('[name="ind-radio"]').checked,
+                    inmuno: document.querySelector('[name="ind-inmuno"]').checked,
+                    lab: document.querySelector('[name="ind-lab"]').checked,
+                    imagen: document.querySelector('[name="ind-imagen"]').checked
+                },
+                examen_fisico_estructurado: {
+                    vitals: {
+                        ta: document.getElementById('vit-ta').value,
+                        fc: document.getElementById('vit-fc').value,
+                        fr: document.getElementById('vit-fr').value,
+                        temp: document.getElementById('vit-temp').value,
+                        sat: document.getElementById('vit-sat').value
+                    },
+                    aparatos: {
+                        respiratorio: document.getElementById('ex-respiratorio').value,
+                        cardio: document.getElementById('ex-cardio').value,
+                        abdomen: document.getElementById('ex-abdomen').value,
+                        gu: document.getElementById('ex-gu').value,
+                        sn: document.getElementById('ex-sn').value
+                    }
+                },
+                evolucion: document.getElementById('form-evolucion').value,
+                plan_estudio: document.getElementById('form-plan').value,
+                proximo_control: document.getElementById('form-proximo').value || null,
+                pautas_alarma: document.getElementById('form-pautas').value,
+                situacion_cierre: document.getElementById('form-situacion').value,
+                texto: document.getElementById('form-evolucion').value.substring(0, 200), // Fallback
+                estado: "BORRADOR"
+            };
+        }
+
+        // --- Logic: Saving ---
+        async function autosave() {
+            console.log("Autosaving...");
+            document.getElementById('save-status-text').textContent = "Guardando...";
+            await saveAsDraft(true);
+        }
+
+        async function saveAsDraft(silent = false) {
+            const payload = getPayload();
+            payload.accion = "GUARDAR";
+
+            try {
+                const url = currentNoteId ? `/historia-clinica/${currentNoteId}` : '/historia-clinica/';
+                const res = await fetch(url, {
+                    method: currentNoteId ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const saved = await res.json();
+                    if (!currentNoteId) currentNoteId = saved.id;
+                    const now = new Date().toLocaleTimeString();
+                    document.getElementById('save-status-text').textContent = `Ult. guardado: ${now} (Borrador)`;
+                }
+            } catch (e) {
+                document.getElementById('save-status-text').textContent = "Error al autoguardar.";
+            }
+        }
+
+        async function signAndSave() {
+            if (!confirm("Al firmar la nota no podrá ser editada. ¿Desea continuar?")) return;
+            const payload = getPayload();
+            payload.accion = "FIRMAR";
+            payload.estado = "FIRMADO";
+
+            try {
+                const url = currentNoteId ? `/historia-clinica/${currentNoteId}` : '/historia-clinica/';
+                const res = await fetch(url, {
+                    method: currentNoteId ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("Evolución firmada y guardada.");
+                    goBack();
+                }
+            } catch (e) {
+                alert("Error al firmar.");
+            }
+        }
+
+        function handlePrint() {
+            window.print();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

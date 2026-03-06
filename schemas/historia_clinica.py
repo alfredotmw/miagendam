@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Dict
 
 class HistoriaClinicaBase(BaseModel):
     texto: Optional[str] = None
@@ -20,6 +20,12 @@ class HistoriaClinicaBase(BaseModel):
     tnm: Optional[str] = None
     estadio: Optional[str] = None
     toxicidad: Optional[str] = None
+    # P2 Structured
+    examen_fisico_estructurado: Optional[Dict] = None
+    indicaciones: Optional[Dict] = None
+    proximo_control: Optional[Union[datetime, str]] = None
+    pautas_alarma: Optional[str] = None
+    situacion_cierre: Optional[str] = None
 
 class HistoriaClinicaCreate(HistoriaClinicaBase):
     paciente_id: int

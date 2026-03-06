@@ -233,6 +233,22 @@ def update_nota(
     db_nota.tratamiento = nota_update.tratamiento
     db_nota.evolucion = nota_update.evolucion
     db_nota.patologia = nota_update.patologia
+    
+    if nota_update.examen_fisico_estructurado is not None:
+        db_nota.examen_fisico_estructurado = nota_update.examen_fisico_estructurado
+    if nota_update.indicaciones is not None:
+        db_nota.indicaciones = nota_update.indicaciones
+    if nota_update.pautas_alarma is not None:
+        db_nota.pautas_alarma = nota_update.pautas_alarma
+    if nota_update.situacion_cierre is not None:
+        db_nota.situacion_cierre = nota_update.situacion_cierre
+    
+    if nota_update.proximo_control:
+        if isinstance(nota_update.proximo_control, str):
+            db_nota.proximo_control = datetime.strptime(nota_update.proximo_control, "%Y-%m-%d").date()
+        else:
+            db_nota.proximo_control = nota_update.proximo_control
+    db_nota.patologia = nota_update.patologia
     db_nota.texto = nota_update.texto or db_nota.texto
     
     # P1 Update

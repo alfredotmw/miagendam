@@ -949,46 +949,14 @@
         }
 
         function openNoteModal(note = null, readOnly = false) {
-            if (!currentDni && !note) { alert("Seleccione paciente"); return; }
-            document.getElementById('noteModal').classList.add('active');
-
-            // Reset state
-            const form = document.getElementById('noteForm');
-            const elements = form.querySelectorAll('input, textarea, select');
-            elements.forEach(el => el.disabled = readOnly);
-
-            // Toggle Buttons
-            const actions = document.querySelector('.modal-actions');
-            if (readOnly) {
-                actions.style.display = 'none';
-                document.querySelector('.modal-title').textContent = "Detalle de Evolución";
-            } else {
-                actions.style.display = 'flex';
-                document.querySelector('.modal-title').textContent = note ? "Editar Borrador" : "Nueva Evolución";
-            }
+            if (!currentPatientId && !note) { alert("Seleccione paciente"); return; }
 
             if (note) {
-                currentNoteId = note.id_referencia;
-                const sc = note.structured_content || {};
-
-                // Fields
-                document.getElementById('note-ecog').value = sc.ecog || '';
-                document.getElementById('note-tnm').value = sc.tnm || '';
-                document.getElementById('note-estadio').value = sc.estadio || '';
-                document.getElementById('note-toxicidad').value = sc.toxicidad || '';
-                document.getElementById('note-radio-check').checked = sc.requiere_radioterapia || false;
-
-                document.getElementById('note-patologia').value = sc.patologia || '';
-
-                document.getElementById('note-motivo').value = sc.motivo || '';
-                document.getElementById('note-antecedentes').value = sc.antecedentes || '';
-                document.getElementById('note-examen').value = sc.examen || '';
-                document.getElementById('note-diagnostico').value = sc.dx_dif || '';
-                document.getElementById('note-plan').value = sc.plan || '';
-                document.getElementById('note-tratamiento').value = sc.tratamiento || '';
+                // If editing or viewing an existing note
+                window.location.href = `/static/nueva_evolucion.html?paciente_id=${currentPatientId}&note_id=${note.id_referencia}${readOnly ? '&readOnly=true' : ''}`;
             } else {
-                currentNoteId = null;
-                form.reset();
+                // New evolution
+                window.location.href = `/static/nueva_evolucion.html?paciente_id=${currentPatientId}`;
             }
         }
         function closeNoteModal() {

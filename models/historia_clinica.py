@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Date, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Date, Boolean, JSON
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
@@ -44,6 +44,13 @@ class HistoriaClinica(Base):
     tnm = Column(String, nullable=True)
     estadio = Column(String, nullable=True)
     toxicidad = Column(Text, nullable=True)
+
+    # P2: Structured Evolution Redesign
+    examen_fisico_estructurado = Column(JSON, nullable=True)
+    indicaciones = Column(JSON, nullable=True)
+    proximo_control = Column(Date, nullable=True)
+    pautas_alarma = Column(Text, nullable=True)
+    situacion_cierre = Column(String, nullable=True)
 
     # Relaciones
     paciente = relationship("Paciente", back_populates="historia_clinica")
