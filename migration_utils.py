@@ -175,6 +175,30 @@ def check_and_migrate_db(engine: Engine):
                     conn.commit()
                 logger.info(f"✅ Columna '{col_name}' agregada.")
 
+        # P2 Columns: Structured Evolution Redesign
+        p2_cols = {
+            "examen_fisico_estructurado": "JSON",
+            "indicaciones": "JSON",
+            "proximo_control": "DATE",
+            "pautas_alarma": "TEXT",
+            "situacion_cierre": "VARCHAR"
+        }
+
+        for col_name, col_type in p2_cols.items():
+            if col_name not in h_columns:
+                logger.info(f"⚠️ Columna '{col_name}' faltante en 'historia_clinica'. Agregando...")
+                with engine.connect() as conn:
+                    # JSON type handling might vary slightly if SQLite vs Postgres
+                    # but SQLAlchemy text execute handles basic JSON/TEXT fallback well.
+                    # Use TEXT for JSON if sqlite, else JSON for PG.
+                    resolved_type = col_type
+                    if col_type == "JSON" and dialect == "sqlite":
+                        resolved_type = "TEXT"
+                    
+                    conn.execute(text(f"ALTER TABLE historia_clinica ADD COLUMN {col_name} {resolved_type}"))
+                    conn.commit()
+                logger.info(f"✅ Columna '{col_name}' agregada.")
+
         # Automation Column: Radiotherapy
         if "requiere_radioterapia" not in h_columns:
             logger.info("⚠️ Columna 'requiere_radioterapia' faltante en 'historia_clinica'. Agregando...")
