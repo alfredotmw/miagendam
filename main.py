@@ -65,6 +65,8 @@ def startup_event():
         sync_quimio_practices()
         from init_data import sync_arregin_setup
         sync_arregin_setup()
+        from apply_agenda_permissions import apply_permissions
+        apply_permissions()
         
     except Exception as e:
         print(f"⚠️ INIT DATA ERROR: {e}")
