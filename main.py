@@ -48,7 +48,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 👉 SE EJECUTA AUTOMÁTICAMENTE AL ARRANCAR FastAPI
 @app.on_event("startup")
 def startup_event():
-    print("🚀 STARTING APP - FLUSHING LOGS")
+    print("STARTING APP - FLUSHING LOGS")
     try:
         # Create Tables first!
         from database import Base, engine
@@ -56,20 +56,15 @@ def startup_event():
         from migration_utils import check_and_migrate_db
         check_and_migrate_db(engine) # 👈 FORCE MIGRATION CHECK
     except Exception as e:
-        print(f"⚠️ MIGRATION/DB ERROR: {e}")
+        print(f"[MIGRATION/DB ERROR]: {e}")
 
     try:
-        # init_data()
-        # Run Patches
-        sync_new_practicas()
-        sync_quimio_practices()
-        from init_data import sync_arregin_setup
-        sync_arregin_setup()
+        init_data()
         from apply_agenda_permissions import apply_permissions
         apply_permissions()
         
     except Exception as e:
-        print(f"⚠️ INIT DATA ERROR: {e}")
+        print(f"[INIT DATA ERROR]: {e}")
 
 
 # Registrar routers

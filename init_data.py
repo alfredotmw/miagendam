@@ -9,7 +9,7 @@ import bcrypt
 
 def seed_users(db: Session):
     if not db.query(User).filter_by(username="Alfredo").first():
-        print("👤 Creando usuario administrador 'Alfredo'...")
+        print("[USER] Creando usuario administrador 'Alfredo'...")
         hashed_password = bcrypt.hashpw("1234".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         admin = User(username="Alfredo", password=hashed_password, role=UserRole.ADMIN)
         db.add(admin)
@@ -118,48 +118,39 @@ def seed_practicas(db: Session):
 def seed_agendas(db: Session):
     from models.agenda import Agenda
     
-    # Agendas de Servicios
-    servicios = [
-        {"nombre": "QUIMIOTERAPIA SAN MARTIN", "tipo": "QUIMIOTERAPIA"},
-        {"nombre": "QUIMIOTERAPIA COLOMBIA", "tipo": "QUIMIOTERAPIA"},
-        {"nombre": "RADIOTERAPIA SAN MARTIN", "tipo": "RADIOTERAPIA"},
-        {"nombre": "RADIOTERAPIA COLOMBIA", "tipo": "RADIOTERAPIA"},
+    agendas_produccion = [
         {"nombre": "TOMOGRAFIAS Y RX", "tipo": "TOMOGRAFIA"},
         {"nombre": "ECOGRAFIAS", "tipo": "ECOGRAFIA"},
-        {"nombre": "CAMARA GAMMA", "tipo": "CAMARA_GAMMA"},
-        {"nombre": "PET", "tipo": "PET"},
+        {"nombre": "CONSULTORIO DR. RUIZ FRANCHESCUTTI", "tipo": "CONSULTA_MEDICA", "profesional": "Dr. Ruiz Franchescutti"},
+        {"nombre": "CONSULTORIO DR. FERNANDEZ CESPEDES", "tipo": "CONSULTA_MEDICA", "profesional": "Dr. Fernandez Cespedes"},
+        {"nombre": "CONSULTORIO DRA. NATALIA AYALA", "tipo": "CONSULTA_MEDICA", "profesional": "Dra. Natalia Ayala"},
+        {"nombre": "CONSULTORIO DR. ALINEZ", "tipo": "CONSULTA_MEDICA", "profesional": "Dr. Alinez"},
+        {"nombre": "CONSULTORIO DRA. GUTIERREZ", "tipo": "CONSULTA_MEDICA", "profesional": "Dra. Gutierrez"},
+        {"nombre": "CONSULTORIO DRA. SERIAL", "tipo": "CONSULTA_MEDICA", "profesional": "Dra. Serial"},
+        {"nombre": "CONSULTORIO DRA. REWHALD", "tipo": "CONSULTA_MEDICA", "profesional": "Dra. Rewhald"},
+        {"nombre": "CONSULTORIO DR. MONZÓN", "tipo": "CONSULTA_MEDICA", "profesional": "Dr. Monzón"},
         {"nombre": "ELECTRO Y MAPEOS", "tipo": "ELECTRO_MAPEO"},
+        {"nombre": "PET", "tipo": "PET"},
+        {"nombre": "CAMARA GAMMA", "tipo": "CAMARA_GAMMA"},
+        {"nombre": "RADIOTERAPIA SAN MARTIN", "tipo": "RADIOTERAPIA"},
+        {"nombre": "RADIOTERAPIA COLOMBIA", "tipo": "RADIOTERAPIA"},
+        {"nombre": "QUIMIOTERAPIA SAN MARTIN", "tipo": "QUIMIOTERAPIA"},
+        {"nombre": "QUIMIOTERAPIA COLOMBIA", "tipo": "QUIMIOTERAPIA"},
+        {"nombre": "CONSULTORIO DR. ANGEL MIÑO", "tipo": "CONSULTA_MEDICA", "profesional": "Dr. Angel Miño"},
+        {"nombre": "DRA. MARÍA ANGELICA DUARTE", "tipo": "CONSULTA_MEDICA", "profesional": "Dra. María Angelica Duarte"},
+        {"nombre": "CONSULTORIO LIC. ARREGIN", "tipo": "CONSULTA_MEDICA", "profesional": "Lic. Arregin"},
+        {"nombre": "CONSUTLORIO DR. GOMEZ SIERRA", "tipo": "CONSULTA_MEDICA", "profesional": "Dr. Gomez Sierra"},
+        {"nombre": "CONSULTORIO DRA. MARTINEZ MIRIAM", "tipo": "CONSULTA_MEDICA", "profesional": "Dra. Martinez Miriam"},
+        {"nombre": "CONSULTORIO DR. LANARI", "tipo": "CONSULTA_MEDICA", "profesional": "Dr. Lanari"},
     ]
 
-    for servicio in servicios:
-        if not db.query(Agenda).filter_by(nombre=servicio["nombre"]).first():
+    for item in agendas_produccion:
+        if not db.query(Agenda).filter_by(nombre=item["nombre"]).first():
+            print(f"[AGENDA] Creando agenda: {item['nombre']}")
             db.add(Agenda(
-                nombre=servicio["nombre"],
-                tipo=servicio["tipo"],
-                profesional=None
-            ))
-
-    # Agendas de Médicos
-    medicos = [
-        "Dr. Ruiz Franchescutti",
-        "Dr. Fernandez Cespedes",
-        "Dra. Natalia Ayala",
-        "Dr. Lanari",
-        "Dr. Monzòn",
-        "Dr. Alinez",
-        "Dra. Gutierrez",
-        "Dra. Cabral Castella",
-        "Dra. Serial",
-        "Dra. Rewhald"
-    ]
-
-    for medico in medicos:
-        nombre_agenda = f"CONSULTORIO {medico.upper()}"
-        if not db.query(Agenda).filter_by(nombre=nombre_agenda).first():
-            db.add(Agenda(
-                nombre=nombre_agenda,
-                tipo="CONSULTA_MEDICA",
-                profesional=medico
+                nombre=item["nombre"],
+                tipo=item["tipo"],
+                profesional=item.get("profesional")
             ))
 
     db.commit()
@@ -171,18 +162,17 @@ def init_data():
     # Siempre intentar crear el usuario admin si no existe
     seed_users(db)
 
-    # Si ya hay datos de obras sociales, prácticas y agendas, no seedear de nuevo
-    from models.agenda import Agenda
-    if db.query(ObraSocial).first() and db.query(Practica).first() and db.query(Agenda).first():
-        print("➡️ Base de datos ya inicializada.")
-        db.close()
-        return
-
-    print("⏳ Inicializando datos de Obras Sociales, Prácticas y Agendas…")
+    print("[WAIT] Sincronizando datos de Obras Sociales, Prácticas y Agendas...")
     seed_obras_sociales(db)
     seed_practicas(db)
     seed_agendas(db)
-    print("✅ Datos iniciales cargados correctamente.")
+    
+    # Run specific syncs
+    sync_new_practicas()
+    sync_quimio_practices()
+    sync_arregin_setup()
+    
+    print("[SUCCESS] Sincronización de datos completada.")
     db.close()
 
 def sync_new_practicas():
@@ -210,7 +200,7 @@ def sync_new_practicas():
     for categoria, lista in nuevas.items():
         for nombre in lista:
             if not db.query(Practica).filter_by(nombre=nombre).first():
-                print(f"➕ Patching práctica: {nombre}")
+                print(f"[PATCH] Patching práctica: {nombre}")
                 db.add(Practica(nombre=nombre, categoria=CategoriaPractica[categoria]))
                 cambios = True
 
@@ -220,7 +210,7 @@ def sync_new_practicas():
     for nombre in obsoletas:
         p = db.query(Practica).filter_by(nombre=nombre).first()
         if p:
-            print(f"🗑️ Eliminando práctica obsoleta: {nombre}")
+            print(f"[DELETE] Eliminando práctica obsoleta: {nombre}")
             db.delete(p)
             cambios = True
     
@@ -236,14 +226,14 @@ def sync_quimio_practices():
     from models.agenda_practica import AgendaPractica
 
     db = SessionLocal()
-    print("🔄 Verificando prácticas de Quimioterapia...")
+    print("[SYNC] Verificando prácticas de Quimioterapia...")
 
     # 1. Ensure Practice Exists
     practice_name = "QUIMIOTERAPIA"
     practice = db.query(Practica).filter(Practica.nombre == practice_name).first()
     
     if not practice:
-        print(f"➕ Creando práctica: {practice_name}")
+        print(f"[ADD] Creando práctica: {practice_name}")
         practice = Practica(nombre=practice_name, categoria=CategoriaPractica.QUIMIOTERAPIA)
         db.add(practice)
         db.commit()
@@ -259,7 +249,7 @@ def sync_quimio_practices():
         ).first()
 
         if not link:
-            print(f"🔗 Vinculando: {agenda.nombre} -> {practice.nombre}")
+            print(f"[LINK] Vinculando: {agenda.nombre} -> {practice.nombre}")
             new_link = AgendaPractica(agenda_id=agenda.id, practica_id=practice.id)
             db.add(new_link)
 
@@ -281,7 +271,7 @@ def sync_arregin_setup():
     agenda_name = "CONSULTORIO LIC. ARREGIN"
     agenda = db.query(Agenda).filter(Agenda.nombre == agenda_name).first()
     if not agenda:
-        print(f"➕ Creating Agenda: {agenda_name}")
+        print(f"[ADD] Creating Agenda: {agenda_name}")
         agenda = Agenda(
             nombre=agenda_name,
             tipo="CONSULTA_MEDICA",
@@ -302,7 +292,7 @@ def sync_arregin_setup():
     for p_name in practices_to_add:
         p = db.query(Practica).filter(Practica.nombre == p_name).first()
         if not p:
-            print(f"➕ Creating Practice: {p_name}")
+            print(f"[ADD] Creating Practice: {p_name}")
             p = Practica(nombre=p_name, categoria=CategoriaPractica.CONSULTA_MEDICA)
             db.add(p)
             db.commit()
@@ -317,7 +307,7 @@ def sync_arregin_setup():
         ).first()
         
         if not link:
-            print(f"🔗 Linking: {agenda.nombre} -> {p.nombre}")
+            print(f"[LINK] Linking: {agenda.nombre} -> {p.nombre}")
             new_link = AgendaPractica(agenda_id=agenda.id, practica_id=p.id)
             db.add(new_link)
 

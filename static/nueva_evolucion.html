@@ -281,7 +281,15 @@
             <div><strong>Diagnóstico:</strong> <span id="patient-dx-header">-</span></div>
             <div><strong>ECOG:</strong> <span id="patient-ecog-header">-</span></div>
         </div>
-        <div id="user-display" style="font-size: 0.9rem; opacity: 0.8;">Dr. -</div>
+        <div id="user-display" style="font-size: 0.9rem; opacity: 0.8; display: flex; align-items: center; gap: 1rem;">
+            <span>Cargando médico...</span>
+            <select id="tipo-evolucion-selector"
+                style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; padding: 2px 5px; font-size: 0.85rem;"
+                onchange="handleTipoEvolucionChange()">
+                <option value="oncologia" style="color: black;">Evolución Oncológica</option>
+                <option value="general" style="color: black;">Evolución General</option>
+            </select>
+        </div>
     </header>
 
     <main class="evolution-layout">
@@ -322,7 +330,7 @@
                 </div>
 
                 <!-- 2. Estado Oncológico -->
-                <div class="collapsible-section">
+                <div class="collapsible-section section-oncologos-only">
                     <div class="section-header" onclick="toggleSection(this)">
                         2. Estado Oncológico <span>▼</span>
                     </div>
@@ -359,13 +367,10 @@
                             <div class="ecog-buttons">
                                 <button type="button" class="ecog-btn" onclick="setEcog(0)">0 (Normal)</button>
                                 <button type="button" class="ecog-btn" onclick="setEcog(1)">1 (Sintomático)</button>
-                                <button type="button" class="ecog-btn" onclick="setEcog(2)">2 (Cama <50%)< /button>
-                                        <button type="button" class="ecog-btn" onclick="setEcog(3)">3 (Cama
-                                            >50%)</button>
-                                        <button type="button" class="ecog-btn" onclick="setEcog(4)">4
-                                            (Postrado)</button>
-                                        <button type="button" class="ecog-btn" onclick="setEcog(5)">5
-                                            (Fallecido)</button>
+                                <button type="button" class="ecog-btn" onclick="setEcog(2)">2 (Cama &lt;50%)</button>
+                                <button type="button" class="ecog-btn" onclick="setEcog(3)">3 (Cama &gt;50%)</button>
+                                <button type="button" class="ecog-btn" onclick="setEcog(4)">4 (Postrado)</button>
+                                <button type="button" class="ecog-btn" onclick="setEcog(5)">5 (Fallecido)</button>
                             </div>
                             <input type="hidden" id="val-ecog">
                         </div>
@@ -408,60 +413,75 @@
                     </div>
                 </div>
 
-                <!-- 4. Examen Físico -->
+                <!-- 4. Examen Físico / Evaluación Clínica -->
                 <div class="collapsible-section">
                     <div class="section-header" onclick="toggleSection(this)">
-                        4. Examen Físico y Signos Vitales <span>▼</span>
+                        <span id="header-examen-text" style="pointer-events: none;">4. Examen Físico y Signos
+                            Vitales</span>
+                        <span class="chevron" style="pointer-events: none;">▼</span>
                     </div>
                     <div class="section-content">
-                        <div class="vitals-grid">
+                        <!-- Campos Generales (Oculto para oncológos) -->
+                        <div class="section-general-only" style="display: none;">
                             <div class="form-group">
-                                <label>TA (mmHg)</label>
-                                <input type="text" id="vit-ta" class="form-control" placeholder="120/80">
-                            </div>
-                            <div class="form-group">
-                                <label>FC (lpm)</label>
-                                <input type="number" id="vit-fc" class="form-control" placeholder="75">
-                            </div>
-                            <div class="form-group">
-                                <label>FR (rpm)</label>
-                                <input type="number" id="vit-fr" class="form-control" placeholder="18">
-                            </div>
-                            <div class="form-group">
-                                <label>Tº (ºC)</label>
-                                <input type="text" id="vit-temp" class="form-control" placeholder="36.5">
-                            </div>
-                            <div class="form-group">
-                                <label>SatO2 (%)</label>
-                                <input type="number" id="vit-sat" class="form-control" placeholder="98">
+                                <label>Evaluación Clínica / Examen Físico General</label>
+                                <textarea id="ex-general" class="form-control" style="min-height: 120px;"
+                                    placeholder="Describa el examen físico..."></textarea>
                             </div>
                         </div>
-                        <div style="margin-top: 1rem;">
-                            <div class="form-group">
-                                <label>Aparato Respiratorio</label>
-                                <textarea id="ex-respiratorio"
-                                    class="form-control">Buena entrada de aire bilateral, sin ruidos agregados.</textarea>
+
+                        <!-- Campos Oncológicos Estructurados -->
+                        <div class="section-oncologos-only">
+                            <div class="vitals-grid">
+                                <div class="form-group">
+                                    <label>TA (mmHg)</label>
+                                    <input type="text" id="vit-ta" class="form-control" placeholder="120/80">
+                                </div>
+                                <div class="form-group">
+                                    <label>FC (lpm)</label>
+                                    <input type="number" id="vit-fc" class="form-control" placeholder="75">
+                                </div>
+                                <div class="form-group">
+                                    <label>FR (rpm)</label>
+                                    <input type="number" id="vit-fr" class="form-control" placeholder="18">
+                                </div>
+                                <div class="form-group">
+                                    <label>Tº (ºC)</label>
+                                    <input type="text" id="vit-temp" class="form-control" placeholder="36.5">
+                                </div>
+                                <div class="form-group">
+                                    <label>SatO2 (%)</label>
+                                    <input type="number" id="vit-sat" class="form-control" placeholder="98">
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label>Aparato Cardiovascular</label>
-                                <textarea id="ex-cardio"
-                                    class="form-control">Ruidos normofonéticos, silencios libres. Sin edemas.</textarea>
+                            <div style="margin-top: 1rem;">
+                                <div class="form-group">
+                                    <label>Aparato Respiratorio</label>
+                                    <textarea id="ex-respiratorio"
+                                        class="form-control">Buena entrada de aire bilateral, sin ruidos agregados.</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Aparato Cardiovascular</label>
+                                    <textarea id="ex-cardio"
+                                        class="form-control">Ruidos normofonéticos, silencios libres. Sin edemas.</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Abdomen</label>
+                                    <textarea id="ex-abdomen"
+                                        class="form-control">Blando, deprensible, indoloro. RHA presentes.</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Genitourinario</label>
+                                    <textarea id="ex-gu"
+                                        class="form-control">PPL negativa, sin particularidades.</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Sistema Nervioso</label>
+                                    <textarea id="ex-sn"
+                                        class="form-control">Vigil, orientado globalmente, sin foco neurológico.</textarea>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label>Abdomen</label>
-                                <textarea id="ex-abdomen"
-                                    class="form-control">Blando, deprensible, indoloro. RHA presentes.</textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Genitourinario</label>
-                                <textarea id="ex-gu" class="form-control">PPL negativa, sin particularidades.</textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Sistema Nervioso</label>
-                                <textarea id="ex-sn"
-                                    class="form-control">Vigil, orientado globalmente, sin foco neurológico.</textarea>
-                            </div>
-                        </div>
+                        </div> <!-- Fin section-oncologos-only -->
                     </div>
                 </div>
 
@@ -543,12 +563,15 @@
         const pacienteId = urlParams.get('paciente_id');
         const token = localStorage.getItem('token');
         let currentNoteId = urlParams.get('note_id') || null;
+        let doctorInfo = null;
+        let tipoFormulario = 'oncologia'; // default
 
         if (!token) window.location.href = '/static/login.html';
         if (!pacienteId) { alert("Paciente no especificado"); window.location.href = '/static/historial_turnos.html' }
 
         // --- Initialization ---
         async function init() {
+            await loadDoctorInfo();
             await loadPatientInfo();
             await loadPatologias();
             await loadHistory();
@@ -561,6 +584,70 @@
 
             // Start Autosave (Every 30s)
             setInterval(autosave, 30000);
+        }
+
+        async function loadDoctorInfo() {
+            try {
+                const res = await fetch('/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    doctorInfo = await res.json();
+
+                    const drName = doctorInfo.full_name || doctorInfo.username;
+                    const drSpec = doctorInfo.especialidad ? doctorInfo.especialidad : "Sin especialidad";
+
+                    const spanUsr = document.querySelector('#user-display span');
+                    if (spanUsr) {
+                        spanUsr.innerHTML = `<strong>Dr. ${drName}</strong> (${drSpec})`;
+                    }
+
+                    // Normalize specialty
+                    const normalizedSpec = doctorInfo.especialidad ?
+                        doctorInfo.especialidad.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") :
+                        null;
+
+                    // Determine form type
+                    if (!normalizedSpec || normalizedSpec === "oncologia") {
+                        tipoFormulario = "oncologia";
+                    } else {
+                        tipoFormulario = "general";
+                    }
+
+                    console.log("Dr Data loaded:", doctorInfo.username, "| Specialty:", drSpec, "| Form Type:", tipoFormulario);
+
+                    // Set select value
+                    const selectEl = document.getElementById('tipo-evolucion-selector');
+                    if (selectEl) selectEl.value = tipoFormulario;
+
+                    applyFormVisibility(tipoFormulario);
+                }
+            } catch (e) {
+                console.error("Error loading doctor info", e);
+            }
+        }
+
+        function handleTipoEvolucionChange() {
+            const selectEl = document.getElementById('tipo-evolucion-selector');
+            if (selectEl) {
+                tipoFormulario = selectEl.value;
+            }
+            applyFormVisibility(tipoFormulario);
+        }
+
+        // Apply visibility rules based on the user's role/speciality
+        function applyFormVisibility(type) {
+            const oncOnlyElements = document.querySelectorAll('.section-oncologos-only');
+            const genOnlyElements = document.querySelectorAll('.section-general-only');
+            const headerExamen = document.getElementById('header-examen-text');
+
+            if (type === 'oncologia') {
+                for (let el of oncOnlyElements) { el.style.setProperty("display", "", "important"); }
+                for (let el of genOnlyElements) { el.style.setProperty("display", "none", "important"); }
+                if (headerExamen) headerExamen.textContent = "4. Examen Físico y Signos Vitales";
+            } else {
+                for (let el of oncOnlyElements) { el.style.setProperty("display", "none", "important"); }
+                for (let el of genOnlyElements) { el.style.setProperty("display", "", "important"); }
+                if (headerExamen) headerExamen.textContent = "4. Evaluación Clínica / Examen Físico";
+            }
         }
 
         async function loadPatientInfo() {
@@ -600,7 +687,10 @@
                         <div style="font-weight: 700; color: #475569; font-size: 0.8rem;">
                             ${new Date(ev.fecha).toLocaleDateString()}
                         </div>
-                        <div style="font-weight: 600; font-size: 0.9rem;">${ev.descripcion}</div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">${ev.descripcion} 
+                            ${ev.structured_content?.especialidad_medico || ev.structured_content?.tipo_evolucion ?
+                        `<span style="font-weight: 400; color: #64748b; font-size: 0.8rem;"> (${[ev.structured_content.especialidad_medico, ev.structured_content.tipo_evolucion].filter(Boolean).join(' - ')})</span>` : ''}
+                        </div>
                         <div style="color: #64748b; margin-top: 0.3rem;">${ev.detalle.substring(0, 150)}...</div>
                     </div>
                 `).join('');
@@ -612,8 +702,12 @@
         // --- UI Utilities ---
         function toggleSection(header) {
             const content = header.nextElementSibling;
+            if (!content) return;
             content.classList.toggle('collapsed');
-            header.querySelector('span').textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+            const chevron = header.querySelector('.chevron') || header.lastElementChild;
+            if (chevron) {
+                chevron.textContent = content.classList.contains('collapsed') ? '▼' : '▲';
+            }
         }
 
         function setEcog(val) {
@@ -648,7 +742,7 @@
                     lab: document.querySelector('[name="ind-lab"]').checked,
                     imagen: document.querySelector('[name="ind-imagen"]').checked
                 },
-                examen_fisico_estructurado: {
+                examen_fisico_estructurado: tipoFormulario === 'oncologia' ? {
                     vitals: {
                         ta: document.getElementById('vit-ta').value,
                         fc: document.getElementById('vit-fc').value,
@@ -663,13 +757,15 @@
                         gu: document.getElementById('ex-gu').value,
                         sn: document.getElementById('ex-sn').value
                     }
-                },
+                } : null,
+                examen_clinico: tipoFormulario === 'oncologia' ? "Examen físico sistémico realizado." : document.getElementById('ex-general').value,
                 evolucion: document.getElementById('form-evolucion').value,
                 plan_estudio: document.getElementById('form-plan').value,
                 proximo_control: document.getElementById('form-proximo').value || null,
                 pautas_alarma: document.getElementById('form-pautas').value,
                 situacion_cierre: document.getElementById('form-situacion').value,
                 texto: document.getElementById('form-evolucion').value.substring(0, 200), // Fallback
+                tipo_evolucion: tipoFormulario, // 👈 SEND TIPO FORMULARIO TO BACKEND
                 estado: "BORRADOR"
             };
         }

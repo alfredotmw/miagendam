@@ -19,6 +19,7 @@ class UserCreate(BaseModel):
     allowed_agendas: Optional[str] = None # IDs separated by comma
     matricula: Optional[str] = None
     full_name: Optional[str] = None
+    especialidad: Optional[str] = None
 
 
 class UserLogin(BaseModel):
@@ -33,6 +34,7 @@ class UserResponse(BaseModel):
     allowed_agendas: Optional[str] = None
     matricula: Optional[str] = None
     full_name: Optional[str] = None
+    especialidad: Optional[str] = None
 
     class Config:
         from_attributes = True  # ✅ Compatible con Pydantic v2
@@ -111,6 +113,7 @@ class UserUpdate(BaseModel):
     allowed_agendas: Optional[str] = None
     matricula: Optional[str] = None
     full_name: Optional[str] = None
+    especialidad: Optional[str] = None
     password: Optional[str] = None # Opcional: Permitir reset de password
 
 @router.put("/{user_id}", response_model=UserResponse)

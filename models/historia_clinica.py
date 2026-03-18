@@ -9,6 +9,8 @@ class HistoriaClinica(Base):
     id = Column(Integer, primary_key=True, index=True)
     paciente_id = Column(Integer, ForeignKey("pacientes.id"), nullable=False)
     medico_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Opcional: si queremos saber quien escribio
+    especialidad_medico = Column(String, nullable=True) # Especialidad del médico al crear la nota
+    tipo_evolucion = Column(String, nullable=True) # "oncologia" o "general" - Definido por la interfaz
     
     fecha = Column(DateTime, default=datetime.now)
     texto = Column(Text, nullable=True) # Mantener como fallback o resumen

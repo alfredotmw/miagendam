@@ -21,6 +21,7 @@ class User(Base):
     allowed_agendas = Column(String, nullable=True) # Comma separated IDs: "1,2,5"
     matricula = Column(String, nullable=True) # M.N. / M.P.
     full_name = Column(String, nullable=True) # Nombre Real del Profesional
+    especialidad = Column(String, nullable=True) # Especialidad médica (ej: Oncología, Cardiología)
 
     # Relación Many-to-Many con Agendas
     agendas = relationship("Agenda", secondary=user_agendas, back_populates="usuarios_permitidos")

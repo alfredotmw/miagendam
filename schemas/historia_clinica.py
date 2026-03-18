@@ -15,6 +15,7 @@ class HistoriaClinicaBase(BaseModel):
     evolucion: Optional[str] = None
     patologia: Optional[str] = None # 👈 NUEVO
     estado: Optional[str] = "BORRADOR"
+    tipo_evolucion: Optional[str] = None # 👈 NUEVO: Tipo de formulario utilizado (ej. oncologia, general)
     # P1 Oncology
     ecog: Optional[int] = None # 0-5
     tnm: Optional[str] = None

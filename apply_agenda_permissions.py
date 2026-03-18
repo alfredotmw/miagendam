@@ -20,7 +20,7 @@ def apply_permissions():
             if user.role in [UserRole.ADMIN, UserRole.RECEPCION]:
                 # Give admins and receptionists access to all agendas
                 user.agendas.extend(all_agendas)
-                print(f"✅ User {user.username} ({user.role}): Assigned ALL agendas ({len(all_agendas)})")
+                print(f"[SUCCESS] User {user.username} ({user.role}): Assigned ALL agendas ({len(all_agendas)})")
                 updated_count += 1
             elif user.role == UserRole.MEDICO:
                 # Give Medico access to all agendas for now to avoid blocking them,
@@ -31,16 +31,16 @@ def apply_permissions():
                 if not matched:
                     # Give them all if no match, so they aren't completely blocked
                     user.agendas.extend(all_agendas)
-                    print(f"⚠️ User {user.username} ({user.role}): No exact match found, assigned ALL agendas ({len(all_agendas)})")
+                    print(f"[WARNING] User {user.username} ({user.role}): No exact match found, assigned ALL agendas ({len(all_agendas)})")
                 else:
                     user.agendas.extend(matched)
-                    print(f"✅ User {user.username} ({user.role}): Assigned {len(matched)} matching agendas")
+                    print(f"[SUCCESS] User {user.username} ({user.role}): Assigned {len(matched)} matching agendas")
                 updated_count += 1
 
         db.commit()
-        print(f"\n🎉 Successfully updated permissions for {updated_count} users.")
+        print(f"\n[DONE] Successfully updated permissions for {updated_count} users.")
     except Exception as e:
-        print(f"❌ Error applying permissions: {e}")
+        print(f"[ERROR] Error applying permissions: {e}")
         db.rollback()
     finally:
         db.close()

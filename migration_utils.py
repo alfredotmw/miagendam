@@ -266,14 +266,14 @@ def check_and_migrate_db(engine: Engine):
             logger.info("🧹 Migración: Limpiando turnos fantasma (00:00)...")
             res = conn.execute(text("DELETE FROM turnos WHERE hora LIKE '00:00%'"))
             if res.rowcount > 0:
-                logger.info(f"✅ Se eliminaron {res.rowcount} turnos con hora inválida.")
+                logger.info(f"[SUCCESS] Se eliminaron {res.rowcount} turnos con hora inválida.")
             
             # B. Delete true duplicates (same agenda/patient/practice/day)
             # This logic is complex for raw SQL in migration. We'll stick to basic cleanup 
             # or just rely on the UNIQUE index creation which will fail if not clean.
             # Best: Clean before index.
             
-            logger.info("🧹 Migración: Limpiando turnos duplicados en Quimioterapia (OMITIDO POR TIMEOUT)...")
+            logger.info("[CLEANUP] Migración: Limpiando turnos duplicados en Quimioterapia (OMITIDO POR TIMEOUT)...")
             # --- ELIMINADO EL CÓDIGO DE LIMPIEZA DE DUPLICADOS O(N^2) ---
             # La limpieza se hizo el 27 de febrero y el índice único ya previene duplicados.
             # Ejecutar esta consulta en cada inicio causaba un timeout de más de 30 segundos

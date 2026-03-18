@@ -8,7 +8,7 @@ from auth.jwt import get_current_user
 from models.turno import Turno
 from models.agenda import Agenda
 from models.practica import Practica
-from datetime import date
+from datetime import date, datetime
 
 router = APIRouter(
     prefix="/radioterapia",
@@ -173,41 +173,94 @@ def check_and_autofill(reg: SeguimientoRadioterapia, db: Session):
     """
     Checks if dates are missing and tries to fill them from Turnos.
     Updates DB if changes found.
+    Respects cycle boundaries to support multiple treatments per patient.
     """
     changes = False
 
-    # 1. FECHA TAC (Simulacion)
-    # Look for latest 'TOMOGRAFIA' appointment
-    if not reg.fecha_tac:
-        last_tac = db.query(Turno).join(Agenda).join(Practica, Turno.practica_id == Practica.id, isouter=True).filter(
+    # 1. Determinar Límites (Boundaries) del Ciclo
+    # Start Bound: Fecha de consulta o Fecha de creación del registro
+    start_bound = None
+    if reg.fecha_consulta:
+        start_bound = datetime.combine(reg.fecha_consulta, datetime.min.time())
+    else:
+        # Intenta buscar una consulta de 1ra vez (Dr. Miño o Dra. Duarte) automáticamente
+        query_consulta = db.query(Turno).join(Agenda).filter(
             Turno.paciente_id == reg.paciente_id,
-            Turno.estado == "COMPLETADO", # Only completed? Or asignado? User said "a medida que se cargan". So maybe any valid state.
-                                          # Let's say "ASISTIO" or just existing event? 
-                                          # Usually date is known when turno is taken.
-            (Agenda.tipo == "TOMOGRAFIA") | (Practica.categoria == "TOMOGRAFIA")
-        ).order_by(Turno.fecha.desc()).first()
+            Turno.estado != "cancelado",
+            Agenda.nombre.in_(["CONSULTORIO DR. ANGEL MIÑO", "DRA. MARÍA ANGELICA DUARTE"]) # Adjust names based on actual DB
+        ).order_by(Turno.fecha.asc())
         
-        if last_tac:
-            reg.fecha_tac = last_tac.fecha.date()
+        # If we have created_at, we can limit to around that time, or we just take the first one before created_at
+        first_consulta = query_consulta.first()
+        if first_consulta:
+            reg.fecha_consulta = first_consulta.fecha.date()
+            start_bound = datetime.combine(first_consulta.fecha.date(), datetime.min.time())
+            changes = True
+        else:
+            # Fallback to created_at
+            start_bound = reg.created_at
+
+    # End Bound: El inicio del siguiente registro de radioterapia para este paciente (si existe)
+    end_bound = None
+    if start_bound:
+        next_reg = db.query(SeguimientoRadioterapia).filter(
+            SeguimientoRadioterapia.paciente_id == reg.paciente_id,
+            SeguimientoRadioterapia.id != reg.id,
+            SeguimientoRadioterapia.created_at > start_bound
+        ).order_by(SeguimientoRadioterapia.created_at.asc()).first()
+        
+        if next_reg:
+            # Boundary is the consultation date or creation date of the next cycle
+            if next_reg.fecha_consulta:
+                end_bound = datetime.combine(next_reg.fecha_consulta, datetime.min.time())
+            else:
+                end_bound = next_reg.created_at
+
+    # Helper function to apply boundaries
+    def apply_bounds(query, date_column):
+        if start_bound:
+            query = query.filter(date_column >= start_bound)
+        if end_bound:
+            query = query.filter(date_column < end_bound)
+        return query
+
+    # 2. FECHA TAC (Simulacion)
+    if not reg.fecha_tac:
+        query_tac = db.query(Turno).join(Agenda).join(Practica, Turno.practica_id == Practica.id, isouter=True).filter(
+            Turno.paciente_id == reg.paciente_id,
+            Turno.estado != "cancelado", # Exclude canceled
+            (Agenda.tipo == "TOMOGRAFIA") | (Practica.categoria == "TOMOGRAFIA")
+        )
+        query_tac = apply_bounds(query_tac, Turno.fecha)
+        # Assuming the first TAC in the cycle is the relevant one
+        first_tac = query_tac.order_by(Turno.fecha.asc()).first()
+        
+        if first_tac:
+            reg.fecha_tac = first_tac.fecha.date()
             changes = True
 
-    # 2. FECHA INICIO TTO (First Radiotherapy Session)
+    # 3. FECHA INICIO TTO (First Radiotherapy Session in this cycle)
     if not reg.fecha_inicio:
-        first_radio = db.query(Turno).join(Agenda).filter(
+        query_inicio = db.query(Turno).join(Agenda).filter(
             Turno.paciente_id == reg.paciente_id,
+            Turno.estado != "cancelado",
             Agenda.tipo == "RADIOTERAPIA"
-        ).order_by(Turno.fecha.asc()).first()
+        )
+        query_inicio = apply_bounds(query_inicio, Turno.fecha)
+        first_radio = query_inicio.order_by(Turno.fecha.asc()).first()
         
         if first_radio:
             reg.fecha_inicio = first_radio.fecha.date()
             changes = True
 
-    # 3. FECHA FIN TTO (Last Radiotherapy Session)
-    # We always update 'fin' if we find a later date than current 'fin' or if 'fin' is missing
-    last_radio = db.query(Turno).join(Agenda).filter(
+    # 4. FECHA FIN TTO (Last Radiotherapy Session in this cycle)
+    query_fin = db.query(Turno).join(Agenda).filter(
         Turno.paciente_id == reg.paciente_id,
+        Turno.estado != "cancelado",
         Agenda.tipo == "RADIOTERAPIA"
-    ).order_by(Turno.fecha.desc()).first()
+    )
+    query_fin = apply_bounds(query_fin, Turno.fecha)
+    last_radio = query_fin.order_by(Turno.fecha.desc()).first()
 
     if last_radio:
         last_date = last_radio.fecha.date()

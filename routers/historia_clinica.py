@@ -68,6 +68,25 @@ def crear_nota(
         fecha_firma = datetime.now()
         firmado_por = current_user.get("id")
 
+    
+    # 🕵️ NORMALIZAR ESPECIALIDAD
+    raw_spec = current_user.get("especialidad") or "oncologia"
+    import unicodedata
+    normalized_spec = unicodedata.normalize('NFD', raw_spec).encode('ascii', 'ignore').decode("utf-8").strip().lower()
+    
+    # 🆕 TIPO DE EVOLUCIÓN ELEGIDO
+    # Si el cliente mandó un tipo_evolucion explícito, lo usamos. Si no, inferimos de la especialidad.
+    tipo_formulario = nota.tipo_evolucion
+    if not tipo_formulario:
+         tipo_formulario = "oncologia" if normalized_spec == "oncologia" else "general"
+
+    # 🛑 SANITIZATION: If general, clear oncology fields from payload
+    if tipo_formulario != "oncologia":
+        nota.ecog = None
+        nota.tnm = None
+        nota.estadio = None
+        nota.toxicidad = None
+
     nueva_nota = HistoriaClinica(
         paciente_id=nota.paciente_id,
         texto=nota.texto or "Nota Estructurada",
@@ -80,6 +99,8 @@ def crear_nota(
         estado=estado_inicial,
         firmado_por_id=firmado_por,
         fecha_firma=fecha_firma,
+        especialidad_medico=raw_spec, # 👈 SAVE ORIGINAL SPECIALTY
+        tipo_evolucion=tipo_formulario, # 👈 SAVE FORM TYPE USED
         # Content
         motivo_consulta=nota.motivo_consulta,
         antecedentes=nota.antecedentes,
@@ -189,6 +210,25 @@ def update_nota(
         raise HTTPException(status_code=403, detail="No se puede editar una nota FIRMADA. Debe crear una ENMIENDA.")
 
     # Apply updates
+    
+    # 🕵️ NORMALIZAR ESPECIALIDAD
+    raw_spec = current_user.get("especialidad") or "oncologia"
+    import unicodedata
+    normalized_spec = unicodedata.normalize('NFD', raw_spec).encode('ascii', 'ignore').decode("utf-8").strip().lower()
+    
+    # 🆕 TIPO DE EVOLUCIÓN ELEGIDO
+    # Si el cliente mandó un tipo_evolucion explícito, lo preferimos. Si no, inferimos de la especialidad.
+    tipo_formulario = nota_update.tipo_evolucion
+    if not tipo_formulario:
+         tipo_formulario = "oncologia" if normalized_spec == "oncologia" else "general"
+
+    # 🛑 SANITIZATION: If general, clear oncology fields from payload
+    if tipo_formulario != "oncologia":
+        nota_update.ecog = None
+        nota_update.tnm = None
+        nota_update.estadio = None
+        nota_update.toxicidad = None
+
     # If action is SIGN, apply signature
     if nota_update.accion == "FIRMAR":
         # 🔐 RESTRICTION: Only MEDICO can sign
@@ -256,6 +296,7 @@ def update_nota(
     db_nota.tnm = nota_update.tnm
     db_nota.estadio = nota_update.estadio
     db_nota.toxicidad = nota_update.toxicidad
+    db_nota.tipo_evolucion = tipo_formulario # 👈 SAVE FORM TYPE USED
 
     db.commit()
     db.refresh(db_nota)
@@ -348,6 +389,8 @@ def get_timeline(
                 "tratamiento": nota.tratamiento,
                 "evolucion": nota.evolucion,
                 "patologia": nota.patologia, # 👈 EXPOSE
+                "especialidad_medico": nota.especialidad_medico, # 👈 EXPOSE
+                "tipo_evolucion": nota.tipo_evolucion, # 👈 EXPOSE
                 # P1
                 "ecog": nota.ecog,
                 "tnm": nota.tnm,
