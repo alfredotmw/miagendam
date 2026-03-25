@@ -115,8 +115,8 @@ def validate_time_rules(hora: str):
             raise HTTPException(status_code=400, detail="⚠️ Horario no habilitado (00:00 es inválido)")
 
         h = int(hora.split(':')[0])
-        if h < 7 or h >= 21:
-            raise HTTPException(status_code=400, detail="⚠️ Horario no habilitado (Rango permitido: 07:00–21:00)")
+        if h < 7 or h >= 24:
+            raise HTTPException(status_code=400, detail="⚠️ Horario no habilitado (Rango permitido: 07:00–23:59)")
     except (ValueError, IndexError):
         raise HTTPException(status_code=400, detail="⚠️ Formato de hora inválido")
     return True

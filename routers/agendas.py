@@ -58,7 +58,9 @@ def get_agenda_slots(
             # Simulamos una lista de prácticas para la función de servicio
             duracion_slot = calculate_duration(agenda.tipo, [practica])
     else:
-        # Si no hay práctica seleccionada, usamos un default según el tipo de agenda
+        # Default de la base de datos si existe, sino fallback por tipo
+        duracion_slot = agenda.slot_minutos if agenda.slot_minutos else 15
+        
         if agenda.tipo == "ECOGRAFIA": duracion_slot = 30
         elif agenda.tipo == "TOMOGRAFIA": duracion_slot = 20
         elif agenda.tipo == "RESONANCIA": duracion_slot = 30
@@ -68,11 +70,12 @@ def get_agenda_slots(
         elif agenda.tipo == "QUIMIOTERAPIA":
             duracion_slot = 60
             capacity = 7
-        else: duracion_slot = 15
+        elif agenda.tipo == "RADIOTERAPIA":
+            duracion_slot = agenda.slot_minutos if agenda.slot_minutos else 10 # 10 is the new standard
 
     # Definir rango horario (ej: 7:00 a 22:00)
     hora_inicio = datetime.combine(fecha, time(7, 0))
-    hora_fin = datetime.combine(fecha, time(22, 0))
+    hora_fin = datetime.combine(fecha + timedelta(days=1), time(0, 0))
 
     # Buscar turnos existentes para ese día
     turnos = db.query(Turno).filter(

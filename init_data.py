@@ -145,13 +145,23 @@ def seed_agendas(db: Session):
     ]
 
     for item in agendas_produccion:
-        if not db.query(Agenda).filter_by(nombre=item["nombre"]).first():
+        agenda = db.query(Agenda).filter_by(nombre=item["nombre"]).first()
+        if not agenda:
             print(f"[AGENDA] Creando agenda: {item['nombre']}")
-            db.add(Agenda(
+            new_agenda = Agenda(
                 nombre=item["nombre"],
                 tipo=item["tipo"],
                 profesional=item.get("profesional")
-            ))
+            )
+            # Default slot duration for Radiotherapy
+            if item["tipo"] == "RADIOTERAPIA":
+                new_agenda.slot_minutos = 10
+            db.add(new_agenda)
+        else:
+            # Patch existing Radioterapia Colombia to 10 mins if needed
+            if item["nombre"] == "RADIOTERAPIA COLOMBIA" and agenda.slot_minutos != 10:
+                print(f"[PATCH] Actualizando slot_minutos de {item['nombre']} a 10")
+                agenda.slot_minutos = 10
 
     db.commit()
 

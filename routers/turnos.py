@@ -754,8 +754,8 @@ def get_available_slots(
 
     # Generate candidate slots (e.g., 8:00 to 20:00)
     # TODO: Make this configurable per agenda or global setting
-    start_hour = 8
-    end_hour = 20
+    start_hour = 7
+    end_hour = 24
     interval = 10 # minutes, granularity for search
 
     available_slots = []

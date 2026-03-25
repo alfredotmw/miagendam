@@ -299,7 +299,11 @@
                 <!-- 1. Datos del Paciente -->
                 <div class="collapsible-section">
                     <div class="section-header" onclick="toggleSection(this)">
-                        1. Datos del Paciente <span>▼</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="section-number"></span>
+                            <span class="section-title">Datos del Paciente</span>
+                        </div>
+                        <span class="chevron">▼</span>
                     </div>
                     <div class="section-content">
                         <div class="field-grid">
@@ -332,7 +336,11 @@
                 <!-- 2. Estado Oncológico -->
                 <div class="collapsible-section section-oncologos-only">
                     <div class="section-header" onclick="toggleSection(this)">
-                        2. Estado Oncológico <span>▼</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="section-number"></span>
+                            <span class="section-title">Estado Oncológico</span>
+                        </div>
+                        <span class="chevron">▼</span>
                     </div>
                     <div class="section-content">
                         <div class="form-group">
@@ -405,7 +413,11 @@
                 <!-- 3. Antecedentes -->
                 <div class="collapsible-section">
                     <div class="section-header" onclick="toggleSection(this)">
-                        3. Antecedentes de Enfermedad Actual <span>▼</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="section-number"></span>
+                            <span class="section-title">Antecedentes de Enfermedad Actual</span>
+                        </div>
+                        <span class="chevron">▼</span>
                     </div>
                     <div class="section-content">
                         <textarea id="form-antecedentes" class="form-control" style="min-height: 120px;"
@@ -416,9 +428,11 @@
                 <!-- 4. Examen Físico / Evaluación Clínica -->
                 <div class="collapsible-section">
                     <div class="section-header" onclick="toggleSection(this)">
-                        <span id="header-examen-text" style="pointer-events: none;">4. Examen Físico y Signos
-                            Vitales</span>
-                        <span class="chevron" style="pointer-events: none;">▼</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="section-number"></span>
+                            <span id="header-examen-text" class="section-title">Examen Físico y Signos Vitales</span>
+                        </div>
+                        <span class="chevron">▼</span>
                     </div>
                     <div class="section-content">
                         <!-- Campos Generales (Oculto para oncológos) -->
@@ -488,7 +502,11 @@
                 <!-- 5. Evolución y Plan -->
                 <div class="collapsible-section">
                     <div class="section-header" onclick="toggleSection(this)">
-                        5. Evolución y Plan <span>▼</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="section-number"></span>
+                            <span class="section-title">Evolución y Plan</span>
+                        </div>
+                        <span class="chevron">▼</span>
                     </div>
                     <div class="section-content">
                         <div class="form-group">
@@ -642,12 +660,28 @@
             if (type === 'oncologia') {
                 for (let el of oncOnlyElements) { el.style.setProperty("display", "", "important"); }
                 for (let el of genOnlyElements) { el.style.setProperty("display", "none", "important"); }
-                if (headerExamen) headerExamen.textContent = "4. Examen Físico y Signos Vitales";
+                if (headerExamen) headerExamen.textContent = "Examen Físico y Signos Vitales";
             } else {
                 for (let el of oncOnlyElements) { el.style.setProperty("display", "none", "important"); }
                 for (let el of genOnlyElements) { el.style.setProperty("display", "", "important"); }
-                if (headerExamen) headerExamen.textContent = "4. Evaluación Clínica / Examen Físico";
+                if (headerExamen) headerExamen.textContent = "Evaluación Clínica / Examen Físico";
             }
+            renumberSections();
+        }
+
+        function renumberSections() {
+            const sections = document.querySelectorAll('.collapsible-section');
+            let visibleIndex = 1;
+            sections.forEach(section => {
+                const display = window.getComputedStyle(section).display;
+                if (display !== 'none') {
+                    const numberSpan = section.querySelector('.section-number');
+                    if (numberSpan) {
+                        numberSpan.textContent = `${visibleIndex}. `;
+                        visibleIndex++;
+                    }
+                }
+            });
         }
 
         async function loadPatientInfo() {
