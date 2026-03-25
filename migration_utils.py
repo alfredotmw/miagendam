@@ -101,6 +101,13 @@ def check_and_migrate_db(engine: Engine):
                 conn.commit()
             logger.info("✅ Columna 'full_name' agregada exitosamente.")
 
+        if "especialidad" not in user_columns:
+            logger.info("⚠️ Columna 'especialidad' faltante en 'users'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN especialidad VARCHAR"))
+                conn.commit()
+            logger.info("✅ Columna 'especialidad' agregada exitosamente.")
+
     # 3. Verificar tabla 'pacientes'
     if inspector.has_table("pacientes"):
         p_columns = [col["name"] for col in inspector.get_columns("pacientes")]
@@ -139,6 +146,13 @@ def check_and_migrate_db(engine: Engine):
                     conn.execute(text(f"ALTER TABLE historia_clinica ADD COLUMN {f} TEXT")) 
                     conn.commit()
                 logger.info(f"✅ Columna '{f}' agregada.")
+
+        if "especialidad_medico" not in h_columns:
+            logger.info("⚠️ Columna 'especialidad_medico' faltante en 'historia_clinica'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE historia_clinica ADD COLUMN especialidad_medico VARCHAR"))
+                conn.commit()
+            logger.info("✅ Columna 'especialidad_medico' agregada.")
 
         # P0 Columns: Estado, Audit, Signature
         p0_cols = {
