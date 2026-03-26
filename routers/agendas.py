@@ -98,9 +98,19 @@ def get_agenda_slots(
             t_duracion = t.duracion if t.duracion else 15
             t_fin = t_inicio + timedelta(minutes=t_duracion)
 
-            # Solapamiento: (StartA < EndB) and (EndA > StartB)
-            if current_time < t_fin and slot_end > t_inicio:
-                turnos_en_slot.append(t)
+            # Solapamiento:
+            if agenda_id == 4:
+                # Lógica quirúrgica para Radioterapia (Evita duplicados visuales por desalineación)
+                overlap_mins = (min(slot_end, t_fin) - max(current_time, t_inicio)).total_seconds() / 60
+                es_inicio = (t_inicio >= current_time and t_inicio < slot_end)
+                es_solapamiento_mayoritario = (overlap_mins > (duracion_slot / 2))
+                
+                if es_inicio or es_solapamiento_mayoritario:
+                    turnos_en_slot.append(t)
+            else:
+                # Lógica estándar para el resto de las agendas
+                if current_time < t_fin and slot_end > t_inicio:
+                    turnos_en_slot.append(t)
         
         # Generar slots según capacidad
         # Primero llenamos con los turnos existentes
