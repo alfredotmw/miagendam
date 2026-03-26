@@ -232,6 +232,14 @@ def check_and_migrate_db(engine: Engine):
                 conn.commit()
             logger.info("✅ Columna 'requiere_radioterapia' agregada.")
 
+        # 🟢 NEW: Column 'tipo_evolucion' (Fix 500 Global Error on Backup/History)
+        if "tipo_evolucion" not in h_columns:
+            logger.info("⚠️ Columna 'tipo_evolucion' faltante en 'historia_clinica'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE historia_clinica ADD COLUMN tipo_evolucion VARCHAR"))
+                conn.commit()
+            logger.info("✅ Columna 'tipo_evolucion' agregada.")
+
     # 5. Verificar tabla 'agendas'
     if inspector.has_table("agendas"):
         a_columns = [col["name"] for col in inspector.get_columns("agendas")]
