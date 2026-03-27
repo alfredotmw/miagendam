@@ -98,9 +98,11 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
         capacidad_maxima = 1
 
     if count_solapados >= capacidad_maxima:
+        first_conflict = turnos_solapados[0]
+        # 🟢 DIAGNÓSTICO: Mostramos exactamente con quién es el conflicto detectado por check_availability
         raise HTTPException(
             status_code=400, 
-            detail=f"⚠️ [V3] HORARIO OCUPADO: Ya existe un turno asignado en este horario. (Capacidad máxima: {capacidad_maxima})"
+            detail=f"⚠️ [V4] HORARIO OCUPADO: Conflicto con Turno ID:{first_conflict.id} (Paciente:{first_conflict.paciente_id}, Agenda:{first_conflict.agenda_id}). Capacidad: {capacidad_maxima}"
         )
 
 def validate_time_rules(hora: str):
