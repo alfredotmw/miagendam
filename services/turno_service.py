@@ -121,7 +121,7 @@ def validate_time_rules(hora: str):
         raise HTTPException(status_code=400, detail="⚠️ Formato de hora inválido")
     return True
 
-def validate_duplicate_rules(db: Session, paciente_id: int, agenda_id: int, fecha: datetime, practicas_ids: list, exclude_turno_id: int = None):
+def validate_duplicate_rules(db: Session, paciente_id: int, agenda_id: int, fecha: datetime, practicas_ids: list, exclude_turno_id: int = None, patologia: str = None):
     """
     Bloquea mismo paciente + misma agenda + misma práctica + mismo día.
     Especialmente crítico para Quimioterapia.
@@ -140,31 +140,85 @@ def validate_duplicate_rules(db: Session, paciente_id: int, agenda_id: int, fech
     if exclude_turno_id:
         query = query.filter(Turno.id != exclude_turno_id)
         
-    turnos_dia = query.all()
-    
-    for t in turnos_dia:
-        # Chequear prácticas
-        t_practicas_ids = [p.id for p in t.practicas]
-        # Si alguno de los practicas_ids solicitados ya está en este turno, es un duplicado
-        duplicadas = set(practicas_ids).intersection(set(t_practicas_ids))
+    turnos_existentes = query.all()
+
+    # 🟢 EXCEPCIÓN RADIOTERAPIA: Permitir duplicado si es distinta patología
+    from models.agenda import Agenda
+    agenda = db.get(Agenda, agenda_id)
+    es_radioterapia = agenda and (agenda.tipo == "RADIOTERAPIA" or agenda_id in [3, 4]) # IDs 3 y 4 son Radioterapia en seed
+
+    for t in turnos_existentes:
+        # Check if any practice matches
+        p_existentes_ids = [p.id for p in t.practicas]
+        
+        # Find common practices between the new turn and existing turn
+        duplicadas = set(practicas_ids).intersection(set(p_existentes_ids))
+        
         if duplicadas:
-             raise HTTPException(
-                status_code=409, 
-                detail="⚠️ Turno duplicado: el paciente ya tiene esa práctica en esa agenda para esa fecha."
-            )
+            if es_radioterapia:
+                # En Radioterapia, permitimos misma práctica el mismo día SOLO SI es distinta patología
+                # Normalizamos patologías para comparación
+                patologia_existente = t.patologia.strip().upper() if t.patologia else ""
+                patologia_nueva = patologia.strip().upper() if patologia else ""
+
+                if patologia_existente == patologia_nueva and patologia_nueva != "":
+                    # Si la patología es la misma (y no está vacía), es un duplicado funcional
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"⚠️ Turno duplicado: el paciente ya tiene la práctica {list(duplicadas)} en esa agenda para esa fecha y misma patología ({patologia_nueva})."
+                    )
+                # Si las patologías son diferentes, se permite el duplicado en Radioterapia
+                # Si la patología es vacía en ambos, se considera duplicado (no hay distinción)
+                elif patologia_existente == "" and patologia_nueva == "":
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"⚠️ Turno duplicado: el paciente ya tiene la práctica {list(duplicadas)} en esa agenda para esa fecha. (Patología no especificada)."
+                    )
+            else:
+                # Para otras agendas, cualquier práctica duplicada es un error
+                raise HTTPException(
+                    status_code=409, 
+                    detail=f"⚠️ Turno duplicado: el paciente ya tiene la práctica {list(duplicadas)} en esa agenda para esa fecha."
+                )
     return True
 
-def check_availability_boolean(db: Session, agenda_id: int, fecha_hora_inicio: datetime, duracion_minutos: int, agenda_tipo: str) -> bool:
+def check_availability_boolean(db: Session, agenda_id: int, fecha_hora_inicio: datetime, duracion_minutos: int, agenda_tipo: str, paciente_id: int = None, practicas: list = None, patologia: str = None) -> bool:
     """
     Versión booleana de check_availability. Retorna True si hay lugar, False si no.
+    Si se provee paciente_id, aplica las reglas de excepción de Radioterapia.
     """
     try:
-        # 🟢 FIX: For availability map (slots), we want to return FALSE if strictly full.
-        # But we also want to allow "Overflow" viewing in Agenda, but NOT new booking.
-        # This function is used by 'get_available_slots' (Booking UI). So it MUST return False if full.
         check_availability(db, agenda_id, fecha_hora_inicio, duracion_minutos, agenda_tipo)
         return True
-    except HTTPException:
+    except HTTPException as e:
+        if paciente_id and e.status_code == 400 and "HORARIO OCUPADO" in str(e.detail):
+            # Si falla por ocupación, verificamos si es una excepción válida para este paciente en Radioterapia
+            # Nota: Necesitamos cargar las prácticas y patología si no vienen, pero para el mapa de slots 
+            # solemos tenerlas en el contexto de la reserva.
+            if agenda_tipo == "RADIOTERAPIA" and practicas:
+                from services.turno_service import validate_same_patient_overlap
+                try:
+                    # Primero verificar que el conflicto sea EXCLUSIVAMENTE con el mismo paciente
+                    fecha_hora_fin = fecha_hora_inicio + timedelta(minutes=duracion_minutos)
+                    otros_pacientes_solapados = db.query(Turno).filter(
+                        Turno.agenda_id == agenda_id,
+                        Turno.estado.notin_(["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]),
+                        Turno.fecha < fecha_hora_fin,
+                        Turno.paciente_id != paciente_id
+                    ).all()
+
+                    capacidad_real_otros = 0
+                    for t in otros_pacientes_solapados:
+                        t_duracion = t.duracion if t.duracion else 15
+                        if t.fecha < fecha_hora_fin and (t.fecha + timedelta(minutes=t_duracion)) > fecha_hora_inicio:
+                            capacidad_real_otros += 1
+                    
+                    if capacidad_real_otros >= 1: # Radioterapia siempre es 1
+                        return False
+
+                    return validate_same_patient_overlap(db, paciente_id, agenda_id, fecha_hora_inicio, duracion_minutos, practicas, patologia)
+                except HTTPException: # Captura el 409 de duplicado funcional
+                    return False
         return False
 
 def validate_date_rules(fecha: datetime):
@@ -175,3 +229,98 @@ def validate_date_rules(fecha: datetime):
     if fecha.weekday() == 6: # 0=Monday, 6=Sunday
         raise HTTPException(status_code=400, detail="No se pueden agendar turnos los días Domingo.")
     return True
+
+def get_agenda_sede(agenda) -> str:
+    """
+    Identifica la sede de la agenda de forma normalizada.
+    """
+    from models.agenda import Agenda
+    if agenda.id == 3 or "SAN MARTIN" in agenda.nombre.upper():
+        return "SAN MARTIN"
+    if agenda.id == 4 or "COLOMBIA" in agenda.nombre.upper():
+        return "COLOMBIA"
+    return "OTRA"
+
+def resolve_treatment_type(practicas: list) -> str:
+    """
+    Resuelve el tipo de tratamiento (técnica) basándose en las prácticas.
+    """
+    import unicodedata
+    def normalize_text(text):
+        return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn').upper()
+
+    for p in practicas:
+        p_name = normalize_text(p.nombre)
+        if "IMRT" in p_name:
+            return "IMRT"
+        if "3D" in p_name or "TRIDIMENSIONAL" in p_name:
+            return "RT 3D"
+    
+    return "OTRO"
+
+def validate_same_patient_overlap(db: Session, paciente_id: int, agenda_id: int, fecha_hora: datetime, duration: int, practicas: list, patologia: str):
+    """
+    Valida si un solapamiento del mismo paciente está permitido en Radioterapia.
+    Retorna True si la superposición es válida bajo las reglas de negocio.
+    Lanza HTTPException 409 si es un duplicado funcional.
+    """
+    from models.agenda import Agenda
+    agenda = db.get(Agenda, agenda_id)
+    if not agenda or agenda.tipo != "RADIOTERAPIA":
+        return False
+    
+    sede = get_agenda_sede(agenda)
+    if sede == "OTRA":
+        return False
+
+    new_treatment = resolve_treatment_type(practicas)
+    # 🟢 REGLA: Si el tratamiento es "OTRO", bloqueamos la superposición por defecto
+    if new_treatment == "OTRO" or new_treatment == "UNKNOWN":
+        return False
+    
+    new_pato = patologia.strip().upper() if patologia else ""
+    fecha_fin = fecha_hora + timedelta(minutes=duration)
+
+    # Buscar turnos activos del mismo paciente en Radioterapia
+    from models.agenda import Agenda
+    query = db.query(Turno).join(Agenda).filter(
+        Turno.paciente_id == paciente_id,
+        Turno.estado.notin_(["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]),
+        Agenda.tipo == "RADIOTERAPIA",
+        Turno.fecha < fecha_fin
+    )
+    
+    overlapping_turns = query.all()
+    
+    has_valid_overlap = False
+    
+    for t in overlapping_turns:
+        # Validar que sea la misma sede
+        if get_agenda_sede(t.agenda) != sede:
+            continue
+            
+        t_duracion = t.duracion if t.duracion else 15
+        t_inicio = t.fecha
+        t_fin = t_inicio + timedelta(minutes=t_duracion)
+        
+        # Verificar solapamiento real
+        if t_inicio < fecha_fin and t_fin > fecha_hora:
+            old_treatment = resolve_treatment_type(t.practicas)
+            old_pato = t.patologia.strip().upper() if t.patologia else ""
+            
+            # 🟢 REGLA: Si algún turno existente resuelve a "OTRO", bloqueamos superposición
+            if old_treatment == "OTRO" or old_treatment == "UNKNOWN":
+                return False
+
+            # 🟢 REGLA: Si misma patología Y mismo tratamiento -> DUPLICADO FUNCIONAL
+            if old_pato == new_pato and old_treatment == new_treatment:
+                raise HTTPException(
+                    status_code=409,
+                    detail="⚠️ Turno duplicado funcional: el paciente ya posee un turno superpuesto para la misma patología y técnica."
+                )
+            
+            # Si al menos uno difiere (patología o tratamiento), marcamos como solapamiento permitido
+            if old_pato != new_pato or old_treatment != new_treatment:
+                has_valid_overlap = True
+                
+    return has_valid_overlap

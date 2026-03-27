@@ -127,10 +127,40 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
         # Validar Horario Comercial (07-21)
         validate_time_rules(turno_in.hora)
         # Validar Duplicados (Mismo Paciente/Agenda/Práctica/Día)
-        validate_duplicate_rules(db, turno_in.paciente_id, agenda.id, fecha_hora_real, turno_in.practicas_ids)
+        validate_duplicate_rules(db, turno_in.paciente_id, agenda.id, fecha_hora_real, turno_in.practicas_ids, patologia=turno_in.patologia)
 
         # Verificar disponibilidad con la fecha y hora REAL
-        check_availability(db, agenda.id, fecha_hora_real, duracion, agenda.tipo)
+        try:
+            check_availability(db, agenda.id, fecha_hora_real, duracion, agenda.tipo)
+        except HTTPException as e:
+            if e.status_code == 400 and "HORARIO OCUPADO" in str(e.detail):
+                # 🟢 EXCEPCIÓN RADIOTERAPIA: Verificar si el conflicto es únicamente con el mismo paciente
+                fecha_hora_fin = fecha_hora_real + timedelta(minutes=duracion)
+                otros_pacientes_solapados = db.query(Turno).filter(
+                    Turno.agenda_id == agenda.id,
+                    Turno.estado.notin_(["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]),
+                    Turno.fecha < fecha_hora_fin,
+                    Turno.paciente_id != turno_in.paciente_id
+                ).all()
+
+                capacidad_real_otros = 0
+                for t in otros_pacientes_solapados:
+                    t_duracion = t.duracion if t.duracion else 15
+                    if t.fecha < fecha_hora_fin and (t.fecha + timedelta(minutes=t_duracion)) > fecha_hora_real:
+                        capacidad_real_otros += 1
+                
+                capacidad_max_otros = 7 if agenda.tipo == "QUIMIOTERAPIA" else 1
+                if agenda.tipo in ["PET", "CAMARA_GAMMA"]: capacidad_max_otros = 1
+
+                if capacidad_real_otros >= capacidad_max_otros:
+                    raise e # Ocupado por otros pacientes
+                
+                # Conflicto es con el mismo paciente, validamos regla específica de Radioterapia
+                from services.turno_service import validate_same_patient_overlap
+                if not validate_same_patient_overlap(db, turno_in.paciente_id, agenda.id, fecha_hora_real, duracion, practicas, turno_in.patologia):
+                    raise e
+            else:
+                raise e
 
         # Manejo de Médico Derivante (OBLIGATORIO)
         medico_id = turno_in.medico_derivante_id
@@ -516,13 +546,50 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
             fecha_hora_real = datetime.combine(fecha_solo, dt_time(h, m))
             
             # 🟢 VALIDACIÓN DE REGLAS DE NEGOCIO (e.g. Domingos, Horarios, Duplicados)
-            from services.turno_service import validate_date_rules, validate_time_rules, validate_duplicate_rules
+            from services.turno_service import validate_date_rules, validate_time_rules, validate_duplicate_rules, check_availability
             validate_date_rules(fecha_hora_real)
             validate_time_rules(nueva_hora_str)
             
             # Validar Duplicados (si cambia fecha/hora)
             practicas_ids = [p.id for p in turno.practicas]
-            validate_duplicate_rules(db, turno.paciente_id, turno.agenda_id, fecha_hora_real, practicas_ids, exclude_turno_id=turno.id)
+            pato_final = turno_in.patologia if turno_in.patologia is not None else turno.patologia
+            validate_duplicate_rules(db, turno.paciente_id, turno.agenda_id, fecha_hora_real, practicas_ids, exclude_turno_id=turno.id, patologia=pato_final)
+
+            # 🟢 EXCEPCIÓN RADIOTERAPIA: Verificar disponibilidad con excepción para el mismo paciente
+            # Calculamos duración actual (o la nueva si viene en el input)
+            duracion_calc = turno_in.duracion if turno_in.duracion is not None else (turno.duracion if turno.duracion else 15)
+            try:
+                check_availability(db, turno.agenda_id, fecha_hora_real, duracion_calc, turno.agenda.tipo)
+            except HTTPException as e:
+                if e.status_code == 400 and "HORARIO OCUPADO" in str(e.detail):
+                    fecha_hora_fin = fecha_hora_real + timedelta(minutes=duracion_calc)
+                    otros_pacientes_solapados = db.query(Turno).filter(
+                        Turno.agenda_id == turno.agenda_id,
+                        Turno.estado.notin_(["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]),
+                        Turno.fecha < fecha_hora_fin,
+                        Turno.paciente_id != turno.paciente_id,
+                        Turno.id != turno.id
+                    ).all()
+
+                    capacidad_real_otros = 0
+                    for t in otros_pacientes_solapados:
+                        t_duracion = t.duracion if t.duracion else 15
+                        if t.fecha < fecha_hora_fin and (t.fecha + timedelta(minutes=t_duracion)) > fecha_hora_real:
+                            capacidad_real_otros += 1
+                    
+                    agenda_tipo = turno.agenda.tipo
+                    capacidad_max_otros = 7 if agenda_tipo == "QUIMIOTERAPIA" else 1
+                    if agenda_tipo in ["PET", "CAMARA_GAMMA"]: capacidad_max_otros = 1
+
+                    if capacidad_real_otros >= capacidad_max_otros:
+                        raise e 
+                    
+                    from services.turno_service import validate_same_patient_overlap
+                    pato_final = turno_in.patologia if turno_in.patologia is not None else turno.patologia
+                    if not validate_same_patient_overlap(db, turno.paciente_id, turno.agenda_id, fecha_hora_real, duracion_calc, turno.practicas, pato_final):
+                        raise e
+                else:
+                    raise e
 
             turno.fecha = fecha_hora_real
             turno.hora = nueva_hora_str
@@ -738,7 +805,8 @@ def get_available_slots(
     practicas_ids: List[int] = Query(...),
     days_count: int = Query(default=1),
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    paciente_id: Optional[int] = Query(default=None)
 ):
     from datetime import datetime, timedelta, time
     from services.turno_service import check_availability_boolean
@@ -751,6 +819,10 @@ def get_available_slots(
     agenda = db.get(Agenda, agenda_id)
     if not agenda:
         raise HTTPException(status_code=404, detail="Agenda no encontrada")
+
+    # Load practices for duration and special overlap rules
+    from models.practica import Practica
+    practicas = db.query(Practica).filter(Practica.id.in_(practicas_ids)).all()
 
     # Generate candidate slots (e.g., 8:00 to 20:00)
     # TODO: Make this configurable per agenda or global setting
@@ -784,8 +856,8 @@ def get_available_slots(
             dt_check = datetime.combine(date_check, slot_time)
             
             # Check availability
-            # We need a version of check_availability that returns Bool instead of raising
-            if not check_availability_boolean(db, agenda_id, dt_check, duracion, agenda.tipo):
+            # Note: We pass practicas and paciente_id to check special Radiotherapy overlap rules
+            if not check_availability_boolean(db, agenda_id, dt_check, duracion, agenda.tipo, paciente_id=paciente_id, practicas=practicas):
                 all_days_free = False
                 break
         
