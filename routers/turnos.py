@@ -133,31 +133,18 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
         try:
             check_availability(db, agenda.id, fecha_hora_real, duracion, agenda.tipo)
         except HTTPException as e:
-            if e.status_code == 400 and "HORARIO OCUPADO" in str(e.detail):
-                # 🟢 EXCEPCIÓN RADIOTERAPIA: Verificar si el conflicto es únicamente con el mismo paciente
-                fecha_hora_fin = fecha_hora_real + timedelta(minutes=duracion)
-                otros_pacientes_solapados = db.query(Turno).filter(
-                    Turno.agenda_id == agenda.id,
-                    Turno.estado.notin_(["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]),
-                    Turno.fecha < fecha_hora_fin,
-                    Turno.paciente_id != turno_in.paciente_id
-                ).all()
-
-                capacidad_real_otros = 0
-                for t in otros_pacientes_solapados:
-                    t_duracion = t.duracion if t.duracion else 15
-                    if t.fecha < fecha_hora_fin and (t.fecha + timedelta(minutes=t_duracion)) > fecha_hora_real:
-                        capacidad_real_otros += 1
-                
-                capacidad_max_otros = 7 if agenda.tipo == "QUIMIOTERAPIA" else 1
-                if agenda.tipo in ["PET", "CAMARA_GAMMA"]: capacidad_max_otros = 1
-
-                if capacidad_real_otros >= capacidad_max_otros:
-                    raise e # Ocupado por otros pacientes
-                
-                # Conflicto es con el mismo paciente, validamos regla específica de Radioterapia
+            # 🟢 EXCEPCIÓN RADIOTERAPIA: Capturamos cualquier error 400 (disponibilidad/horario)
+            if e.status_code == 400:
+                # Intentamos la validación específica de Radioterapia (mismo paciente)
                 from services.turno_service import validate_same_patient_overlap
-                if not validate_same_patient_overlap(db, turno_in.paciente_id, agenda.id, fecha_hora_real, duracion, practicas, turno_in.patologia):
+                try:
+                    if validate_same_patient_overlap(db, turno_in.paciente_id, agenda.id, fecha_hora_real, duracion, practicas, turno_in.patologia):
+                        pass # Permitir
+                    else:
+                        raise e
+                except HTTPException as he:
+                    raise he
+                except Exception:
                     raise e
             else:
                 raise e
@@ -561,32 +548,18 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
             try:
                 check_availability(db, turno.agenda_id, fecha_hora_real, duracion_calc, turno.agenda.tipo)
             except HTTPException as e:
-                if e.status_code == 400 and "HORARIO OCUPADO" in str(e.detail):
-                    fecha_hora_fin = fecha_hora_real + timedelta(minutes=duracion_calc)
-                    otros_pacientes_solapados = db.query(Turno).filter(
-                        Turno.agenda_id == turno.agenda_id,
-                        Turno.estado.notin_(["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]),
-                        Turno.fecha < fecha_hora_fin,
-                        Turno.paciente_id != turno.paciente_id,
-                        Turno.id != turno.id
-                    ).all()
-
-                    capacidad_real_otros = 0
-                    for t in otros_pacientes_solapados:
-                        t_duracion = t.duracion if t.duracion else 15
-                        if t.fecha < fecha_hora_fin and (t.fecha + timedelta(minutes=t_duracion)) > fecha_hora_real:
-                            capacidad_real_otros += 1
-                    
-                    agenda_tipo = turno.agenda.tipo
-                    capacidad_max_otros = 7 if agenda_tipo == "QUIMIOTERAPIA" else 1
-                    if agenda_tipo in ["PET", "CAMARA_GAMMA"]: capacidad_max_otros = 1
-
-                    if capacidad_real_otros >= capacidad_max_otros:
-                        raise e 
-                    
+                # 🟢 EXCEPCIÓN RADIOTERAPIA: Capturamos cualquier error 400
+                if e.status_code == 400:
                     from services.turno_service import validate_same_patient_overlap
                     pato_final = turno_in.patologia if turno_in.patologia is not None else turno.patologia
-                    if not validate_same_patient_overlap(db, turno.paciente_id, turno.agenda_id, fecha_hora_real, duracion_calc, turno.practicas, pato_final):
+                    try:
+                        if validate_same_patient_overlap(db, turno.paciente_id, turno.agenda_id, fecha_hora_real, duracion_calc, turno.practicas, pato_final):
+                            pass # Permitir
+                        else:
+                            raise e
+                    except HTTPException as he:
+                        raise he
+                    except Exception:
                         raise e
                 else:
                     raise e

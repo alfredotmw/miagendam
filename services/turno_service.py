@@ -100,7 +100,7 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
     if count_solapados >= capacidad_maxima:
         raise HTTPException(
             status_code=400, 
-            detail=f"⚠️ HORARIO OCUPADO: Ya existe un turno asignado en este horario. (Capacidad máxima: {capacidad_maxima})"
+            detail=f"⚠️ [V3] HORARIO OCUPADO: Ya existe un turno asignado en este horario. (Capacidad máxima: {capacidad_maxima})"
         )
 
 def validate_time_rules(hora: str):
