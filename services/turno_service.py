@@ -267,8 +267,13 @@ def validate_same_patient_overlap(db: Session, paciente_id: int, agenda_id: int,
     """
     from models.agenda import Agenda
     agenda = db.get(Agenda, agenda_id)
-    if not agenda or agenda.tipo != "RADIOTERAPIA":
-        return False
+    tipo_alto = agenda.tipo.upper() if agenda and agenda.tipo else ""
+    
+    if not agenda or tipo_alto != "RADIOTERAPIA":
+        # 🟢 DIAGNÓSTICO: Si no es Radioterapia, no aplicamos la excepción de mismo paciente
+        # Pero devolvemos una pista si es que pensábamos que era Radio.
+        # return False  <-- Esto hacía que se mostrara el error original sin pistas
+        raise HTTPException(status_code=400, detail=f"⚠️ Bloqueo: La agenda {agenda_id} no es de tipo RADIOTERAPIA (Tipo detectado: '{tipo_alto}')")
     
     new_treatment = resolve_treatment_type(practicas)
     new_pato = patologia.strip().upper() if patologia else ""
