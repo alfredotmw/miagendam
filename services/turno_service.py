@@ -88,7 +88,17 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
         t_fin = t_inicio + timedelta(minutes=duracion_t)
 
         # Chequear solapamiento exacto
-        if t_inicio < fecha_hora_fin and t_fin > fecha_hora_inicio:
+        # 🟢 MEJORA: Gracia de 5 min para Radioterapia (para turnos mal alineados como :15 o :45)
+        overlap_grace = 0
+        if agenda_tipo == "RADIOTERAPIA":
+            overlap_grace = 5
+            
+        # Calcular intersección
+        interseccion_inicio = max(t_inicio, fecha_hora_inicio)
+        interseccion_fin = min(t_fin, fecha_hora_fin)
+        duracion_interseccion = (interseccion_fin - interseccion_inicio).total_seconds() / 60
+
+        if duracion_interseccion > overlap_grace:
             count_solapados += 1
 
     # Capacidad máxima
