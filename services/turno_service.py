@@ -75,10 +75,15 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
         Turno.fecha < fecha_hora_fin
     ).all()
 
+    # 🟢 BUSCAR EL SLOT_MINUTOS DE LA AGENDA PARA FALLBACK
+    from models.agenda import Agenda
+    agenda = db.get(Agenda, agenda_id)
+    default_duration = agenda.slot_minutos if agenda and agenda.slot_minutos else 15
+
     count_solapados = 0
     for t in turnos_solapados:
         # Calcular fin del turno existente
-        duracion_t = t.duracion if t.duracion else 15 # Fallback
+        duracion_t = t.duracion if t.duracion else default_duration
         t_inicio = t.fecha
         t_fin = t_inicio + timedelta(minutes=duracion_t)
 
@@ -87,21 +92,18 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
             count_solapados += 1
 
     # Capacidad máxima
-    capacidad_maxima = 1 # Por defecto 1 paciente por vez (consultorio, equipos)
+    capacidad_maxima = 1 # Por defecto 1 paciente por vez
 
     if agenda_tipo == "QUIMIOTERAPIA":
         capacidad_maxima = 7 # 7 sillones
     
-    # 🟢 FIX: Enforce strict single capacity for PET/GAMMA (Just in case logic changes)
     if agenda_tipo in ["PET", "CAMARA_GAMMA"]:
         capacidad_maxima = 1
 
     if count_solapados >= capacidad_maxima:
-        # 🟢 BUSCAR EL TURNO QUE REALMENTE SOLAPA (no solo el primero de la query)
-        real_conflict = next((t for t in turnos_solapados if t.fecha < fecha_hora_fin and (t.fecha + timedelta(minutes=(t.duracion or 15))) > fecha_hora_inicio), turnos_solapados[0])
         raise HTTPException(
             status_code=400, 
-            detail=f"⚠️ [V6] HORARIO OCUPADO: Conflicto con Turno ID:{real_conflict.id} (Paciente:{real_conflict.paciente_id}, Fecha:{real_conflict.fecha}, Estado:{real_conflict.estado}). Capacidad: {capacidad_maxima}"
+            detail=f"⚠️ HORARIO OCUPADO: Ya existe un turno asignado en este horario o el margen de tiempo es insuficiente. (Capacidad máxima: {capacidad_maxima})"
         )
 
 def validate_time_rules(hora: str):
