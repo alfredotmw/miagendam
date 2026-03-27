@@ -286,12 +286,11 @@ def validate_same_patient_overlap(db: Session, paciente_id: int, agenda_id: int,
     new_pato = patologia.strip().upper() if patologia else ""
     fecha_fin = fecha_hora + timedelta(minutes=duration)
 
-    # Buscar turnos activos del mismo paciente en Radioterapia
-    from models.agenda import Agenda
-    query = db.query(Turno).join(Agenda).filter(
+    # Buscar turnos activos del mismo paciente (en CUALQUIER servicio)
+    # Si estamos pidiendo para Radioterapia, permitimos que se solape con otros
+    query = db.query(Turno).filter(
         Turno.paciente_id == paciente_id,
         Turno.estado.notin_(["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]),
-        Agenda.tipo == "RADIOTERAPIA",
         Turno.fecha < fecha_fin
     )
     
@@ -300,16 +299,21 @@ def validate_same_patient_overlap(db: Session, paciente_id: int, agenda_id: int,
     has_valid_overlap = False
     
     for t in overlapping_turns:
-        # Validar que sea la misma sede
-        if get_agenda_sede(t.agenda) != sede:
-            continue
-            
+        # Si el turno existente NO es de Radioterapia, permitimos el solapamiento 
+        # sin validar patología/técnica (porque son servicios distintos)
+        es_radio_existente = (t.agenda.tipo == "RADIOTERAPIA" or get_agenda_sede(t.agenda) != "OTRA")
+        
         t_duracion = t.duracion if t.duracion else 15
         t_inicio = t.fecha
         t_fin = t_inicio + timedelta(minutes=t_duracion)
         
         # Verificar solapamiento real
         if t_inicio < fecha_fin and t_fin > fecha_hora:
+            if not es_radio_existente:
+                # Es otro servicio (Quimio, Consulta, etc.). Permitimos overlap libremente.
+                has_valid_overlap = True
+                continue
+
             old_treatment = resolve_treatment_type(t.practicas)
             old_pato = t.patologia.strip().upper() if t.patologia else ""
             
