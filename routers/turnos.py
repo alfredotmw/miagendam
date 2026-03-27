@@ -133,9 +133,8 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
         try:
             check_availability(db, agenda.id, fecha_hora_real, duracion, agenda.tipo)
         except HTTPException as e:
-            # 🟢 EXCEPCIÓN RADIOTERAPIA: Capturamos cualquier error 400 (disponibilidad/horario)
+            # 🟢 EXCEPCIÓN RADIOTERAPIA: Capturamos cualquier error 400
             if e.status_code == 400:
-                # Intentamos la validación específica de Radioterapia (mismo paciente)
                 from services.turno_service import validate_same_patient_overlap
                 try:
                     if validate_same_patient_overlap(db, turno_in.paciente_id, agenda.id, fecha_hora_real, duracion, practicas, turno_in.patologia):
@@ -143,6 +142,8 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
                     else:
                         raise e
                 except HTTPException as he:
+                    # 🟢 DIAGNÓSTICO: Si falla, mostramos AMBOS (el original de check_avail y el de validate_overlap)
+                    he.detail = f"{he.detail} | Original: {e.detail}"
                     raise he
                 except Exception:
                     raise e
@@ -558,6 +559,8 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
                         else:
                             raise e
                     except HTTPException as he:
+                        # 🟢 DIAGNÓSTICO: Mostramos AMBOS
+                        he.detail = f"{he.detail} | Original: {e.detail}"
                         raise he
                     except Exception:
                         raise e
