@@ -98,11 +98,9 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
         capacidad_maxima = 1
 
     if count_solapados >= capacidad_maxima:
-        # 🔍 Diagnóstico para producción
-        blocking_ids = [str(t.paciente_id) for t in turnos_solapados[:3]]
         raise HTTPException(
             status_code=400, 
-            detail=f"⚠️ HORARIO OCUPADO: Ya existe un turno asignado en este horario. (Capacidad máxima: {capacidad_maxima}). Pacientes bloqueantes: {', '.join(blocking_ids)}"
+            detail=f"⚠️ HORARIO OCUPADO: Ya existe un turno asignado en este horario. (Capacidad máxima: {capacidad_maxima})"
         )
 
 def validate_time_rules(hora: str):
@@ -264,30 +262,19 @@ def resolve_treatment_type(practicas: list) -> str:
 
 def validate_same_patient_overlap(db: Session, paciente_id: int, agenda_id: int, fecha_hora: datetime, duration: int, practicas: list, patologia: str):
     """
-    Valida si un solapamiento del mismo paciente está permitido en Radioterapia.
-    Retorna True si la superposición es válida bajo las reglas de negocio.
-    Lanza HTTPException 409 si es un duplicado funcional.
+    Versión simplificada: En Radioterapia, permitimos el solapamiento con el mismo paciente
+    siempre que no sea un duplicado funcional exacto (misma patología y técnica).
     """
     from models.agenda import Agenda
     agenda = db.get(Agenda, agenda_id)
     if not agenda or agenda.tipo != "RADIOTERAPIA":
         return False
     
-    sede = get_agenda_sede(agenda)
-    if sede == "OTRA":
-        return False
-
     new_treatment = resolve_treatment_type(practicas)
-    # 🟢 Cambio: Si el tratamiento es "OTRO", permitimos overlap si la patología es diferente.
-    # Antes bloqueábamos por defecto, pero esto puede ser muy restrictivo en producción.
-    # if new_treatment == "OTRO" or new_treatment == "UNKNOWN":
-    #    return False
-    
     new_pato = patologia.strip().upper() if patologia else ""
     fecha_fin = fecha_hora + timedelta(minutes=duration)
 
-    # Buscar turnos activos del mismo paciente (en CUALQUIER servicio)
-    # Si estamos pidiendo para Radioterapia, permitimos que se solape con otros
+    # Buscar turnos activos del mismo paciente
     query = db.query(Turno).filter(
         Turno.paciente_id == paciente_id,
         Turno.estado.notin_(["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]),
@@ -296,40 +283,31 @@ def validate_same_patient_overlap(db: Session, paciente_id: int, agenda_id: int,
     
     overlapping_turns = query.all()
     
-    has_valid_overlap = False
-    
+    # Si no hay otros turnos del mismo paciente solapados, no hay conflicto que validar aquí
+    # (El conflicto original de check_availabilty debe haber sido con otro paciente)
+    if not overlapping_turns:
+        return False
+
     for t in overlapping_turns:
-        # Si el turno existente NO es de Radioterapia, permitimos el solapamiento 
-        # sin validar patología/técnica (porque son servicios distintos)
-        es_radio_existente = (t.agenda.tipo == "RADIOTERAPIA" or get_agenda_sede(t.agenda) != "OTRA")
-        
         t_duracion = t.duracion if t.duracion else 15
         t_inicio = t.fecha
         t_fin = t_inicio + timedelta(minutes=t_duracion)
         
         # Verificar solapamiento real
         if t_inicio < fecha_fin and t_fin > fecha_hora:
-            if not es_radio_existente:
-                # Es otro servicio (Quimio, Consulta, etc.). Permitimos overlap libremente.
-                has_valid_overlap = True
+            # Si el turno es de otro servicio, permitimos el overlap libremente
+            if t.agenda.tipo != "RADIOTERAPIA":
                 continue
-
+            
             old_treatment = resolve_treatment_type(t.practicas)
             old_pato = t.patologia.strip().upper() if t.patologia else ""
             
-            # 🟢 REGLA: Si algún turno existente resuelve a "OTRO", bloqueamos superposición
-            if old_treatment == "OTRO" or old_treatment == "UNKNOWN":
-                return False
-
-            # 🟢 REGLA: Si misma patología Y mismo tratamiento -> DUPLICADO FUNCIONAL
+            # Bloqueamos solo si es un duplicado funcional exacto (misma pato Y misma técnica)
             if old_pato == new_pato and old_treatment == new_treatment:
                 raise HTTPException(
                     status_code=409,
-                    detail="⚠️ Turno duplicado funcional: el paciente ya posee un turno superpuesto para la misma patología y técnica."
+                    detail=f"⚠️ Turno duplicado funcional: ya existe un turno para Patología '{new_pato}' y Técnica '{new_treatment}' en este horario."
                 )
-            
-            # Si al menos uno difiere (patología o tratamiento), marcamos como solapamiento permitido
-            if old_pato != new_pato or old_treatment != new_treatment:
-                has_valid_overlap = True
-                
-    return has_valid_overlap
+    
+    # Si llegamos aquí, cualquier solapamiento encontrado con el mismo paciente es válido
+    return True
