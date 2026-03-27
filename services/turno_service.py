@@ -98,9 +98,11 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
         capacidad_maxima = 1
 
     if count_solapados >= capacidad_maxima:
+        # 🔍 Diagnóstico para producción
+        blocking_ids = [str(t.paciente_id) for t in turnos_solapados[:3]]
         raise HTTPException(
             status_code=400, 
-            detail=f"⚠️ HORARIO OCUPADO: Ya existe un turno asignado en este horario. (Capacidad máxima: {capacidad_maxima})"
+            detail=f"⚠️ HORARIO OCUPADO: Ya existe un turno asignado en este horario. (Capacidad máxima: {capacidad_maxima}). Pacientes bloqueantes: {', '.join(blocking_ids)}"
         )
 
 def validate_time_rules(hora: str):
@@ -232,12 +234,14 @@ def validate_date_rules(fecha: datetime):
 
 def get_agenda_sede(agenda) -> str:
     """
-    Identifica la sede de la agenda de forma normalizada.
+    Identifica la sede de la agenda de forma normalizada (San Martin vs Colombia).
     """
-    from models.agenda import Agenda
-    if agenda.id == 3 or "SAN MARTIN" in agenda.nombre.upper():
+    if not agenda: return "OTRA"
+    
+    nombre_alto = agenda.nombre.upper()
+    if agenda.id == 3 or "SAN MARTIN" in nombre_alto or "S.M" in nombre_alto:
         return "SAN MARTIN"
-    if agenda.id == 4 or "COLOMBIA" in agenda.nombre.upper():
+    if agenda.id == 4 or "COLOMBIA" in nombre_alto:
         return "COLOMBIA"
     return "OTRA"
 
@@ -274,9 +278,10 @@ def validate_same_patient_overlap(db: Session, paciente_id: int, agenda_id: int,
         return False
 
     new_treatment = resolve_treatment_type(practicas)
-    # 🟢 REGLA: Si el tratamiento es "OTRO", bloqueamos la superposición por defecto
-    if new_treatment == "OTRO" or new_treatment == "UNKNOWN":
-        return False
+    # 🟢 Cambio: Si el tratamiento es "OTRO", permitimos overlap si la patología es diferente.
+    # Antes bloqueábamos por defecto, pero esto puede ser muy restrictivo en producción.
+    # if new_treatment == "OTRO" or new_treatment == "UNKNOWN":
+    #    return False
     
     new_pato = patologia.strip().upper() if patologia else ""
     fecha_fin = fecha_hora + timedelta(minutes=duration)
