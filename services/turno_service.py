@@ -66,14 +66,13 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
     # Buscar turnos que se solapen en esa agenda
     # Un turno se solapa si:
     # (InicioA < FinB) y (FinA > InicioB)
+    # 🟢 FIX: Excluir todos los estados inactivos de la ocupación real
+    inactive_states = ["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]
+    
     turnos_solapados = db.query(Turno).filter(
         Turno.agenda_id == agenda_id,
-        Turno.estado != "cancelado",
-        Turno.fecha < fecha_hora_fin, # Inicio del turno existente es menor al fin del nuevo
-        # Aquí hay un detalle: Turno.fecha es el inicio. Necesitamos saber la duración de los turnos existentes.
-        # Como acabamos de agregar la columna duración, asumimos que los turnos viejos podrían no tenerla.
-        # Para simplificar la query en SQL, idealmente tendríamos la fecha de fin guardada.
-        # Pero podemos hacerlo calculando en Python o asumiendo una duración standard si es null.
+        Turno.estado.notin_(inactive_states),
+        Turno.fecha < fecha_hora_fin
     ).all()
 
     count_solapados = 0
