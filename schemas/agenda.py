@@ -10,7 +10,7 @@ class AgendaBase(BaseModel):
 
 
 class AgendaCreate(AgendaBase):
-    pass
+    allowed_user_ids: Optional[List[int]] = None
 
 
 class AgendaUpdate(BaseModel):

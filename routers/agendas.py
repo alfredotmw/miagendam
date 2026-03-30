@@ -186,10 +186,8 @@ def create_agenda(
     )
     
     # 🛡️ Sync permissions if user_ids are provided
-    # Note: AgendaCreate might not have allowed_user_ids yet in some views, adding it as optional fallback
-    allowed_user_ids = getattr(agenda, 'allowed_user_ids', [])
-    if allowed_user_ids:
-        permitted_users = db.query(User).filter(User.id.in_(allowed_user_ids)).all()
+    if agenda.allowed_user_ids:
+        permitted_users = db.query(User).filter(User.id.in_(agenda.allowed_user_ids)).all()
         nueva_agenda.usuarios_permitidos = permitted_users
 
     db.add(nueva_agenda)
