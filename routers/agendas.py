@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta, time
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -14,27 +15,62 @@ router = APIRouter(prefix="/agendas", tags=["Agendas"])
 
 @router.get("/")
 def listar_agendas(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    # 🛡️ New Agenda-Centric Permission Logic
+    """
+    Lista las agendas permitidas para el usuario actual.
+    Regla: ADMIN ve todo. Otros ven unión de Many-to-Many + Legacy CSV.
+    """
+    username = current_user["username"]
+    role = current_user["role"]
     
     # 1. ADMIN Bypass: See everything
-    if current_user["role"] == "ADMIN":
+    if role == "ADMIN":
+        logging.info(f"PERM: Usuario {username} (ADMIN) tiene acceso total a todas las agendas.")
         return db.query(Agenda).all()
     
-    # 2. Non-Admins: See only agendas where they are explicitly permitted
-    user_id = db.query(User.id).filter(User.username == current_user["username"]).scalar()
-    if not user_id:
+    # 2. Fetch User metadata
+    db_user = db.query(User).filter(User.username == username).first()
+    if not db_user:
+        logging.warning(f"PERM: Usuario {username} no encontrado en base de datos.")
         return []
     
-    # Use relationship to find only allowed agendas
-    agendas = db.query(Agenda).join(Agenda.usuarios_permitidos).filter(User.id == user_id).all()
+    # 3. Collect Agendas from different sources
+    permitted_agendas = set()
     
-    # 3. Fallback for Medicos (Existing logic preservation if needed)
-    # If no explicitly allowed agendas, try professional name matching for Medicos
-    if not agendas and current_user["role"] == "MEDICO":
-        search_term = f"%{current_user['username']}%"
-        agendas = db.query(Agenda).filter(Agenda.profesional.ilike(search_term)).all()
+    # Source A: Many-to-Many Relationship (Primary)
+    m2m_agendas = db_user.agendas
+    for a in m2m_agendas:
+        permitted_agendas.add(a)
+    
+    # Source B: Legacy CSV column (Backward Compatibility)
+    legacy_ids = []
+    if db_user.allowed_agendas:
+        try:
+            legacy_ids = [int(id.strip()) for id in db_user.allowed_agendas.split(',') if id.strip()]
+            if legacy_ids:
+                legacy_agendas = db.query(Agenda).filter(Agenda.id.in_(legacy_ids)).all()
+                for a in legacy_agendas:
+                    permitted_agendas.add(a)
+        except Exception as e:
+            logging.error(f"PERM: Error procesando legacy CSV para {username}: {e}")
+
+    # Log sources
+    logging.info(f"PERM: Decision para {username} (Role: {role}): "
+                 f"M2M Count: {len(m2m_agendas)}, "
+                 f"Legacy Count: {len(legacy_ids)}, "
+                 f"Unique Union: {len(permitted_agendas)}")
+    
+    # Convert set back to list for return
+    result = list(permitted_agendas)
+    
+    # 4. Fallback for Medicos (Only if NO agendas were found by assignment)
+    if not result and role == "MEDICO":
+        search_term = f"%{username}%"
+        fallback_agendas = db.query(Agenda).filter(Agenda.profesional.ilike(search_term)).all()
+        if fallback_agendas:
+            logging.info(f"PERM: Usando fallback por nombre para Médico {username}. Encontrados: {len(fallback_agendas)}")
+            result = fallback_agendas
         
-    return agendas
+    return result
 
 @router.get("/{agenda_id}/slots")
 def get_agenda_slots(
