@@ -67,6 +67,7 @@ def crear_paciente(paciente: PacienteCreate, db: Session = Depends(get_db), curr
     if paciente_data.get('direccion'): paciente_data['direccion'] = paciente_data['direccion'].upper()
 
     nuevo = Paciente(**paciente_data)
+    nuevo.creado_por_id = current_user.get("id") # 🛡️ Auditoría
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)
@@ -113,7 +114,7 @@ def obtener_paciente_por_dni(dni: str, db: Session = Depends(get_db)):
 
 # 🟢 Actualizar paciente
 @router.put("/{paciente_id}", response_model=PacienteOut)
-def actualizar_paciente(paciente_id: int, datos: PacienteUpdate, db: Session = Depends(get_db)):
+def actualizar_paciente(paciente_id: int, datos: PacienteUpdate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")

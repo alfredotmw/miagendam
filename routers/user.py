@@ -89,6 +89,7 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
 
     token_data = {
+        "id": db_user.id,
         "sub": db_user.username, 
         "role": db_user.role, 
         "allowed_agendas": db_user.allowed_agendas

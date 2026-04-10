@@ -35,5 +35,9 @@ class SeguimientoRadioterapiaOut(SeguimientoRadioterapiaBase):
     updated_at: Optional[datetime] = None
     paciente: Optional[PacienteOut] = None
 
+    # Auditoría extendida
+    creado_por_id: Optional[int] = None
+    modificado_por_id: Optional[int] = None
+
     class Config:
-        orm_mode = True
+        from_attributes = True

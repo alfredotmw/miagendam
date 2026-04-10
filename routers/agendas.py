@@ -17,7 +17,7 @@ router = APIRouter(prefix="/agendas", tags=["Agendas"])
 def listar_agendas(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     Lista las agendas permitidas para el usuario actual.
-    Regla: ADMIN ve todo. Otros ven unión de Many-to-Many + Legacy CSV.
+    Regla: ADMIN ve todo. Otros ven las agendas vinculadas en la relación Many-to-Many.
     """
     username = current_user["username"]
     role = current_user["role"]
@@ -33,36 +33,14 @@ def listar_agendas(db: Session = Depends(get_db), current_user: dict = Depends(g
         logging.warning(f"PERM: Usuario {username} no encontrado en base de datos.")
         return []
     
-    # 3. Collect Agendas from different sources
-    permitted_agendas = set()
+    # 3. Collect Agendas from Many-to-Many relationship (Unified Source)
+    result = list(db_user.agendas)
     
-    # Source A: Many-to-Many Relationship (Primary)
-    m2m_agendas = db_user.agendas
-    for a in m2m_agendas:
-        permitted_agendas.add(a)
-    
-    # Source B: Legacy CSV column (Backward Compatibility)
-    legacy_ids = []
-    if db_user.allowed_agendas:
-        try:
-            legacy_ids = [int(id.strip()) for id in db_user.allowed_agendas.split(',') if id.strip()]
-            if legacy_ids:
-                legacy_agendas = db.query(Agenda).filter(Agenda.id.in_(legacy_ids)).all()
-                for a in legacy_agendas:
-                    permitted_agendas.add(a)
-        except Exception as e:
-            logging.error(f"PERM: Error procesando legacy CSV para {username}: {e}")
-
-    # Log sources
-    logging.info(f"PERM: Decision para {username} (Role: {role}): "
-                 f"M2M Count: {len(m2m_agendas)}, "
-                 f"Legacy Count: {len(legacy_ids)}, "
-                 f"Unique Union: {len(permitted_agendas)}")
-    
-    # Convert set back to list for return
-    result = list(permitted_agendas)
+    # Log results
+    logging.info(f"PERM: Decision para {username} (Role: {role}): Assigned Agendas Count: {len(result)}")
     
     # 4. Fallback for Medicos (Only if NO agendas were found by assignment)
+    # This remains as a safety net for automatically matching doctors by name if not explicitly linked.
     if not result and role == "MEDICO":
         search_term = f"%{username}%"
         fallback_agendas = db.query(Agenda).filter(Agenda.profesional.ilike(search_term)).all()

@@ -46,13 +46,13 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
         )
 
 
-# 👤 Obtener usuario actual desde el payload
 def get_current_user(payload: Dict[str, Any] = Depends(verify_token)) -> Dict[str, Any]:
     """
     Devuelve el usuario actual a partir del payload del JWT.
-    Estructura: {"username": str, "role": str}
+    Estructura: {"username": str, "role": str, "id": int}
     """
     return {
+        "id": payload.get("id"),
         "username": payload["sub"], 
         "role": payload["role"],
         "allowed_agendas": payload.get("allowed_agendas")

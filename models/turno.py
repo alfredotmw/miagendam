@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, String, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
+from datetime import datetime
 from models.user import User # Importamos User para la relación de recordatorio
 
 class Turno(Base):
@@ -30,6 +31,14 @@ class Turno(Base):
     recordatorio_fecha = Column(DateTime, nullable=True)
     recordatorio_usuario_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    # Relación opcional con usuario que envió
+    # Auditoría
+    creado_por_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    fecha_creacion = Column(DateTime, default=datetime.now)
+    modificado_por_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    fecha_modificacion = Column(DateTime, nullable=True, onupdate=datetime.now)
+
+    # Relaciones de Auditoría
+    creado_por = relationship("User", foreign_keys=[creado_por_id])
+    modificado_por = relationship("User", foreign_keys=[modificado_por_id])
     recordatorio_usuario = relationship("User", foreign_keys=[recordatorio_usuario_id])
 

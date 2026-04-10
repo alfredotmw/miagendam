@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 from schemas.obra_social import ObraSocialOut  # 👈 Importamos para mostrar el nombre en la respuesta
 
 class PacienteBase(BaseModel):
@@ -27,6 +27,13 @@ class PacienteUpdate(PacienteBase):
 class MedicoDerivanteOut(BaseModel):
     id: int
     nombre: str
+
+    # Auditoría
+    creado_por_id: Optional[int] = None
+    fecha_creacion: Optional[datetime] = None
+    modificado_por_id: Optional[int] = None
+    fecha_modificacion: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 
@@ -36,6 +43,12 @@ class PacienteOut(PacienteBase):
     obra_social: Optional[ObraSocialOut] = None  # 👈 devuelve datos de la obra social
     medico_derivante_id: Optional[int] = None
     medico_derivante: Optional[MedicoDerivanteOut] = None # Para devolver nombre, etc.
+
+    # Auditoría
+    creado_por_id: Optional[int] = None
+    fecha_creacion: Optional[datetime] = None
+    modificado_por_id: Optional[int] = None
+    fecha_modificacion: Optional[datetime] = None
 
     class Config:
         from_attributes = True

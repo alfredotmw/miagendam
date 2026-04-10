@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
+from datetime import datetime
+from models.user import User # Necesario para relación audit
 
 class Paciente(Base):
     __tablename__ = "pacientes"
@@ -22,6 +24,14 @@ class Paciente(Base):
     # Relaciones
     obra_social = relationship("ObraSocial", back_populates="pacientes")
 
+    # Auditoría
+    creado_por_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    fecha_creacion = Column(DateTime, default=datetime.now)
+    modificado_por_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    fecha_modificacion = Column(DateTime, nullable=True, onupdate=datetime.now)
+
+    creado_por = relationship("User", foreign_keys=[creado_por_id])
+    modificado_por = relationship("User", foreign_keys=[modificado_por_id])
     
     # Nueva relación para Historia Clínica
     historia_clinica = relationship("HistoriaClinica", back_populates="paciente", cascade="all, delete-orphan")

@@ -26,5 +26,12 @@ class SeguimientoRadioterapia(Base):
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
+    # Auditoría extendida
+    creado_por_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    modificado_por_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    creado_por = relationship("User", foreign_keys=[creado_por_id])
+    modificado_por = relationship("User", foreign_keys=[modificado_por_id])
+
     # Relationship
     paciente = relationship("Paciente", backref="tratamientos_radioterapia")

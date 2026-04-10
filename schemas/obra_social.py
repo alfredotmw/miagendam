@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 class ObraSocialBase(BaseModel):
     nombre: str
@@ -14,6 +15,12 @@ class ObraSocialUpdate(ObraSocialBase):
 
 class ObraSocialOut(ObraSocialBase):
     id: int
+
+    # Auditoría
+    creado_por_id: Optional[int] = None
+    fecha_creacion: Optional[datetime] = None
+    modificado_por_id: Optional[int] = None
+    fecha_modificacion: Optional[datetime] = None
 
     class Config:
         from_attributes = True

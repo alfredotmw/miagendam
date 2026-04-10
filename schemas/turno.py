@@ -54,6 +54,12 @@ class TurnoOut(BaseModel):
     paciente: Optional[PacienteOut] = None
     agenda: Optional[AgendaOut] = None
 
+    # Auditoría
+    creado_por_id: Optional[int] = None
+    fecha_creacion: Optional[datetime] = None
+    modificado_por_id: Optional[int] = None
+    fecha_modificacion: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 
