@@ -10,6 +10,8 @@ from models.agenda import Agenda
 from models.practica import Practica
 from models.medico import MedicoDerivante
 from models.turno_practica import TurnoPractica
+from models.user import User
+from sqlalchemy.orm import joinedload
 import pandas as pd
 from datetime import date
 
@@ -146,9 +148,11 @@ def get_excel_feed(
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    # Query all turns
-    # We join with relevant tables to optimize fetching
-    turnos = db.query(Turno).join(Paciente).join(Agenda).outerjoin(Turno.medico_derivante).order_by(Turno.fecha.desc()).all()
+    # Query all turns with Joins to optimize fetching
+    turnos = db.query(Turno).join(Paciente).join(Agenda)\
+        .outerjoin(Turno.medico_derivante)\
+        .outerjoin(User, Turno.creado_por_id == User.id)\
+        .order_by(Turno.fecha.desc()).all()
     
     data = []
     for t in turnos:
@@ -182,7 +186,10 @@ def get_excel_feed(
             "Medico_Derivante": derivante,
             "Patologia": t.patologia or "",
             # Include Practices?
-            "Practicas": ", ".join([p.nombre for p in t.practicas]) if t.practicas else ""
+            "Practicas": ", ".join([p.nombre for p in t.practicas]) if t.practicas else "",
+            # Nuevas columnas de auditoría
+            "creado_por": t.creado_por.username if t.creado_por else "N/A",
+            "fecha_creacion": t.fecha_creacion.strftime("%Y-%m-%d %H:%M:%S") if t.fecha_creacion else "N/A"
         }
         data.append(record)
         
