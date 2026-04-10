@@ -82,7 +82,7 @@ def get_live_data(db: Session = Depends(get_db)):
     10. Estado
     """
     # Query con Joins para obtener una fila por práctica (Explode)
-    results = db.query(Turno, Practica).join(TurnoPractica, Turno.id == TurnoPractica.turno_id).join(Practica, TurnoPractica.practica_id == Practica.id).all()
+    results = db.query(Turno, Practica).join(TurnoPractica, Turno.id == TurnoPractica.turno_id).join(Practica, TurnoPractica.practica_id == Practica.id).outerjoin(User, Turno.creado_por_id == User.id).all()
     
     data = []
     for turno, practica in results:
@@ -110,7 +110,9 @@ def get_live_data(db: Session = Depends(get_db)):
             "Estudio Solicitado": practica.nombre,
             "Servicio": turno.agenda.nombre,
             "Médico Solicitante": turno.medico_derivante.nombre if turno.medico_derivante else "N/A",
-            "Estado": turno.estado
+            "Estado": turno.estado,
+            "creado_por": turno.creado_por.username if turno.creado_por else "N/A",
+            "fecha_creacion": turno.fecha_creacion.strftime("%Y-%m-%d %H:%M:%S") if turno.fecha_creacion else "N/A"
         }
         data.append(row)
 
