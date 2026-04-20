@@ -513,6 +513,13 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
     if not turno:
         raise HTTPException(status_code=404, detail="Turno no encontrado")
     
+    # 🛡️ SECURITY CHECK: Si está COMPLETADO, solo ADMIN puede modificarlo (incluyendo pasarlo a AUSENTE)
+    if turno.estado == "COMPLETADO" and current_user.get("role") != "ADMIN":
+        raise HTTPException(
+            status_code=403, 
+            detail="⚠️ ACCESO DENEGADO: No tiene permisos para modificar un turno COMPLETADO."
+        )
+
     # Capture old date for tracking logic
     old_date = turno.fecha.date() if turno.fecha else None
 

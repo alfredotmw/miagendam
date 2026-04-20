@@ -366,15 +366,16 @@ function renderSlots(slots) {
                     // Radiotherapy Tracking
                     html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030;">☢️</button>`;
 
-                    if (estado !== 'AUSENTE') {
-                        html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>`;
-                    }
-
                     // Clinical History / Evolution
                     // Safely escape quotes for the onclick handler
                     const safeNombre = p ? (p.nombre + ' ' + p.apellido).replace(/'/g, "\\'") : '';
                     const safeDni = p ? p.dni : '';
                     html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${safeDni}', nombre: '${safeNombre}'})" title="Nueva Evolución" style="background: #e2e8f0;">📋</button>`;
+                }
+
+                // 🟢 FIX: Botón de Ausente disponible para no-completados, o para admins incluso si está completado.
+                if (estado !== 'AUSENTE' && (estado !== 'COMPLETADO' || isAdmin)) {
+                    html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>`;
                 }
 
                 if (estado !== 'COMPLETADO' || isAdmin) {
