@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database import get_db
 from models.user import User, UserRole
+from models.agenda import Agenda
 import bcrypt
 from typing import List, Optional
 from auth.jwt import create_access_token, get_current_user, require_roles
@@ -61,6 +62,17 @@ def register_user(
         full_name=user.full_name
     )
     db.add(db_user)
+    
+    # 🛡️ Synchronize Many-to-Many relationship from legacy CSV string
+    if user.allowed_agendas:
+        try:
+            agenda_ids = [int(id.strip()) for id in user.allowed_agendas.split(',') if id.strip()]
+            if agenda_ids:
+                agendas = db.query(Agenda).filter(Agenda.id.in_(agenda_ids)).all()
+                db_user.agendas = agendas
+        except ValueError:
+            pass # Ignore malformed CSV for now
+            
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -77,6 +89,7 @@ def login_user(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
 
     token_data = {
+        "id": db_user.id,
         "sub": db_user.username, 
         "role": db_user.role, 
         "allowed_agendas": db_user.allowed_agendas
@@ -130,9 +143,18 @@ def update_user(
     if user_update.role:
         db_user.role = user_update.role
     
-    # Permitir borrar permisos enviando string vacío o cambiarlo explicitamente
+    # Sincronizar relación Many-to-Many si cambió allowed_agendas
     if user_update.allowed_agendas is not None:
         db_user.allowed_agendas = user_update.allowed_agendas
+        try:
+            if user_update.allowed_agendas.strip():
+                agenda_ids = [int(id.strip()) for id in user_update.allowed_agendas.split(',') if id.strip()]
+                agendas = db.query(Agenda).filter(Agenda.id.in_(agenda_ids)).all()
+                db_user.agendas = agendas
+            else:
+                db_user.agendas = []
+        except ValueError:
+            pass
 
     if user_update.matricula is not None:
         db_user.matricula = user_update.matricula

@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta, time
+import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -14,27 +15,40 @@ router = APIRouter(prefix="/agendas", tags=["Agendas"])
 
 @router.get("/")
 def listar_agendas(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
-    # 🛡️ New Agenda-Centric Permission Logic
+    """
+    Lista las agendas permitidas para el usuario actual.
+    Regla: ADMIN ve todo. Otros ven las agendas vinculadas en la relación Many-to-Many.
+    """
+    username = current_user["username"]
+    role = current_user["role"]
     
     # 1. ADMIN Bypass: See everything
-    if current_user["role"] == "ADMIN":
+    if role == "ADMIN":
+        logging.info(f"PERM: Usuario {username} (ADMIN) tiene acceso total a todas las agendas.")
         return db.query(Agenda).all()
     
-    # 2. Non-Admins: See only agendas where they are explicitly permitted
-    user_id = db.query(User.id).filter(User.username == current_user["username"]).scalar()
-    if not user_id:
+    # 2. Fetch User metadata
+    db_user = db.query(User).filter(User.username == username).first()
+    if not db_user:
+        logging.warning(f"PERM: Usuario {username} no encontrado en base de datos.")
         return []
     
-    # Use relationship to find only allowed agendas
-    agendas = db.query(Agenda).join(Agenda.usuarios_permitidos).filter(User.id == user_id).all()
+    # 3. Collect Agendas from Many-to-Many relationship (Unified Source)
+    result = list(db_user.agendas)
     
-    # 3. Fallback for Medicos (Existing logic preservation if needed)
-    # If no explicitly allowed agendas, try professional name matching for Medicos
-    if not agendas and current_user["role"] == "MEDICO":
-        search_term = f"%{current_user['username']}%"
-        agendas = db.query(Agenda).filter(Agenda.profesional.ilike(search_term)).all()
+    # Log results
+    logging.info(f"PERM: Decision para {username} (Role: {role}): Assigned Agendas Count: {len(result)}")
+    
+    # 4. Fallback for Medicos (Only if NO agendas were found by assignment)
+    # This remains as a safety net for automatically matching doctors by name if not explicitly linked.
+    if not result and role == "MEDICO":
+        search_term = f"%{username}%"
+        fallback_agendas = db.query(Agenda).filter(Agenda.profesional.ilike(search_term)).all()
+        if fallback_agendas:
+            logging.info(f"PERM: Usando fallback por nombre para Médico {username}. Encontrados: {len(fallback_agendas)}")
+            result = fallback_agendas
         
-    return agendas
+    return result
 
 @router.get("/{agenda_id}/slots")
 def get_agenda_slots(
@@ -186,10 +200,8 @@ def create_agenda(
     )
     
     # 🛡️ Sync permissions if user_ids are provided
-    # Note: AgendaCreate might not have allowed_user_ids yet in some views, adding it as optional fallback
-    allowed_user_ids = getattr(agenda, 'allowed_user_ids', [])
-    if allowed_user_ids:
-        permitted_users = db.query(User).filter(User.id.in_(allowed_user_ids)).all()
+    if agenda.allowed_user_ids:
+        permitted_users = db.query(User).filter(User.id.in_(agenda.allowed_user_ids)).all()
         nueva_agenda.usuarios_permitidos = permitted_users
 
     db.add(nueva_agenda)

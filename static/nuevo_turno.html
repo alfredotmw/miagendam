@@ -359,10 +359,27 @@
         let allAgendas = [];
 
         async function loadData() {
+            // Helper to handle individual fetches gracefully
+            const safeFetch = async (url, defaultValue = []) => {
+                try {
+                    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (res.status === 401) return logout();
+                    if (!res.ok) {
+                        console.warn(`Non-critical error fetching ${url}: ${res.status}`);
+                        return defaultValue;
+                    }
+                    return await res.json();
+                } catch (e) {
+                    console.error(`Error in safeFetch for ${url}:`, e);
+                    return defaultValue;
+                }
+            };
+
             try {
-                // 1. Agendas
+                // 1. Agendas (Critical)
                 const agendasRes = await fetch('/agendas/', { headers: { 'Authorization': `Bearer ${token}` } });
                 if (agendasRes.status === 401) return logout();
+                if (!agendasRes.ok) throw new Error(`HTTP ${agendasRes.status}`);
                 allAgendas = await agendasRes.json();
 
                 const agendaSelect = document.getElementById('agenda_id');
@@ -374,13 +391,13 @@
                     agendaSelect.appendChild(opt);
                 });
 
-                // 2. Prácticas
+                // 2. Prácticas (Critical)
                 const practicasRes = await fetch('/practicas/', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!practicasRes.ok) throw new Error(`HTTP ${practicasRes.status}`);
                 allPracticas = await practicasRes.json();
 
-                // 3. Obras Sociales
-                const osRes = await fetch('/obras-sociales/', { headers: { 'Authorization': `Bearer ${token}` } });
-                const obras = await osRes.json();
+                // 3. Obras Sociales (Non-Critical)
+                const obras = await safeFetch('/obras-sociales/', []);
                 const osList = document.getElementById('obras_list');
                 obras.forEach(os => {
                     const opt = document.createElement('option');
@@ -388,9 +405,8 @@
                     osList.appendChild(opt);
                 });
 
-                // 4. Médicos
-                const medRes = await fetch('/medicos/', { headers: { 'Authorization': `Bearer ${token}` } });
-                const medicos = await medRes.json();
+                // 4. Médicos (Non-Critical)
+                const medicos = await safeFetch('/medicos/', []);
                 const medList = document.getElementById('medicos_list');
                 medicos.forEach(m => {
                     const opt = document.createElement('option');
@@ -398,9 +414,8 @@
                     medList.appendChild(opt);
                 });
 
-                // 5. Patologías
-                const patRes = await fetch('/turnos/patologias', { headers: { 'Authorization': `Bearer ${token}` } });
-                const patologias = await patRes.json();
+                // 5. Patologías (Non-Critical)
+                const patologias = await safeFetch('/turnos/patologias', []);
                 const patList = document.getElementById('patologias_list');
                 patologias.forEach(p => {
                     const opt = document.createElement('option');
@@ -435,8 +450,17 @@
                 } catch (e) { console.error(e); }
 
             } catch (error) {
-                console.error(error);
-                alert('Error cargando datos iniciales. Por favor recargue la página.');
+                console.error("Critical error in loadData:", error);
+                // Si falla algo crítico, mostramos un error en la UI, no un alert bloqueante
+                const header = document.querySelector('.page-header');
+                const errorDiv = document.createElement('div');
+                errorDiv.style.color = '#e53e3e';
+                errorDiv.style.backgroundColor = '#fff5f5';
+                errorDiv.style.padding = '1rem';
+                errorDiv.style.borderRadius = '0.5rem';
+                errorDiv.style.marginBottom = '1rem';
+                errorDiv.textContent = 'Aviso: Hubo un problema al cargar algunos datos. Por favor recargue la página si no ve las agendas o prácticas.';
+                header.appendChild(errorDiv);
             }
         }
 

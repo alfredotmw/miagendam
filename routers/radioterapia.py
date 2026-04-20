@@ -100,6 +100,7 @@ def create_registro(
                 db.rollback()
 
     new_reg = SeguimientoRadioterapia(**registro.dict())
+    new_reg.creado_por_id = current_user.get("id") # 🛡️ Auditoría
     db.add(new_reg)
     db.commit()
     db.refresh(new_reg)
@@ -302,6 +303,9 @@ def update_registro(
         else:
             setattr(db_reg, key, value)
     
+    # 🛡️ Auditoría
+    db_reg.modificado_por_id = current_user.get("id")
+
     db.commit()
     db.refresh(db_reg)
     return db_reg
