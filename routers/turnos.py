@@ -14,6 +14,8 @@ from models.turno_practica import TurnoPractica
 
 from schemas.turno import TurnoCreate, TurnoOut
 
+ESTADOS_VALIDOS = ["PENDIENTE", "AUSENTE", "ESPERANDO", "COMPLETADO"]
+
 router = APIRouter(
     prefix="/turnos",
     tags=["Turnos"],
@@ -177,10 +179,13 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
             paciente_id=turno_in.paciente_id,
             agenda_id=turno_in.agenda_id,
             medico_derivante_id=medico_id, # Asignamos el médico
-            estado=turno_in.estado.upper() if turno_in.estado else "PENDIENTE",
+            estado=(turno_in.estado.upper() if turno_in.estado else "PENDIENTE"),
             patologia=turno_in.patologia.strip().upper() if turno_in.patologia else None, # ✅ Normalización a mayúsculas
             creado_por_id=current_user.get("id") # 🛡️ Auditoría
         )
+
+        if nuevo_turno.estado not in ESTADOS_VALIDOS:
+            raise HTTPException(status_code=400, detail=f"Estado inválido. Valores permitidos: {', '.join(ESTADOS_VALIDOS)}")
         db.add(nuevo_turno)
         db.flush()  # para obtener nuevo_turno.id sin hacer commit todavía
 
@@ -579,7 +584,10 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
              print(f"Error actualizando fecha/hora: {e}")
              raise HTTPException(status_code=400, detail="Formato de hora inválido")
     if turno_in.estado is not None:
-        turno.estado = turno_in.estado.upper()
+        nuevo_estado = turno_in.estado.upper()
+        if nuevo_estado not in ESTADOS_VALIDOS:
+            raise HTTPException(status_code=400, detail=f"Estado inválido. Valores permitidos: {', '.join(ESTADOS_VALIDOS)}")
+        turno.estado = nuevo_estado
     if turno_in.duracion is not None:
         turno.duracion = turno_in.duracion
 

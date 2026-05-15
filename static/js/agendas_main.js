@@ -355,6 +355,7 @@ function renderSlots(slots) {
 
                 if (estado !== 'COMPLETADO') {
                     html += `
+                        <button class="action-btn btn-waiting" onclick="requestUpdateStatus(${turno.id}, 'ESPERANDO')" title="Esperando">🕙</button>
                         <button class="action-btn btn-complete" onclick="triggerComplete(${turno.id})" title="Completar">✅</button>
                         <button class="action-btn btn-reschedule" onclick="triggerReschedule(${turno.id})" title="Reprogramar">📅</button>
                     `;
@@ -657,7 +658,7 @@ window.requestUpdateStatus = function (id, status) {
 
     const msg = status === 'COMPLETADO'
         ? '¿Desea marcar este turno como COMPLETADO?'
-        : '¿Desea marcar este turno como AUSENTE?';
+        : (status === 'ESPERANDO' ? '¿Desea marcar este turno como ESPERANDO?' : '¿Desea marcar este turno como AUSENTE?');
 
     const modal = document.getElementById('confirmationModal');
     if (modal) {
@@ -979,6 +980,7 @@ function renderTimeline(events) {
 function getStatusColor(status) {
     const s = status.toUpperCase();
     if (s === 'COMPLETADO' || s === 'ASISTIÓ') return '#48bb78'; // Green
+    if (s === 'ESPERANDO') return '#d97706'; // Amber
     if (s === 'AUSENTE' || s === 'CANCELADO') return '#f56565'; // Red
     if (s === 'PENDIENTE') return '#4299e1'; // Blue
     return '#a0aec0'; // Gray
