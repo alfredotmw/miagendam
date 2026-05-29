@@ -368,10 +368,9 @@ function renderSlots(slots) {
                     html += `<button class="action-btn" onclick="startRadiotherapy(${turno.id}, this)" title="Iniciar Seguimiento Radioterapia" style="background: #FFF5F5; border: 1px solid #FC8181; color: #C53030;">☢️</button>`;
 
                     // Clinical History / Evolution
-                    // Safely escape quotes for the onclick handler
-                    const safeNombre = p ? (p.nombre + ' ' + p.apellido).replace(/'/g, "\\'") : '';
+                    // Redirección a la página completa de Historial
                     const safeDni = p ? p.dni : '';
-                    html += `<button class="action-btn" onclick="openNoteModal(null, false, {id: ${turno.paciente_id}, dni: '${safeDni}', nombre: '${safeNombre}'})" title="Nueva Evolución" style="background: #e2e8f0;">📋</button>`;
+                    html += `<button class="action-btn" onclick="window.location.href='/static/historial_turnos.html?dni=${safeDni}'" title="Ver Historial Paciente" style="background: #e2e8f0;">📋</button>`;
                 }
 
                 // 🟢 FIX: Botón de Ausente disponible para no-completados, o para admins incluso si está completado.
@@ -804,17 +803,10 @@ window.closeNoteModal = function () {
 
 window.viewHistoryFromModal = function () {
     if (currentHistoriaPacienteId) {
-        closeNoteModal();
-        // We need to fetch details if we don't have them easily, or relies on openHistoria doing it
-        // We don't have DNI/Name readily available here unless we store it.
-        // But openHistoria clears the timeline, so we might need to rely on what we have.
-        // Ideally we call openHistoria, but we lack parameters.
-        // Fallback: Just show modal and load timeline.
-        const modal = document.getElementById('historiaModal');
-        if (modal) {
-            modal.classList.add('active');
-            loadHistoriaTimeline(currentHistoriaPacienteId);
-        }
+        // En este caso, el modal NoteModal está dentro de Agendas.html
+        // Si queremos ir al historial completo desde el modal de evolución rápida:
+        const dni = window.currentHistoriaPacienteDni || '';
+        window.location.href = `/static/historial_turnos.html?dni=${dni}`;
     }
 }
 

@@ -917,7 +917,10 @@
                 else { const e = await res.json(); alert(e.detail); }
             } catch (e) { alert("Error"); }
         }
-        document.getElementById('noteForm').addEventListener('submit', e => e.preventDefault());
+        const noteForm = document.getElementById('noteForm');
+        if (noteForm) {
+            noteForm.addEventListener('submit', e => e.preventDefault());
+        }
 
         function handlePrint() {
             const pCard = document.querySelector('.patient-card').cloneNode(true);
@@ -1128,6 +1131,19 @@
                 console.error(e);
                 alert(e.message || "Error de conexión");
             }
+        }
+
+        // --- AUTO-LOAD LOGIC ---
+        const params = new URLSearchParams(window.location.search);
+        const autoDni = params.get('dni');
+        if (autoDni) {
+            console.log("Carga automática detectada para DNI:", autoDni);
+            document.getElementById('search-dni').value = autoDni;
+            currentDni = autoDni;
+            // Pequeño delay para asegurar que el DOM esté listo para recibir los datos
+            setTimeout(() => {
+                fetchAndRender(autoDni);
+            }, 100);
         }
     </script>
 </body>
