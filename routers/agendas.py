@@ -113,7 +113,7 @@ def get_agenda_slots(
             t_fin = t_inicio + timedelta(minutes=t_duracion)
 
             # Solapamiento:
-            if agenda_id == 4:
+            if agenda.tipo == "RADIOTERAPIA" or agenda_id in [3, 4]:
                 # Lógica quirúrgica para Radioterapia (Evita duplicados visuales por desalineación)
                 overlap_mins = (min(slot_end, t_fin) - max(current_time, t_inicio)).total_seconds() / 60
                 es_inicio = (t_inicio >= current_time and t_inicio < slot_end)
