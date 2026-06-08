@@ -65,6 +65,7 @@ def crear_paciente(paciente: PacienteCreate, db: Session = Depends(get_db), curr
     if paciente_data.get('apellido'): paciente_data['apellido'] = paciente_data['apellido'].upper()
     if paciente_data.get('sexo'): paciente_data['sexo'] = paciente_data['sexo'].upper()
     if paciente_data.get('direccion'): paciente_data['direccion'] = paciente_data['direccion'].upper()
+    if paciente_data.get('patologia'): paciente_data['patologia'] = paciente_data['patologia'].strip().upper()
 
     nuevo = Paciente(**paciente_data)
     nuevo.creado_por_id = current_user.get("id") # 🛡️ Auditoría
@@ -172,8 +173,8 @@ def actualizar_paciente(paciente_id: int, datos: PacienteUpdate, db: Session = D
         update_data['medico_derivante_id'] = datos.medico_derivante_id
 
     for key, value in update_data.items():
-        if isinstance(value, str): # FORCE UPPERCASE
-            value = value.upper()
+        if isinstance(value, str): # FORCE UPPERCASE & STRIP
+            value = value.strip().upper()
         setattr(paciente, key, value)
     
     db.commit()

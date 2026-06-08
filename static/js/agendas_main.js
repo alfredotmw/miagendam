@@ -1082,8 +1082,8 @@ window.openEditPatientModal = async function (patientId, turnoId = null) {
         document.getElementById('edit-obra-social').value = p.obra_social ? p.obra_social.nombre : '';
         document.getElementById('edit-medico').value = p.medico_derivante ? p.medico_derivante.nombre : '';
 
-        // Clear Patologia by default if no turn context
-        document.getElementById('edit-patologia').value = '';
+        // Load Patologia (fallback to patient's central pathology)
+        document.getElementById('edit-patologia').value = p.patologia || '';
 
         // If Context Turno exists, override/populate fields from Turno
         if (currentTurnoIdEdit) {
@@ -1098,8 +1098,8 @@ window.openEditPatientModal = async function (patientId, turnoId = null) {
                 }
             }
 
-            if (foundTurno) {
-                if (foundTurno.patologia) document.getElementById('edit-patologia').value = foundTurno.patologia;
+            if (foundTurno && foundTurno.patologia) {
+                document.getElementById('edit-patologia').value = foundTurno.patologia;
             }
         }
 
@@ -1128,7 +1128,7 @@ async function submitEditPatient() {
 
     const payloadPaciente = {
         nombre, apellido, fecha_nacimiento, telefono, dni,
-        obra_social_nombre, medico_derivante_nombre
+        obra_social_nombre, medico_derivante_nombre, patologia
     };
 
     const btn = document.querySelector('#editPatientModal .btn-primary');

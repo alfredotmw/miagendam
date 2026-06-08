@@ -312,4 +312,29 @@ def check_and_migrate_db(engine: Engine):
             except Exception as e:
                 logger.warning(f"⚠️ No se pudo aplicar el índice único (posibles duplicados remanentes): {e}")
 
+            # D. Migrate historical pathologies from turnos to pacientes
+            logger.info("🔄 Migración: Sincronizando patologías históricas de turnos a pacientes...")
+            try:
+                query_mig = """
+                UPDATE pacientes
+                SET patologia = (
+                    SELECT t.patologia
+                    FROM turnos t
+                    WHERE t.paciente_id = pacientes.id
+                      AND t.patologia IS NOT NULL
+                      AND t.patologia != ''
+                    ORDER BY t.fecha DESC
+                    LIMIT 1
+                )
+                WHERE (pacientes.patologia IS NULL OR pacientes.patologia = '');
+                """
+                res = conn.execute(text(query_mig))
+                conn.commit()
+                if res.rowcount > 0:
+                    logger.info(f"✅ Se sincronizaron {res.rowcount} patologías de turnos a pacientes.")
+                else:
+                    logger.info("ℹ️ No se requirió sincronización de patologías o ya estaban actualizadas.")
+            except Exception as e:
+                logger.warning(f"⚠️ No se pudo realizar la sincronización de patologías: {e}")
+
             conn.commit()

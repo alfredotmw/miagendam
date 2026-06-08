@@ -1084,18 +1084,11 @@
             const telefono = document.getElementById('edit-telefono').value;
             const obra_social_nombre = document.getElementById('edit-obra-social').value;
             const medico_derivante_nombre = document.getElementById('edit-medico').value;
-            // patologia is not in PacienteUpdate schema directly usually, but logic in agendas_main handles it.
-            // Wait, agendas_main updates turnout separately for patologia.
-            // Paciente update endpoint might not accept 'patologia' if it's not in schema.
-            // Let's check schema again.
-
-            // Re-checking previous view_file of schemas/paciente.py...
-            // It has obra_social_nombre, medico_derivante_nombre.
-            // It does NOT have patologia.
+            const patologia = document.getElementById('edit-patologia').value;
 
             const payload = {
                 nombre, apellido, fecha_nacimiento, telefono,
-                obra_social_nombre, medico_derivante_nombre
+                obra_social_nombre, medico_derivante_nombre, patologia
             };
 
             try {

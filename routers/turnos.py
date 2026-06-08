@@ -184,6 +184,9 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
             creado_por_id=current_user.get("id") # 🛡️ Auditoría
         )
 
+        if nuevo_turno.patologia:
+            paciente.patologia = nuevo_turno.patologia
+
         if nuevo_turno.estado not in ESTADOS_VALIDOS:
             raise HTTPException(status_code=400, detail=f"Estado inválido. Valores permitidos: {', '.join(ESTADOS_VALIDOS)}")
         db.add(nuevo_turno)
@@ -610,6 +613,8 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
 
     if turno_in.patologia is not None:
         turno.patologia = turno_in.patologia.strip().upper() if turno_in.patologia else None
+        if turno.paciente:
+            turno.paciente.patologia = turno.patologia
 
     # 🛡️ Auditoría
     turno.modificado_por_id = current_user.get("id")

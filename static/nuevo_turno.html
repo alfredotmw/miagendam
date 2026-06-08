@@ -488,6 +488,7 @@
                     document.getElementById('telefono').value = p.telefono;
                     // FIX: Cargar celular
                     document.getElementById('celular').value = p.celular || '';
+                    document.getElementById('patologia').value = p.patologia || '';
 
                     if (p.obra_social) {
                         document.getElementById('obra_social_input').value = p.obra_social.nombre;
@@ -505,6 +506,7 @@
                     document.getElementById('telefono').value = '';
                     // FIX: Limpiar celular
                     document.getElementById('celular').value = '';
+                    document.getElementById('patologia').value = '';
                     document.getElementById('obra_social_input').value = '';
 
                     document.getElementById('nombre').focus();
@@ -568,22 +570,22 @@
             const selectedOption = agendaSelect.options[agendaSelect.selectedIndex];
             if (!selectedOption || !selectedOption.dataset) return;
 
-            const tipoAgenda = selectedOption.dataset.tipo;
+            const tipo = selectedOption.dataset.tipo;
             const container = document.getElementById('practicas_container');
             container.innerHTML = '';
 
             // Clear search
             document.getElementById('practiceSearch').value = '';
 
-            if (!tipoAgenda) return;
+            if (!tipo) return;
 
             let filtered = [];
-            if (tipoAgenda === 'TOMOGRAFIA') {
+            if (tipo === 'TOMOGRAFIA') {
                 filtered = allPracticas.filter(p => p.categoria === 'TOMOGRAFIA' || p.categoria === 'RADIOGRAFIA');
-            } else if (tipoAgenda === 'CONSULTA_MEDICA') {
+            } else if (tipo === 'CONSULTA_MEDICA') {
                 filtered = allPracticas.filter(p => p.categoria === 'CONSULTA_MEDICA');
             } else {
-                filtered = allPracticas.filter(p => p.categoria === tipoAgenda);
+                filtered = allPracticas.filter(p => p.categoria === tipo);
             }
 
             if (filtered.length === 0) {
@@ -633,16 +635,12 @@
             const multiDayContainer = document.getElementById('multi_day_container');
             const singleDateContainer = document.getElementById('single_date_container');
 
-            // Toggle Pathology
+            // Toggle Pathology - Always visible but required only for Chemo/Radio or tracking
             const isSeguimiento = document.getElementById('crear_seguimiento').checked;
+            patologiaContainer.style.display = 'block';
             if (tipo === 'QUIMIOTERAPIA' || tipo === 'RADIOTERAPIA' || isSeguimiento) {
-                patologiaContainer.style.display = 'block';
-                // Only make it required if it's strictly a Radio/Chemo agenda, otherwise optional but recommended?
-                // Or make it required if tracking is enabled.
                 document.getElementById('patologia').required = true;
             } else {
-                patologiaContainer.style.display = 'none';
-                document.getElementById('patologia').value = '';
                 document.getElementById('patologia').required = false;
             }
 
