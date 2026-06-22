@@ -14,8 +14,6 @@ from models.turno_practica import TurnoPractica
 
 from schemas.turno import TurnoCreate, TurnoOut
 
-ESTADOS_VALIDOS = ["PENDIENTE", "AUSENTE", "ESPERANDO", "COMPLETADO"]
-
 router = APIRouter(
     prefix="/turnos",
     tags=["Turnos"],
@@ -188,7 +186,7 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
             paciente_id=turno_in.paciente_id,
             agenda_id=turno_in.agenda_id,
             medico_derivante_id=medico_id, # Asignamos el médico
-            estado=(turno_in.estado.upper() if turno_in.estado else "PENDIENTE"),
+            estado=turno_in.estado.upper() if turno_in.estado else "PENDIENTE",
             patologia=turno_in.patologia.strip().upper() if turno_in.patologia else None, # ✅ Normalización a mayúsculas
             observaciones=turno_in.observaciones,
             creado_por_id=current_user.get("id") # 🛡️ Auditoría
@@ -197,8 +195,6 @@ def crear_turno(turno_in: TurnoCreate, db: Session = Depends(get_db), current_us
         if nuevo_turno.patologia:
             paciente.patologia = nuevo_turno.patologia
 
-        if nuevo_turno.estado not in ESTADOS_VALIDOS:
-            raise HTTPException(status_code=400, detail=f"Estado inválido. Valores permitidos: {', '.join(ESTADOS_VALIDOS)}")
         db.add(nuevo_turno)
         db.flush()  # para obtener nuevo_turno.id sin hacer commit todavía
 
@@ -532,13 +528,6 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
     if not turno:
         raise HTTPException(status_code=404, detail="Turno no encontrado")
     
-    # 🛡️ SECURITY CHECK: Si está COMPLETADO, solo ADMIN puede modificarlo (incluyendo pasarlo a AUSENTE)
-    if turno.estado == "COMPLETADO" and current_user.get("role") != "ADMIN":
-        raise HTTPException(
-            status_code=403, 
-            detail="⚠️ ACCESO DENEGADO: No tiene permisos para modificar un turno COMPLETADO."
-        )
-
     # Capture old date for tracking logic
     old_date = turno.fecha.date() if turno.fecha else None
 
@@ -597,10 +586,7 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
              print(f"Error actualizando fecha/hora: {e}")
              raise HTTPException(status_code=400, detail="Formato de hora inválido")
     if turno_in.estado is not None:
-        nuevo_estado = turno_in.estado.upper()
-        if nuevo_estado not in ESTADOS_VALIDOS:
-            raise HTTPException(status_code=400, detail=f"Estado inválido. Valores permitidos: {', '.join(ESTADOS_VALIDOS)}")
-        turno.estado = nuevo_estado
+        turno.estado = turno_in.estado.upper()
     if turno_in.duracion is not None:
         turno.duracion = turno_in.duracion
 

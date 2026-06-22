@@ -33,6 +33,16 @@ def check_and_migrate_db(engine: Engine):
         else:
             logger.info("✅ Columna 'patologia' ya existe en 'turnos'.")
 
+        # Chequear columna 'observaciones'
+        if "observaciones" not in columns:
+            logger.info("⚠️ Columna 'observaciones' faltante en 'turnos'. Agregando...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE turnos ADD COLUMN observaciones TEXT"))
+                conn.commit()
+            logger.info("✅ Columna 'observaciones' agregada exitosamente.")
+        else:
+            logger.info("✅ Columna 'observaciones' ya existe en 'turnos'.")
+
         # Chequear columna 'duracion' (por si acaso falto en deploy anteriores)
         if "duracion" not in columns:
             logger.info("⚠️ Columna 'duracion' faltante en 'turnos'. Agregando...")

@@ -331,8 +331,8 @@ function renderSlots(slots) {
                 const p = turno.paciente;
                 const nombre = p ? `${p.nombre} ${p.apellido}` : 'ID: ' + turno.paciente_id;
 
-                html += `<td style="vertical-align: top; padding: 12px 0 border-bottom: 1px solid #edf2f7;">
-                    <div style="font-weight: 600; color: #1a202c;">${nombre}</div>
+                html += `<td style="vertical-align: top; padding: 12px 0; border-bottom: 1px solid #edf2f7; cursor: pointer;" onclick="openTurnoDetails(${turno.id})" title="Ver Detalles del Turno">
+                    <div class="clickable-patient-name" style="font-weight: 600; color: #2b6cb0; text-decoration: underline;">${nombre}</div>
                     ${turno.patologia ? `<div style="font-size: 0.8rem; color: #718096; margin-top: 2px;">${turno.patologia}</div>` : ''}
                 </td>`;
 
@@ -1268,3 +1268,114 @@ window.triggerReschedule = function (id) {
 
 // Initialize Paste Listener
 enableImagePaste();
+
+// --- logic for Appointment Detail Modal ---
+let currentTurnoIdDetail = null;
+
+window.openTurnoDetails = async function (turnoId) {
+    currentTurnoIdDetail = turnoId;
+    try {
+        const response = await fetch(`/turnos/${turnoId}/detalle`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error("No se pudo cargar el detalle del turno");
+        const turno = await response.json();
+        
+        // Populate patient details
+        const p = turno.paciente;
+        document.getElementById('dt-paciente').textContent = p ? `${p.nombre} ${p.apellido}`.toUpperCase() : '-';
+        document.getElementById('dt-dni').textContent = p ? p.dni : '-';
+        document.getElementById('dt-obra-social').textContent = p && p.obra_social ? p.obra_social.nombre.toUpperCase() : '-';
+        document.getElementById('dt-telefono').textContent = p ? (p.celular || p.telefono || '-') : '-';
+        
+        // Populate agenda details
+        document.getElementById('dt-agenda').textContent = turno.agenda ? turno.agenda.nombre.toUpperCase() : '-';
+        document.getElementById('dt-estado').textContent = turno.estado.toUpperCase();
+        
+        // Format date
+        let dateStr = '-';
+        if (turno.fecha) {
+            const dateObj = new Date(turno.fecha);
+            dateStr = dateObj.toLocaleDateString('es-AR');
+        }
+        document.getElementById('dt-fecha').textContent = dateStr;
+        document.getElementById('dt-hora').textContent = turno.hora || '-';
+        
+        // Populate practices list
+        const practicasContainer = document.getElementById('dt-practicas');
+        practicasContainer.innerHTML = '';
+        if (turno.practicas && turno.practicas.length > 0) {
+            turno.practicas.forEach(pr => {
+                const li = document.createElement('li');
+                li.textContent = pr.nombre;
+                practicasContainer.appendChild(li);
+            });
+        } else {
+            const li = document.createElement('li');
+            li.style.listStyle = 'none';
+            li.style.color = '#a0aec0';
+            li.textContent = 'Sin prácticas cargadas';
+            practicasContainer.appendChild(li);
+        }
+        
+        // Populate observations
+        document.getElementById('dt-observaciones').value = turno.observaciones || '';
+        
+        // Open modal
+        const modal = document.getElementById('detalleTurnoModal');
+        if (modal) {
+            modal.classList.add('active');
+            modal.style.display = 'flex';
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error al cargar detalles del turno: " + e.message);
+    }
+}
+
+window.closeDetalleTurnoModal = function () {
+    const modal = document.getElementById('detalleTurnoModal');
+    if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+    }
+}
+
+window.saveTurnoObservaciones = async function () {
+    if (!currentTurnoIdDetail) return;
+    
+    const obsValue = document.getElementById('dt-observaciones').value.trim();
+    const btn = document.querySelector('#detalleTurnoModal .btn-primary');
+    const originalText = btn.textContent;
+    btn.textContent = 'Guardando...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch(`/turnos/${currentTurnoIdDetail}`, {
+            method: 'PATCH',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+                
+            },
+            body: JSON.stringify({
+                observaciones: obsValue || ""
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || "Error al actualizar las observaciones");
+        }
+        
+        alert("Observaciones guardadas con éxito");
+        closeDetalleTurnoModal();
+        loadSlots(); // Refresh slot rendering to keep everything in sync
+    } catch (e) {
+        console.error(e);
+        alert("Error al guardar: " + e.message);
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}

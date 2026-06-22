@@ -438,6 +438,8 @@ def get_timeline(
         
         descripcion = f"Turno: {agenda_nombre}"
         detalle = f"Prácticas: {practica_str if practica_str else 'Consulta/Sin práctica asoc.'}"
+        if getattr(turno, "observaciones", None):
+            detalle += f"\nObservaciones: {turno.observaciones}"
         
         # Try to get professional info from Agenda
         medico_nom = None
