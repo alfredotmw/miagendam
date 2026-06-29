@@ -21,7 +21,7 @@ def calculate_duration(agenda_tipo: str, practicas: list, custom_duration: int =
 
     # Reglas para Electro y Mapeos
     if agenda_tipo == "ELECTRO_MAPEO":
-        return 60 # 1 hora
+        return 30 # 30 minutos
 
     # Reglas para Ecografías
     if agenda_tipo == "ECOGRAFIA":
