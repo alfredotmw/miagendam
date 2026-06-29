@@ -162,6 +162,9 @@ def seed_agendas(db: Session):
             if item["nombre"] == "RADIOTERAPIA COLOMBIA" and agenda.slot_minutos != 10:
                 print(f"[PATCH] Actualizando slot_minutos de {item['nombre']} a 10")
                 agenda.slot_minutos = 10
+            if item["tipo"] == "ELECTRO_MAPEO" and agenda.slot_minutos != 60:
+                print(f"[PATCH] Actualizando slot_minutos de {item['nombre']} a 60")
+                agenda.slot_minutos = 60
 
     db.commit()
 
