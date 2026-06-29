@@ -80,7 +80,7 @@ def get_agenda_slots(
         elif agenda.tipo == "RESONANCIA": duracion_slot = 30
         elif agenda.tipo == "CONSULTA_MEDICA": duracion_slot = 20
         elif agenda.tipo == "PET" or agenda.tipo == "CAMARA_GAMMA": duracion_slot = 60
-        elif agenda.tipo == "ELECTRO_MAPEO": duracion_slot = 30
+        elif agenda.tipo == "ELECTRO_MAPEO": duracion_slot = 60
         elif agenda.tipo == "QUIMIOTERAPIA":
             duracion_slot = 60
             capacity = 7
