@@ -395,7 +395,13 @@ def get_timeline(
                 "ecog": nota.ecog,
                 "tnm": nota.tnm,
                 "estadio": nota.estadio,
-                "toxicidad": nota.toxicidad
+                "toxicidad": nota.toxicidad,
+                # P2 fields (for load/print completeness)
+                "examen_fisico_estructurado": nota.examen_fisico_estructurado,
+                "indicaciones": nota.indicaciones,
+                "proximo_control": nota.proximo_control.isoformat() if nota.proximo_control else None,
+                "pautas_alarma": nota.pautas_alarma,
+                "situacion_cierre": nota.situacion_cierre
             }
         ))
 

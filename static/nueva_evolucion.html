@@ -191,87 +191,53 @@
         }
 
         /* --- Print Styles --- */
+        @media screen {
+            .print-only {
+                display: none !important;
+            }
+        }
         @media print {
-
-            .patient-sticky-header,
-            .history-panel,
-            .evolution-footer,
-            .sidebar,
-            .sidebar-nav {
+            .no-print {
                 display: none !important;
             }
-
-            body {
-                overflow: visible !important;
+            .print-only {
+                display: block !important;
                 background: white !important;
+                color: black !important;
+                width: 100% !important;
                 height: auto !important;
-            }
-
-            .evolution-layout {
-                display: block !important;
-            }
-
-            .form-panel {
-                padding: 0 !important;
-                border: none !important;
                 overflow: visible !important;
             }
-
-            .collapsible-section {
-                border: none !important;
-                margin-bottom: 2rem !important;
-                page-break-inside: avoid;
+            @page {
+                size: A4;
+                margin: 1.5cm 1.5cm 1.8cm 1.5cm;
             }
-
-            .section-header {
-                border-bottom: 2px solid #000 !important;
-                padding-left: 0 !important;
-                background: none !important;
-            }
-
-            .section-header span {
-                display: none;
-                /* Hide chevron */
-            }
-
-            .section-content {
-                display: block !important;
-                padding: 0.5rem 0 !important;
-            }
-
-            .form-group label {
+            body {
+                background: white !important;
                 color: black !important;
-            }
-
-            .form-control {
-                border: none !important;
-                padding: 0 !important;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
                 font-size: 11pt !important;
+                line-height: 1.5 !important;
             }
-
-            .ecog-buttons {
-                display: block !important;
+            #print-view {
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                padding: 0;
+                margin: 0 auto;
             }
-
-            .ecog-btn:not(.active) {
-                display: none !important;
+            #print-view table {
+                width: 100%;
+                max-width: 100%;
+                border-collapse: collapse;
+                box-sizing: border-box;
             }
-
-            .ecog-btn.active {
-                background: none !important;
-                color: black !important;
-                border: 1px solid black !important;
-                padding: 2px 5px !important;
-            }
-
-            /* Custom print header/footer logic in JS */
         }
     </style>
 </head>
 
 <body>
-
-    <header class="patient-sticky-header">
+    <header class="patient-sticky-header no-print">
         <div style="display: flex; align-items: center; gap: 1rem;">
             <img src="/static/logo_ccm_coc.jpg" alt="Logo" height="40" style="border-radius: 4px; background: white;">
             <div id="patient-name-header" style="font-size: 1.2rem; font-weight: 700;">Cargando paciente...</div>
@@ -292,7 +258,7 @@
         </div>
     </header>
 
-    <main class="evolution-layout">
+    <main class="evolution-layout no-print">
         <div class="form-panel">
             <form id="evolution-form">
 
@@ -556,7 +522,7 @@
         </div>
     </main>
 
-    <footer class="evolution-footer">
+    <footer class="evolution-footer no-print">
         <div class="autosave-indicator">
             <span id="save-status-icon" style="color: var(--green-500);">●</span>
             <span id="save-status-text">Listo. Autoguardado habilitado.</span>
@@ -571,9 +537,21 @@
         </div>
     </footer>
 
-    <!-- Print Template (Hidden) -->
-    <div id="print-template" style="display: none;">
-        <!-- Logic to fill this with B&W content -->
+    <!-- Print Container (Clean layout) -->
+    <div id="print-view" class="print-only">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2b6cb0; padding-bottom: 12px; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="/static/logo_ccm_coc.jpg" alt="Logo" height="45" style="border-radius: 4px;">
+                <div>
+                    <p style="font-size: 8.5pt; margin: 0; color: #718096; font-weight: 500; font-family: 'Inter', sans-serif;">San Martín 2473 | Colombia 1249 | Corrientes, Capital</p>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <h2 style="font-size: 12pt; margin: 0; font-weight: bold; color: #2d3748; text-transform: uppercase; font-family: 'Inter', sans-serif;">Historia Clínica / Evolución</h2>
+                <p style="font-size: 8.5pt; margin: 4px 0 0 0; color: #4a5568; font-weight: 500;" id="print-header-tipo-evolucion"></p>
+            </div>
+        </div>
+        <div id="print-content"></div>
     </div>
 
     <script>
@@ -857,7 +835,390 @@
             }
         }
 
+        // --- Logic: Loading Existing Notes ---
+        async function loadExistingNote(noteId) {
+            try {
+                const res = await fetch(`/historia-clinica/paciente/${pacienteId}/timeline`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) {
+                    console.error("Error fetching timeline to load note");
+                    return;
+                }
+                const data = await res.json();
+                const event = data.timeline.find(ev => ev.tipo === 'NOTA' && ev.id_referencia == noteId);
+                if (!event) {
+                    console.error("Note not found in timeline");
+                    return;
+                }
+
+                console.log("Loading note data into form:", event);
+                const sc = event.structured_content || {};
+
+                // 1. Determine form type
+                if (sc.tipo_evolucion) {
+                    tipoFormulario = sc.tipo_evolucion;
+                }
+                const selectEl = document.getElementById('tipo-evolucion-selector');
+                if (selectEl) selectEl.value = tipoFormulario;
+                applyFormVisibility(tipoFormulario);
+
+                // 2. Populate basic fields
+                if (event.fecha) {
+                    document.getElementById('form-fecha').value = event.fecha.substring(0, 10);
+                }
+                if (sc.patologia) document.getElementById('form-dx').value = sc.patologia;
+                if (sc.tnm) document.getElementById('form-tnm').value = sc.tnm;
+                if (sc.estadio) document.getElementById('form-estadio').value = sc.estadio;
+                
+                if (sc.ecog !== null && sc.ecog !== undefined && sc.ecog !== "") {
+                    setEcog(parseInt(sc.ecog));
+                }
+                if (sc.toxicidad) document.getElementById('form-toxicidad').value = sc.toxicidad;
+                
+                const ind = sc.indicaciones || {};
+                document.querySelector('[name="ind-quimio"]').checked = !!ind.quimio;
+                document.querySelector('[name="ind-radio"]').checked = !!ind.radio;
+                document.querySelector('[name="ind-inmuno"]').checked = !!ind.inmuno;
+                document.querySelector('[name="ind-lab"]').checked = !!ind.lab;
+                document.querySelector('[name="ind-imagen"]').checked = !!ind.imagen;
+
+                if (sc.antecedentes) document.getElementById('form-antecedentes').value = sc.antecedentes;
+                
+                // Examen fisico
+                if (tipoFormulario === 'general') {
+                    if (sc.examen) document.getElementById('ex-general').value = sc.examen;
+                } else {
+                    const efe = sc.examen_fisico_estructurado || {};
+                    const vitals = efe.vitals || {};
+                    if (vitals.ta) document.getElementById('vit-ta').value = vitals.ta;
+                    if (vitals.fc) document.getElementById('vit-fc').value = vitals.fc;
+                    if (vitals.fr) document.getElementById('vit-fr').value = vitals.fr;
+                    if (vitals.temp) document.getElementById('vit-temp').value = vitals.temp;
+                    if (vitals.sat) document.getElementById('vit-sat').value = vitals.sat;
+
+                    const aparatos = efe.aparatos || {};
+                    if (aparatos.respiratorio) document.getElementById('ex-respiratorio').value = aparatos.respiratorio;
+                    if (aparatos.cardio) document.getElementById('ex-cardio').value = aparatos.cardio;
+                    if (aparatos.abdomen) document.getElementById('ex-abdomen').value = aparatos.abdomen;
+                    if (aparatos.gu) document.getElementById('ex-gu').value = aparatos.gu;
+                    if (aparatos.sn) document.getElementById('ex-sn').value = aparatos.sn;
+                }
+
+                if (sc.situacion_cierre) document.getElementById('form-situacion').value = sc.situacion_cierre;
+                if (sc.evolucion) document.getElementById('form-evolucion').value = sc.evolucion;
+                if (sc.plan) document.getElementById('form-plan').value = sc.plan;
+                if (sc.proximo_control) document.getElementById('form-proximo').value = sc.proximo_control.substring(0, 10);
+                if (sc.pautas_alarma) document.getElementById('form-pautas').value = sc.pautas_alarma;
+
+                // 3. Handle read-only logic if signed
+                if (event.estado === 'FIRMADO') {
+                    // Disable all form inputs
+                    const inputs = document.querySelectorAll('#evolution-form input, #evolution-form textarea, #evolution-form select');
+                    inputs.forEach(el => el.disabled = true);
+                    
+                    // Disable ECOG buttons
+                    document.querySelectorAll('.ecog-btn').forEach(btn => {
+                        btn.style.pointerEvents = 'none';
+                    });
+                    
+                    // Hide primary actions
+                    const btnSign = document.querySelector('.btn-primary');
+                    const btnDraft = document.querySelector('.btn-secondary[onclick="saveAsDraft()"]');
+                    if (btnSign) btnSign.style.display = 'none';
+                    if (btnDraft) btnDraft.style.display = 'none';
+                    
+                    document.getElementById('save-status-text').textContent = "Evolución FIRMADA (Lectura protegida)";
+                    document.getElementById('save-status-icon').style.color = "var(--red-500)";
+                }
+            } catch (e) {
+                console.error("Error in loadExistingNote:", e);
+            }
+        }
+
+        // --- Logic: Print View Setup ---
+        function preparePrintView() {
+            const printContent = document.getElementById('print-content');
+            const printHeaderTipo = document.getElementById('print-header-tipo-evolucion');
+            if (!printContent || !printHeaderTipo) return;
+
+            printContent.innerHTML = '';
+            printHeaderTipo.textContent = '';
+
+            const paciente = document.getElementById('patient-name-header').textContent.trim();
+            const osHeader = document.getElementById('patient-os-header').textContent.trim();
+            const dni = document.getElementById('form-dni').value.trim();
+            const os = document.getElementById('form-os').value.trim() || osHeader;
+            const nroAfiliado = document.getElementById('form-nro-afiliado').value.trim();
+            const medicoSolicitante = document.getElementById('form-medico').value.trim();
+            const fechaVal = document.getElementById('form-fecha').value;
+            const fecha = formatDateES(fechaVal);
+
+            const formTypeLabel = tipoFormulario === 'oncologia' ? 'Evolución Oncológica' : 'Evolución General';
+
+            let patientTable = `
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 10pt; background-color: #f7fafc; border: 1px solid #cbd5e1;">
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; width: 50%;"><strong>Paciente:</strong> ${formatVal(paciente)}</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; width: 50%;"><strong>Fecha de Evolución:</strong> ${formatVal(fecha)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;"><strong>DNI:</strong> ${formatVal(dni)}</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;"><strong>Obra Social:</strong> ${formatVal(os)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;"><strong>Nº Afiliado:</strong> ${formatVal(nroAfiliado)}</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;"><strong>Médico Solicitante:</strong> ${formatVal(medicoSolicitante)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;" colspan="2"><strong>Médico Derivante:</strong> ${formatVal(medicoSolicitante)}</td>
+                    </tr>
+                </table>
+            `;
+
+            let oncologyHtml = '';
+            if (tipoFormulario === 'oncologia') {
+                const dx = document.getElementById('form-dx').value.trim();
+                const tnm = document.getElementById('form-tnm').value.trim();
+                const estadio = document.getElementById('form-estadio').value.trim();
+                const protocolo = document.getElementById('form-protocolo').value.trim();
+                const ecogVal = document.getElementById('val-ecog').value;
+                const toxicidad = document.getElementById('form-toxicidad').value.trim();
+
+                let ecogText = "Sin informar";
+                if (ecogVal !== "" && ecogVal !== null && ecogVal !== undefined) {
+                    const ecogLabels = ["0 (Normal)", "1 (Sintomático)", "2 (Cama <50%)", "3 (Cama >50%)", "4 (Postrado)", "5 (Fallecido)"];
+                    ecogText = ecogLabels[parseInt(ecogVal)] || ecogVal;
+                }
+
+                let indList = [];
+                if (document.querySelector('[name="ind-quimio"]').checked) indList.push("Quimioterapia");
+                if (document.querySelector('[name="ind-radio"]').checked) indList.push("Radioterapia");
+                if (document.querySelector('[name="ind-inmuno"]').checked) indList.push("Inmunoterapia");
+                if (document.querySelector('[name="ind-lab"]').checked) indList.push("Solicitar Laboratorio");
+                if (document.querySelector('[name="ind-imagen"]').checked) indList.push("Solicitar Imagen");
+                const indicacionesText = indList.length > 0 ? indList.join(", ") : "";
+
+                if (dx || tnm || estadio || protocolo || ecogVal !== "" || toxicidad || indicacionesText) {
+                    oncologyHtml = `
+                        <div style="margin-bottom: 25px;">
+                            <h3 style="font-size: 11pt; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; margin: 0 0 10px 0; padding-bottom: 4px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Estado Oncológico</h3>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 10px;">
+                                <tr>
+                                    <td style="padding: 6px 0; width: 50%;"><strong>Diagnóstico:</strong> ${formatVal(dx)}</td>
+                                    <td style="padding: 6px 0; width: 50%;"><strong>ECOG:</strong> ${formatVal(ecogText)}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0;"><strong>TNM:</strong> ${formatVal(tnm)}</td>
+                                    <td style="padding: 6px 0;"><strong>Estadio:</strong> ${formatVal(estadio)}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0;"><strong>Protocolo / Ciclo:</strong> ${formatVal(protocolo)}</td>
+                                    <td style="padding: 6px 0;"><strong>Indicaciones:</strong> ${formatVal(indicacionesText)}</td>
+                                </tr>
+                            </table>
+                            ${toxicidad ? `
+                            <div style="font-size: 10pt; margin-top: 8px;">
+                                <strong>Toxicidad (CTCAE v5.0):</strong>
+                                <div style="margin: 4px 0 0 0; white-space: pre-wrap; color: #2d3748; line-height: 1.4;">${toxicidad}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            }
+
+            const antecedentes = document.getElementById('form-antecedentes').value.trim();
+            const exGeneral = document.getElementById('ex-general').value.trim();
+            
+            let physicalExamHtml = '';
+            if (tipoFormulario === 'oncologia') {
+                const ta = document.getElementById('vit-ta').value.trim();
+                const fc = document.getElementById('vit-fc').value.trim();
+                const fr = document.getElementById('vit-fr').value.trim();
+                const temp = document.getElementById('vit-temp').value.trim();
+                const sat = document.getElementById('vit-sat').value.trim();
+                
+                const respiratorio = document.getElementById('ex-respiratorio').value.trim();
+                const cardio = document.getElementById('ex-cardio').value.trim();
+                const abdomen = document.getElementById('ex-abdomen').value.trim();
+                const gu = document.getElementById('ex-gu').value.trim();
+                const sn = document.getElementById('ex-sn').value.trim();
+
+                const hasVitals = ta || fc || fr || temp || sat;
+                const hasAparatos = respiratorio || cardio || abdomen || gu || sn;
+
+                if (hasVitals || hasAparatos) {
+                    physicalExamHtml = `
+                        <div id="print-examen-oncologico-container">
+                            ${hasVitals ? `
+                            <div style="background-color: #f7fafc; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; margin-bottom: 10px; font-size: 9.5pt; display: flex; justify-content: space-between;">
+                                <span><strong>TA:</strong> ${formatVal(ta)} mmHg</span>
+                                <span><strong>FC:</strong> ${formatVal(fc)} lpm</span>
+                                <span><strong>FR:</strong> ${formatVal(fr)} rpm</span>
+                                <span><strong>Tº:</strong> ${formatVal(temp)} ºC</span>
+                                <span><strong>SatO2:</strong> ${formatVal(sat)}%</span>
+                            </div>
+                            ` : ''}
+                            ${hasAparatos ? `
+                            <table style="width: 100%; border-collapse: collapse; font-size: 9.5pt; line-height: 1.4;">
+                                ${respiratorio ? `<tr><td style="padding: 4px 0; vertical-align: top; width: 25%;"><strong>Ap. Respiratorio:</strong></td><td style="padding: 4px 0; color: #2d3748;">${respiratorio}</td></tr>` : ''}
+                                ${cardio ? `<tr><td style="padding: 4px 0; vertical-align: top;"><strong>Ap. Cardiovascular:</strong></td><td style="padding: 4px 0; color: #2d3748;">${cardio}</td></tr>` : ''}
+                                ${abdomen ? `<tr><td style="padding: 4px 0; vertical-align: top;"><strong>Abdomen:</strong></td><td style="padding: 4px 0; color: #2d3748;">${abdomen}</td></tr>` : ''}
+                                ${gu ? `<tr><td style="padding: 4px 0; vertical-align: top;"><strong>Genitourinario:</strong></td><td style="padding: 4px 0; color: #2d3748;">${gu}</td></tr>` : ''}
+                                ${sn ? `<tr><td style="padding: 4px 0; vertical-align: top;"><strong>Sistema Nervioso:</strong></td><td style="padding: 4px 0; color: #2d3748;">${sn}</td></tr>` : ''}
+                            </table>
+                            ` : ''}
+                        </div>
+                    `;
+                }
+            } else {
+                if (exGeneral) {
+                    physicalExamHtml = `
+                        <div id="print-examen-general-container">
+                            <div style="white-space: pre-wrap; font-size: 10pt; color: #2d3748; line-height: 1.4;">${exGeneral}</div>
+                        </div>
+                    `;
+                }
+            }
+
+            const situacionVal = document.getElementById('form-situacion').value;
+            const situacionMap = {
+                "ESTABLE": "Paciente estable, continúa mismo plan",
+                "MEJORIA": "Mejoría clínica evidente",
+                "CAMBIO_PLAN": "Requiere cambio de estrategia / protocolo",
+                "ESTUDIOS_PENDIENTES": "A la espera de resultados críticos",
+                "INTERNACION": "Criterio de internación"
+            };
+            const situacionText = situacionMap[situacionVal] || situacionVal;
+
+            const evolucion = document.getElementById('form-evolucion').value.trim();
+            const plan = document.getElementById('form-plan').value.trim();
+            const proximoVal = document.getElementById('form-proximo').value;
+            const proximo = formatDateES(proximoVal);
+            const pautas = document.getElementById('form-pautas').value.trim();
+
+            let signatureHtml = '';
+            if (doctorInfo) {
+                const drName = doctorInfo.full_name || doctorInfo.username || "";
+                const drSpec = doctorInfo.especialidad || "";
+                const drMat = doctorInfo.matricula || "";
+                
+                signatureHtml = `
+                    <div class="print-signature-section" style="margin-top: 50px; text-align: right; page-break-inside: avoid;">
+                        <div style="display: inline-block; text-align: center; border-top: 1px solid #4a5568; padding-top: 6px; min-width: 220px; font-size: 10pt;">
+                            <span style="font-weight: bold; display: block;">Dr/a. ${drName}</span>
+                            ${drSpec ? `<span style="color: #4a5568; display: block; font-size: 9pt;">${drSpec}</span>` : ''}
+                            ${drMat ? `<span style="color: #718096; display: block; font-size: 8.5pt;">M.P. ${drMat}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            } else {
+                signatureHtml = `
+                    <div class="print-signature-section" style="margin-top: 50px; text-align: right; page-break-inside: avoid;">
+                        <div style="display: inline-block; text-align: center; border-top: 1px solid #4a5568; padding-top: 6px; min-width: 220px; font-size: 10pt;">
+                            <span style="font-weight: bold; display: block; height: 15px;"></span>
+                            <span style="color: #4a5568; display: block; font-size: 9pt;">Firma y Sello del Profesional</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            printHeaderTipo.textContent = formTypeLabel;
+            printContent.innerHTML = `
+                ${patientTable}
+
+                ${oncologyHtml}
+
+                ${antecedentes ? `
+                <div class="print-clinical-section" style="margin-bottom: 20px; page-break-inside: avoid;">
+                    <h3 style="font-size: 11pt; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; margin: 0 0 8px 0; padding-bottom: 4px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Relato cronológico del evento actual</h3>
+                    <div style="margin: 0; font-size: 10pt; white-space: pre-wrap; color: #2d3748; line-height: 1.4;">${antecedentes}</div>
+                </div>
+                ` : ''}
+
+                ${physicalExamHtml ? `
+                <div class="print-clinical-section" style="margin-bottom: 20px; page-break-inside: avoid;">
+                    <h3 style="font-size: 11pt; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; margin: 0 0 8px 0; padding-bottom: 4px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Evaluación clínica / examen físico general</h3>
+                    ${physicalExamHtml}
+                </div>
+                ` : ''}
+
+                ${situacionVal ? `
+                <div class="print-clinical-section" style="margin-bottom: 20px; page-break-inside: avoid;">
+                    <h3 style="font-size: 11pt; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; margin: 0 0 8px 0; padding-bottom: 4px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Situación al cierre</h3>
+                    <div style="margin: 0; font-size: 10pt; color: #2d3748; line-height: 1.4;">${situacionText}</div>
+                </div>
+                ` : ''}
+
+                ${evolucion ? `
+                <div class="print-clinical-section" style="margin-bottom: 20px; page-break-inside: avoid;">
+                    <h3 style="font-size: 11pt; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; margin: 0 0 8px 0; padding-bottom: 4px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Evolución cronológica / comentario</h3>
+                    <div style="margin: 0; font-size: 10pt; white-space: pre-wrap; color: #2d3748; line-height: 1.4;">${evolucion}</div>
+                </div>
+                ` : ''}
+
+                ${plan ? `
+                <div class="print-clinical-section" style="margin-bottom: 20px; page-break-inside: avoid;">
+                    <h3 style="font-size: 11pt; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; margin: 0 0 8px 0; padding-bottom: 4px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Conducta / plan terapéutico</h3>
+                    <div style="margin: 0; font-size: 10pt; white-space: pre-wrap; color: #2d3748; line-height: 1.4;">${plan}</div>
+                </div>
+                ` : ''}
+
+                ${(proximoVal || pautas) ? `
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 25px; page-break-inside: avoid;">
+                    <tr>
+                        ${proximoVal ? `
+                        <td style="width: 50%; padding-right: 15px; vertical-align: top;">
+                            <div class="print-clinical-section" style="margin-bottom: 0;">
+                                <h3 style="font-size: 11pt; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; margin: 0 0 8px 0; padding-bottom: 4px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Próximo control</h3>
+                                <div style="margin: 0; font-size: 10pt; color: #2d3748; line-height: 1.4;">${proximo}</div>
+                            </div>
+                        </td>
+                        ` : ''}
+                        ${pautas ? `
+                        <td style="width: ${proximoVal ? '50%' : '100%'}; ${proximoVal ? 'padding-left: 15px;' : ''} vertical-align: top;">
+                            <div class="print-clinical-section" style="margin-bottom: 0;">
+                                <h3 style="font-size: 11pt; border-bottom: 1.5px solid #2b6cb0; color: #2b6cb0; margin: 0 0 8px 0; padding-bottom: 4px; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Pautas de alarma</h3>
+                                <div style="margin: 0; font-size: 10pt; color: #2d3748; line-height: 1.4;">${pautas}</div>
+                            </div>
+                        </td>
+                        ` : ''}
+                    </tr>
+                </table>
+                ` : ''}
+
+                ${signatureHtml}
+            `;
+        }
+
+        function formatVal(val, defaultText = "Sin informar") {
+            if (val === undefined || val === null) return defaultText;
+            const trimmed = String(val).trim();
+            if (trimmed.startsWith("Relato cronológico") || 
+                trimmed.startsWith("Describa el examen") || 
+                trimmed.startsWith("Detalle la evolución") || 
+                trimmed.startsWith("Defina los pasos") ||
+                trimmed === "dd/mm/aaaa" ||
+                trimmed === "-") {
+                return defaultText;
+            }
+            return trimmed ? trimmed : defaultText;
+        }
+
+        function formatDateES(dateStr) {
+            if (!dateStr || dateStr === "dd/mm/aaaa") return "Sin informar";
+            const parts = dateStr.split("-");
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        window.addEventListener('beforeprint', preparePrintView);
+
         function handlePrint() {
+            preparePrintView();
             window.print();
         }
 
