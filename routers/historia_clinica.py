@@ -353,6 +353,16 @@ def get_timeline(
 
     turnos = query_turnos.all()
 
+    # 🆕 BATCH QUERY CLINICAL REPORTS TO AVOID N+1
+    import config
+    reports_map = {}
+    if getattr(config, "ENABLE_CLINICAL_REPORTS", False) and turnos:
+        from models.informe_clinico import InformeClinico
+        turno_ids = [t.id for t in turnos]
+        reports = db.query(InformeClinico.id, InformeClinico.turno_id, InformeClinico.estado)\
+            .filter(InformeClinico.turno_id.in_(turno_ids)).all()
+        reports_map = {r.turno_id: (r.id, r.estado) for r in reports}
+
     timeline_events = []
 
     # Process Notes
@@ -456,6 +466,9 @@ def get_timeline(
              # We will use that string as name.
              medico_nom = turno.agenda.profesional
 
+        report_info = reports_map.get(turno.id)
+        report_id, report_estado = report_info if report_info else (None, None)
+
         timeline_events.append(TimelineEvent(
             tipo="TURNO",
             fecha=turno.fecha, 
@@ -464,10 +477,13 @@ def get_timeline(
             id_referencia=turno.id,
             servicio=normalized_service,
             estado=turno.estado,
+            informe_estado=report_estado,
+            informe_id=report_id,
             medico_nombre=medico_nom,
             medico_matricula=medico_mat,
             structured_content={
-                "patologia": getattr(turno, "patologia", None)
+                "patologia": getattr(turno, "patologia", None),
+                "medico_derivante": turno.medico_derivante.nombre if turno.medico_derivante else (turno.paciente.medico_derivante.nombre if getattr(turno, "paciente", None) and getattr(turno.paciente, "medico_derivante", None) else None)
             }
         ))
 

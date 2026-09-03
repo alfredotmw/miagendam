@@ -83,3 +83,13 @@ def get_medicos_derivantes(db: Session = Depends(get_db), current_user: dict = D
     """
     medicos = db.query(MedicoDerivante).order_by(MedicoDerivante.nombre.asc()).all()
     return [{"id": m.id, "nombre": m.nombre} for m in medicos]
+
+@router.get("/settings")
+def get_settings(current_user: dict = Depends(get_current_user)):
+    """
+    Returns public settings configuration required by the frontend.
+    """
+    import config
+    return {
+        "enable_clinical_reports": getattr(config, "ENABLE_CLINICAL_REPORTS", False)
+    }

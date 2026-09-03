@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from schemas.practica import PracticaOut
-from schemas.paciente import PacienteOut
+from schemas.paciente import PacienteOut, MedicoDerivanteOut
 from schemas.agenda import AgendaOut
 
 class TurnoBase(BaseModel):
@@ -55,12 +55,16 @@ class TurnoOut(BaseModel):
     
     paciente: Optional[PacienteOut] = None
     agenda: Optional[AgendaOut] = None
+    medico_derivante: Optional[MedicoDerivanteOut] = None
 
     # Auditoría
     creado_por_id: Optional[int] = None
     fecha_creacion: Optional[datetime] = None
     modificado_por_id: Optional[int] = None
     fecha_modificacion: Optional[datetime] = None
+
+    # Informe clínico sugerido/permitido por backend
+    tipo_informe_permitido: Optional[str] = None
 
     class Config:
         from_attributes = True

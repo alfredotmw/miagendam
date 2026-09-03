@@ -348,3 +348,44 @@ def check_and_migrate_db(engine: Engine):
                 logger.warning(f"⚠️ No se pudo realizar la sincronización de patologías: {e}")
 
             conn.commit()
+
+    # 8. VERIFY TABLE 'informes_clinicos' IDEMPOTENTLY
+    # (Matches current project mechanism to verify and migrate/create missing tables)
+    inspector = inspect(engine)
+    if not inspector.has_table("informes_clinicos"):
+        logger.info("⚠️ Tabla 'informes_clinicos' faltante. Creando...")
+        try:
+            dialect = engine.dialect.name
+            auto_inc = "SERIAL PRIMARY KEY" if dialect == "postgresql" else "INTEGER PRIMARY KEY AUTOINCREMENT"
+            timestamp_type = "TIMESTAMP"
+            
+            with engine.connect() as conn:
+                conn.execute(text(f"""
+                    CREATE TABLE informes_clinicos (
+                        id {auto_inc},
+                        turno_id INTEGER NOT NULL UNIQUE,
+                        paciente_id INTEGER NOT NULL,
+                        tipo_informe VARCHAR(50) NOT NULL,
+                        contenido_json TEXT NOT NULL,
+                        contenido_texto TEXT,
+                        estado VARCHAR(50) NOT NULL DEFAULT 'BORRADOR',
+                        version INTEGER NOT NULL DEFAULT 1,
+                        created_at {timestamp_type} NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        updated_at {timestamp_type} NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        finalized_at {timestamp_type},
+                        created_by INTEGER NOT NULL,
+                        updated_by INTEGER NOT NULL,
+                        finalized_by INTEGER,
+                        FOREIGN KEY (turno_id) REFERENCES turnos(id) ON DELETE RESTRICT,
+                        FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+                        FOREIGN KEY (created_by) REFERENCES users(id),
+                        FOREIGN KEY (updated_by) REFERENCES users(id),
+                        FOREIGN KEY (finalized_by) REFERENCES users(id)
+                    )
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_informes_paciente ON informes_clinicos(paciente_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS idx_informes_estado ON informes_clinicos(estado)"))
+                conn.commit()
+            logger.info("✅ Tabla 'informes_clinicos' creada exitosamente.")
+        except Exception as e:
+            logger.error(f"❌ Error al crear la tabla 'informes_clinicos': {e}")

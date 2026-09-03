@@ -55,6 +55,8 @@ class TimelineEvent(BaseModel):
     detalle: Optional[str] = "" # The note text or extra info about the turno (status, etc)
     id_referencia: Optional[int] # ID of the note or the turno
     estado: Optional[str] = None # For turnos: "Asistido", "Ausente", etc.
+    informe_estado: Optional[str] = None # For clinical reports associated with turnos
+    informe_id: Optional[int] = None
     servicio: Optional[str] = None
     medico_nombre: Optional[str] = None
     medico_matricula: Optional[str] = None

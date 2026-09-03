@@ -4,3 +4,10 @@ env/
 *.pyc
 .DS_Store
 .vscode/
+.claude/
+scratch/
+*-Alfredo.*
+audit_log.txt
+test_output.txt
+test_import.*
+start_local.bat

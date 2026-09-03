@@ -1,6 +1,7 @@
 # routers/turnos.py
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -45,6 +46,8 @@ def obtener_detalle_turno(turno_id: int, db: Session = Depends(get_db), current_
     turno = db.get(Turno, turno_id)
     if not turno:
         raise HTTPException(status_code=404, detail="Turno no encontrado")
+    from routers.informe_clinico import determine_report_type
+    turno.tipo_informe_permitido = determine_report_type(turno)
     return turno
 
 
@@ -57,10 +60,11 @@ def verificar_duplicados(check: CheckDuplicates, db: Session = Depends(get_db), 
     Verifica si un paciente ya tiene turnos activos en las fechas proporcionadas.
     Retorna una lista de alertas si hay coincidencias.
     """
-    # Buscar turnos activos (no cancelados) para el paciente en las fechas dadas
+    # Buscar turnos activos (no cancelados ni ausentes) para el paciente en las fechas dadas
+    estados_ignorados = ["CANCELADO", "ANULADO", "INACTIVO", "AUSENTE"]
     query = db.query(Turno).filter(
         Turno.paciente_id == check.paciente_id,
-        Turno.estado != "CANCELADO"
+        func.upper(func.coalesce(Turno.estado, '')).notin_(estados_ignorados)
     )
 
     if check.agenda_id:
@@ -571,7 +575,7 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
             # Calculamos duración actual (o la nueva si viene en el input)
             duracion_calc = turno_in.duracion if turno_in.duracion is not None else (turno.duracion if turno.duracion else 15)
             try:
-                check_availability(db, turno.agenda_id, fecha_hora_real, duracion_calc, turno.agenda.tipo)
+                check_availability(db, turno.agenda_id, fecha_hora_real, duracion_calc, turno.agenda.tipo, exclude_turno_id=turno.id)
             except HTTPException as e:
                 # 🟢 EXCEPCIÓN RADIOTERAPIA: Capturamos cualquier error 400
                 if e.status_code == 400:

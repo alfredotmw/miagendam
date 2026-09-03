@@ -7,6 +7,7 @@ from migration_utils import check_and_migrate_db # 👉 MIGRACIÓN
 import models  # 👉 AGREGADO para registrar tablas
 import models.plantilla # Register P2 Model
 import models.patologia # Register Patologia Model
+import models.informe_clinico # Register InformeClinico Model
 
 # Crear tablas en la base de datos (Moved to startup)
 # Base.metadata.create_all(bind=engine)
@@ -95,6 +96,9 @@ app.include_router(radioterapia.router)
 
 from routers import common
 app.include_router(common.router)
+
+from routers import informe_clinico
+app.include_router(informe_clinico.router)
 
 from fastapi.responses import RedirectResponse
 

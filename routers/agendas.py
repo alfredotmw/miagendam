@@ -92,11 +92,12 @@ def get_agenda_slots(
     hora_fin = datetime.combine(fecha + timedelta(days=1), time(0, 0))
 
     # Buscar turnos existentes para ese día
+    inactive_states = ["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]
     turnos = db.query(Turno).filter(
         Turno.agenda_id == agenda_id,
         Turno.fecha >= hora_inicio,
         Turno.fecha < hora_fin,
-        Turno.estado != "cancelado"
+        Turno.estado.notin_(inactive_states)
     ).all()
 
     slots = []

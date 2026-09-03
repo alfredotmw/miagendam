@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from models.turno import Turno
@@ -55,7 +56,7 @@ def calculate_duration(agenda_tipo: str, practicas: list, custom_duration: int =
     # Default general
     return 15
 
-def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime, duracion_minutos: int, agenda_tipo: str):
+def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime, duracion_minutos: int, agenda_tipo: str, exclude_turno_id: int = None):
     """
     Verifica si hay disponibilidad para el turno.
     Maneja la capacidad de sillones para Quimioterapia.
@@ -69,11 +70,15 @@ def check_availability(db: Session, agenda_id: int, fecha_hora_inicio: datetime,
     # 🟢 FIX: Excluir todos los estados inactivos de la ocupación real
     inactive_states = ["CANCELADO", "cancelado", "ANULADO", "anulado", "INACTIVO", "inactivo"]
     
-    turnos_solapados = db.query(Turno).filter(
+    query = db.query(Turno).filter(
         Turno.agenda_id == agenda_id,
         Turno.estado.notin_(inactive_states),
         Turno.fecha < fecha_hora_fin
-    ).all()
+    )
+    if exclude_turno_id:
+        query = query.filter(Turno.id != exclude_turno_id)
+
+    turnos_solapados = query.all()
 
     # 🟢 BUSCAR EL SLOT_MINUTOS DE LA AGENDA PARA FALLBACK
     from models.agenda import Agenda
@@ -142,12 +147,14 @@ def validate_duplicate_rules(db: Session, paciente_id: int, agenda_id: int, fech
     from models.turno_practica import TurnoPractica
     
     # Query: Buscar turnos del paciente en esa agenda para ese día (sin contar el turno actual si es update)
+    # Excluir turnos inactivos (cancelados, anulados) y AUSENTES (si faltó hoy y se reprograma o crea nuevo turno para hoy, debe permitirlo)
+    estados_ignorados = ["CANCELADO", "ANULADO", "INACTIVO", "AUSENTE"]
     query = db.query(Turno).filter(
         Turno.paciente_id == paciente_id,
         Turno.agenda_id == agenda_id,
         Turno.fecha >= datetime.combine(fecha.date(), datetime.min.time()),
         Turno.fecha <= datetime.combine(fecha.date(), datetime.max.time()),
-        Turno.estado != "cancelado"
+        func.upper(func.coalesce(Turno.estado, '')).notin_(estados_ignorados)
     )
     
     if exclude_turno_id:

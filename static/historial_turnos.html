@@ -336,7 +336,94 @@
                 color: white !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+        }
+
+        /* Badges de estado del turno */
+        .estado-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            line-height: 1;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .estado-completado {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .estado-ausente {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .estado-pendiente {
+            background-color: #ffedd5;
+            color: #9a3412;
+            border: 1px solid #fed7aa;
+        }
+
+        .estado-esperando {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        .estado-sin-informacion {
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+        }
+
+        .timeline-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .timeline-title-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        @media print {
+            .estado-badge {
+                border-width: 1px !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
+        }
+
+        .clickable-turno-card {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .clickable-turno-card:hover {
+            box-shadow: 0 4px 12px rgba(49, 130, 206, 0.15) !important;
+            border-color: #3182ce !important;
+            background-color: #fcfdfd !important;
+        }
+
+        .clickable-turno-card:focus {
+            outline: 2px solid #3182ce !important;
+            outline-offset: 2px !important;
+        }
+
+        /* Spin animation for loader */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -406,6 +493,7 @@
                     @oncologicocorrientes
                 </span>
             </div>
+
         </div>
     </div>
 
@@ -502,15 +590,20 @@
                 <!-- Right: Filters & Timeline -->
                 <div class="history-main">
                     <div class="filters-card">
-                        <div class="form-group" style="margin: 0; flex: 1;">
+                        <div class="form-group" style="margin: 0; flex: 1; min-width: 120px;">
                             <label>Desde</label>
                             <input type="date" id="filter-start" class="form-input">
                         </div>
-                        <div class="form-group" style="margin: 0; flex: 1;">
+                        <div class="form-group" style="margin: 0; flex: 1; min-width: 120px;">
                             <label>Hasta</label>
                             <input type="date" id="filter-end" class="form-input">
                         </div>
                         <button class="btn-secondary" onclick="applyFilters()">Filtrar</button>
+                        
+                        <div class="form-group" style="margin: 0; flex: 2; min-width: 200px; margin-left: auto;">
+                            <label for="search-history-text">Buscar en historial</label>
+                            <input type="text" id="search-history-text" class="form-input" placeholder="Buscar por práctica, servicio, evolución...">
+                        </div>
                     </div>
 
                     <div class="timeline-section">
@@ -592,6 +685,137 @@
         </div>
     </div>
 
+    <!-- Turno Detail Modal (Phase 2: Solo lectura) -->
+    <div id="turnoDetailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="turno-detail-title">
+        <div class="modal-content" style="max-width: 600px; padding: 2.5rem; position: relative;">
+            <div class="modal-header" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                <h3 id="turno-detail-title" class="modal-title" style="color: #2d3748; font-size: 1.5rem;">Detalle del turno</h3>
+                <span class="close-modal" id="close-turno-detail-btn" onclick="cerrarDetalleTurno()" style="cursor: pointer; font-size: 1.8rem; font-weight: 700; color: #a0aec0; transition: color 0.2s;" tabindex="0" role="button" aria-label="Cerrar modal">&times;</span>
+            </div>
+            
+            <div id="turno-detail-loading" style="display: none; text-align: center; padding: 2rem;">
+                <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3182ce; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1rem;"></div>
+                <div style="color: #4a5568;">Cargando detalle del turno...</div>
+            </div>
+            
+            <div id="turno-detail-error" style="display: none; padding: 1.5rem; background: #fff5f5; border-left: 4px solid #e53e3e; border-radius: 4px; color: #c53030; margin-bottom: 1.5rem;">
+                <div style="font-weight: bold; margin-bottom: 0.5rem;">Error</div>
+                <div id="turno-detail-error-message">No se pudo cargar el detalle del turno.</div>
+            </div>
+
+            <div id="turno-detail-content" style="display: grid; gap: 1.25rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; background: #f7fafc; padding: 1.25rem; border-radius: 8px; border: 1px solid #edf2f7;">
+                    <div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">Paciente</div>
+                        <div id="td-paciente" style="font-weight: 600; color: #2d3748;">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">DNI</div>
+                        <div id="td-dni" style="color: #4a5568;">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">Fecha</div>
+                        <div id="td-fecha" style="color: #4a5568;">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">Hora</div>
+                        <div id="td-hora" style="color: #4a5568;">-</div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">Agenda o Servicio</div>
+                        <div id="td-agenda" style="color: #4a5568;">-</div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">Médico Solicitante (Derivante)</div>
+                        <div id="td-derivante" style="color: #4a5568;">-</div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">Práctica o prácticas</div>
+                        <div id="td-practicas" style="color: #4a5568; white-space: pre-wrap;">-</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; padding: 0.5rem 0; border-top: 1px solid #edf2f7; padding-top: 1rem;">
+                    <div style="flex: 1; min-width: 150px;">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.5rem;">Estado administrativo del turno</div>
+                        <div id="td-estado-turno">-</div>
+                    </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.5rem;">Estado del informe clínico</div>
+                        <div id="td-estado-informe">-</div>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción Modo Lectura -->
+                <div id="turno-detail-actions" style="display: none; gap: 1rem; justify-content: flex-end; flex-wrap: wrap; margin-top: 1.5rem; border-top: 1px solid #edf2f7; padding-top: 1.5rem;">
+                    <button type="button" id="btn-start-create" onclick="iniciarCreacion()" style="padding: 0.5rem 1.25rem; border-radius: 4px; border: none; background: #319795; cursor: pointer; font-weight: 600; color: #fff;">Crear informe</button>
+                    <button type="button" id="btn-start-edit" onclick="iniciarEdicion()" style="padding: 0.5rem 1.25rem; border-radius: 4px; border: none; background: #3182ce; cursor: pointer; font-weight: 600; color: #fff;">Continuar borrador</button>
+                    <button type="button" id="btn-view-report" onclick="verInformeFinalizado()" style="display: none; padding: 0.5rem 1.25rem; border-radius: 4px; border: none; background: #553c9a; cursor: pointer; font-weight: 600; color: #fff;" aria-label="Ver informe clínico finalizado">Ver informe</button>
+                    <button type="button" id="btn-print-report" onclick="imprimirInformeIndividual()" style="display: none; padding: 0.5rem 1.25rem; border-radius: 4px; border: none; background: #276749; cursor: pointer; font-weight: 600; color: #fff; align-items: center; gap: 0.4rem;" aria-label="Imprimir informe clínico finalizado">🖨️ Imprimir informe</button>
+                </div>
+            </div>
+
+            <!-- Formulario de Edición (Phase 3: Crear / Continuar Borrador) -->
+            <div id="turno-detail-edit" style="display: none; flex-direction: column; gap: 1.25rem; margin-top: 1.5rem; border-top: 1px solid #edf2f7; padding-top: 1.5rem;">
+                <h4 id="edit-template-title" style="color: #2d3748; margin-bottom: 0.5rem; font-size: 1.1rem; font-weight: 600;">Cargando plantilla...</h4>
+                
+                <div id="turno-detail-edit-error" style="display: none; padding: 1rem; background: #fff5f5; border-left: 4px solid #e53e3e; border-radius: 4px; color: #c53030; margin-bottom: 1.25rem;">
+                    <div id="turno-detail-edit-error-message">Error de validación.</div>
+                </div>
+
+                <form id="clinical-report-form" style="display: grid; gap: 1rem;" onsubmit="event.preventDefault();">
+                    <!-- Fields will be dynamically injected here using value property -->
+                    <div id="template-fields-container" style="display: grid; gap: 1rem;"></div>
+                    
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap; margin-top: 1.5rem; border-top: 1px solid #edf2f7; padding-top: 1.5rem;">
+                        <button type="button" class="btn-cancel" id="btn-cancel-edit" onclick="cancelarEdicion()" style="padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid #cbd5e0; background: #fff; cursor: pointer; font-weight: 600; color: #4a5568;">Cancelar edición</button>
+                        <button type="button" class="btn-primary" id="btn-save-draft" onclick="guardarBorrador()" style="padding: 0.5rem 1.25rem; border-radius: 4px; border: none; background: #3182ce; cursor: pointer; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                            <span id="save-btn-text">Guardar borrador</span>
+                        </button>
+                        <button type="button" id="btn-finalize" onclick="finalizarInforme()" style="display: none; padding: 0.5rem 1.25rem; border-radius: 4px; border: none; background: #276749; cursor: pointer; font-weight: 600; color: #fff; align-items: center; gap: 0.5rem;" aria-label="Finalizar informe clínico">
+                            <span id="finalize-btn-text">Finalizar informe</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Panel Informe Finalizado (Phase 4: Solo Lectura) -->
+            <div id="informe-finalizado-panel" style="display: none; margin-top: 1.5rem; border-top: 2px solid #276749; padding-top: 1.5rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 1.25rem; color: #276749;" aria-hidden="true">&#10003;</span>
+                        <h4 id="informe-finalizado-title" tabindex="-1" style="margin: 0; color: #276749; font-size: 1.05rem; font-weight: 700;">Informe finalizado</h4>
+                    </div>
+                    <button type="button" onclick="imprimirInformeIndividual()" style="padding: 0.45rem 0.9rem; border-radius: 6px; border: 1px solid #276749; background: #276749; color: white; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; transition: all 0.2s;">
+                        🖨️ Imprimir informe / PDF
+                    </button>
+                </div>
+                <div style="background: #f0fff4; border: 1px solid #c6f6d5; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;">
+                    <div>
+                        <div style="font-size: 0.7rem; text-transform: uppercase; color: #276749; font-weight: 700; margin-bottom: 0.2rem;">Tipo de informe</div>
+                        <div id="if-tipo" style="color: #2d3748; font-weight: 600;">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; text-transform: uppercase; color: #276749; font-weight: 700; margin-bottom: 0.2rem;">Estado del informe</div>
+                        <div id="if-estado" style="color: #276749; font-weight: 700;">FINALIZADO</div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <div style="font-size: 0.7rem; text-transform: uppercase; color: #276749; font-weight: 700; margin-bottom: 0.2rem;">Finalizado por</div>
+                        <div id="if-finalizado-por" style="color: #2d3748;">-</div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <div style="font-size: 0.7rem; text-transform: uppercase; color: #276749; font-weight: 700; margin-bottom: 0.2rem;">Fecha y hora de finalizaci&#243;n</div>
+                        <div id="if-finalizado-at" style="color: #2d3748;">-</div>
+                    </div>
+                </div>
+                <div id="if-contenido-container" style="display: grid; gap: 1rem;" aria-label="Contenido del informe">
+                    <!-- Injected dynamically via renderInformeFinalizado() -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <datalist id="os-list"></datalist>
     <datalist id="medicos-list"></datalist>
 
@@ -617,18 +841,74 @@
             })
             .catch(e => console.error("Could not load pathologies", e));
 
-        // Check Admin
+        // Check User Role and Info
+        let loggedInUser = null;
         fetch('/users/me', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()).then(u => {
+            loggedInUser = u;
             if (u.role === 'ADMIN') {
                 const al = document.getElementById('admin-links');
                 if (al) al.style.display = 'block';
             }
         }).catch(e => { });
 
+        let enableClinicalReports = false;
+        let originalTimelineEvents = [];
+
+        // Check settings for feature flags
+        const settingsPromise = fetch('/common/settings', { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(settings => {
+                enableClinicalReports = settings.enable_clinical_reports === true;
+            })
+            .catch(e => {
+                console.error("Could not load settings", e);
+            });
+
         let currentDni = null;
         let currentPatientId = null;
         let currentNoteId = null;
         let eventsMap = {}; // Map to store events by ID for easy access
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function obtenerPresentacionEstado(estado) {
+            const valor = String(estado || '').trim().toUpperCase();
+
+            const estados = {
+                COMPLETADO: {
+                    texto: 'Completado',
+                    clase: 'estado-completado'
+                },
+                COMPLETO: {
+                    texto: 'Completado',
+                    clase: 'estado-completado'
+                },
+                AUSENTE: {
+                    texto: 'Ausente',
+                    clase: 'estado-ausente'
+                },
+                PENDIENTE: {
+                    texto: 'Pendiente',
+                    clase: 'estado-pendiente'
+                },
+                ESPERANDO: {
+                    texto: 'Esperando',
+                    clase: 'estado-esperando'
+                }
+            };
+
+            return estados[valor] || {
+                texto: valor || 'Sin información',
+                clase: 'estado-sin-informacion'
+            };
+        }
 
         function handleEnter(e) { if (e.key === 'Enter') searchHistory(); }
         function logout() { localStorage.removeItem('token'); window.location.href = '/static/login.html'; }
@@ -693,6 +973,7 @@
                     throw new Error(`${res.status}: ${errorData.detail || errorData.message || JSON.stringify(errorData)}`);
                 }
                 const data = await res.json();
+                await settingsPromise;
                 renderPage(data);
             } catch (e) {
                 console.error(e);
@@ -709,7 +990,15 @@
             document.getElementById('p-dni').textContent = p.dni;
             document.getElementById('p-edad').textContent = p.edad ? `${p.edad} años` : '-';
             document.getElementById('p-obra-social').textContent = p.obra_social ? p.obra_social.nombre : '-';
-            renderTimeline(data.timeline);
+            document.getElementById('p-medico').textContent = p.medico_derivante ? p.medico_derivante.nombre : (p.medico_derivante_nombre || '-');
+            
+            // Safe copy and reset input
+            originalTimelineEvents = Array.isArray(data.timeline) ? [...data.timeline] : [];
+            const historySearchInput = document.getElementById('search-history-text');
+            if (historySearchInput) {
+                historySearchInput.value = '';
+            }
+            renderTimeline(originalTimelineEvents);
         }
 
         function renderTimeline(events) {
@@ -791,12 +1080,52 @@
                     }
                 }
 
+                let statusBadgeHtml = '';
+                const tipoEvento = String(ev.tipo || '').trim().toUpperCase();
+
+                if (tipoEvento === 'TURNO') {
+                    const statusInfo = obtenerPresentacionEstado(ev.estado);
+                    let badgeContent = `
+                        <span class="estado-badge ${statusInfo.clase}">
+                            ${escapeHtml(statusInfo.texto)}
+                        </span>
+                    `;
+                    if (enableClinicalReports) {
+                        const repInfo = obtenerPresentacionInforme(ev.informe_estado);
+                        badgeContent += `
+                            <span class="estado-badge ${repInfo.clase}" style="margin-left: 0.5rem;">
+                                ${escapeHtml(repInfo.texto)}
+                            </span>
+                        `;
+                    }
+                    statusBadgeHtml = `
+                        <span class="status-badges-container" id="status-badges-${ev.id_referencia}">
+                            ${badgeContent}
+                        </span>
+                    `;
+                }
+
+                let cardAttrs = `class="timeline-card"`;
+                if (tipoEvento === 'TURNO' && enableClinicalReports) {
+                    cardAttrs = `class="timeline-card clickable-turno-card" tabindex="0" role="button" onclick="abrirDetalleTurno(${ev.id_referencia}, event)" onkeydown="if(event.key === 'Enter' || event.key === ' ') { abrirDetalleTurno(${ev.id_referencia}, event); event.preventDefault(); }" style="cursor: pointer;"`;
+                }
+
                 return `
-                <div class="timeline-card">
+                <div ${cardAttrs}>
                     <div class="timeline-icon ${typeClass}">${icon}</div>
                     <div class="timeline-header-row">
-                        <div class="timeline-title">${title} ${actions}</div>
-                        <div class="timeline-date">${dateStr} ${!isPlan ? timeStr : ''}</div>
+                        <div class="timeline-title" style="flex: 1; min-width: 0;">
+                            <div class="timeline-title-row">
+                                <div class="timeline-title-content">
+                                    <span class="timeline-title-text">${title}</span>
+                                    ${statusBadgeHtml}
+                                </div>
+                                <div class="timeline-actions">
+                                    ${actions}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-date" style="margin-left: 0.5rem; white-space: nowrap;">${dateStr} ${!isPlan ? timeStr : ''}</div>
                     </div>
                     <div class="timeline-body">${content}</div>
                     ${signature}
@@ -927,7 +1256,79 @@
             const timeline = document.querySelector('.timeline-section').cloneNode(true);
             pCard.querySelector('button')?.remove(); pCard.querySelector('button')?.remove();
             const pl = document.getElementById('print-content-placeholder');
-            pl.innerHTML = ''; pl.appendChild(pCard); pl.appendChild(timeline);
+            pl.innerHTML = '';
+            pl.appendChild(pCard);
+            pl.appendChild(timeline);
+
+            // Include finalized report only for ADMIN/MEDICO (never RECEPCION, never drafts)
+            if (activeReport && activeReport.estado === 'FINALIZADO' &&
+                    loggedInUser && (loggedInUser.role === 'ADMIN' || loggedInUser.role === 'MEDICO')) {
+                const tipo = activeReport.tipo_informe;
+                const fields = TEMPLATES_CONFIG[tipo];
+                const contenido = activeReport.contenido_json || {};
+
+                const printSection = document.createElement('div');
+                printSection.style.pageBreakBefore = 'always';
+                printSection.style.marginTop = '2rem';
+                printSection.style.borderTop = '2px solid #276749';
+                printSection.style.paddingTop = '1rem';
+
+                const header = document.createElement('h3');
+                header.style.color = '#276749';
+                header.style.marginBottom = '0.5rem';
+                header.textContent = 'Informe Cl\u00ednico — ' + (tipo || '').replace(/_/g, ' ');
+                printSection.appendChild(header);
+
+                // Finalized-by metadata
+                const finBy = activeReport.finalized_by_username
+                    ? activeReport.finalized_by_username
+                    : (activeReport.finalized_by ? 'Usuario #' + activeReport.finalized_by : '-');
+                let dateStr = '-';
+                if (activeReport.finalized_at) {
+                    try {
+                        const dt = new Date(activeReport.finalized_at);
+                        dateStr = dt.toLocaleString('es-AR', {
+                            timeZone: 'America/Argentina/Buenos_Aires',
+                            year: 'numeric', month: '2-digit', day: '2-digit',
+                            hour: '2-digit', minute: '2-digit'
+                        });
+                    } catch (_) { dateStr = activeReport.finalized_at; }
+                }
+                const meta = document.createElement('p');
+                meta.style.fontSize = '0.85rem';
+                meta.style.color = '#4a5568';
+                meta.style.marginBottom = '1rem';
+                meta.textContent = 'Finalizado por: ' + finBy + ' \u2014 ' + dateStr;
+                printSection.appendChild(meta);
+
+                // Field blocks (textContent only — never innerHTML for clinical data)
+                if (fields) {
+                    fields.forEach(field => {
+                        const val = contenido[field.id];
+                        if (!val || !String(val).trim()) return;
+                        const block = document.createElement('div');
+                        block.style.marginBottom = '0.75rem';
+                        block.style.pageBreakInside = 'avoid';
+                        const lbl = document.createElement('strong');
+                        lbl.style.fontSize = '0.8rem';
+                        lbl.style.textTransform = 'uppercase';
+                        lbl.style.color = '#276749';
+                        lbl.style.display = 'block';
+                        lbl.style.marginBottom = '0.15rem';
+                        lbl.textContent = field.label;
+                        const txt = document.createElement('p');
+                        txt.style.whiteSpace = 'pre-wrap';
+                        txt.style.margin = '0';
+                        txt.style.fontSize = '0.9rem';
+                        txt.textContent = val; // Safe: textContent only
+                        block.appendChild(lbl);
+                        block.appendChild(txt);
+                        printSection.appendChild(block);
+                    });
+                }
+                pl.appendChild(printSection);
+            }
+
             window.print();
         }
         window.onafterprint = () => document.getElementById('print-content-placeholder').innerHTML = '';
@@ -1124,6 +1525,1205 @@
                 console.error(e);
                 alert(e.message || "Error de conexión");
             }
+        }
+
+        // --- CLINICAL REPORTS MODULE - PHASE 3 (Creación y edición de borradores) ---
+        let lastActiveElement = null;
+        let isTurnoDetailLoading = false;
+        
+        let activeReport = null; // Stores current report metadata and content_json
+        let originalFormContent = ""; // Stringified copy of form values for dirty check
+        let isSubmitting = false; // Flag to prevent double submission
+        let currentOpeningTurnoId = null; // Track currently loading Turno ID to prevent race conditions
+        let isEditMode = false; // Flag for edit mode
+        let currentTurnoDetail = null; // Store current TurnoOut object
+
+        const TEMPLATES_CONFIG = {
+            "IMAGENES": [
+                { id: "indicacion_clinica", label: "Indicación clínica", max: 2000 },
+                { id: "tecnica", label: "Técnica", max: 4000 },
+                { id: "hallazgos", label: "Hallazgos", max: 10000 },
+                { id: "conclusion", label: "Conclusión", max: 4000 },
+                { id: "observaciones", label: "Observaciones", max: 4000 }
+            ],
+            "ELECTROENCEFALOGRAMA": [
+                { id: "indicacion_clinica", label: "Indicación clínica", max: 2000 },
+                { id: "tecnica", label: "Técnica", max: 4000 },
+                { id: "actividad_de_fondo", label: "Actividad de fondo", max: 6000 },
+                { id: "hallazgos", label: "Hallazgos", max: 10000 },
+                { id: "maniobras_de_activacion", label: "Maniobras de activación", max: 6000 },
+                { id: "conclusion", label: "Conclusión", max: 4000 },
+                { id: "observaciones", label: "Observaciones", max: 4000 }
+            ],
+            "CONSULTA_MEDICA": [
+                { id: "motivo_consulta", label: "Motivo de consulta", max: 3000 },
+                { id: "antecedentes_relevantes", label: "Antecedentes relevantes", max: 6000 },
+                { id: "evaluacion", label: "Evaluación", max: 10000 },
+                { id: "impresion_diagnostica", label: "Impresión diagnóstica", max: 5000 },
+                { id: "conducta", label: "Conducta", max: 5000 },
+                { id: "indicaciones", label: "Indicaciones", max: 5000 },
+                { id: "observaciones", label: "Observaciones", max: 4000 }
+            ],
+            "TEXTO_LIBRE": [
+                { id: "informe", label: "Informe", max: 15000 }
+            ]
+        };
+
+        function getNormalizedFormValues() {
+            const container = document.getElementById('template-fields-container');
+            if (!container) return "";
+            const textareas = container.querySelectorAll('textarea');
+            const values = {};
+            textareas.forEach(ta => {
+                const fieldId = ta.id.replace('cr-', '');
+                values[fieldId] = ta.value;
+            });
+            return JSON.stringify(values);
+        }
+
+        function checkDirtyState() {
+            if (!isEditMode) return false;
+            const current = getNormalizedFormValues();
+            const isDirty = current !== originalFormContent;
+            
+            // Manage beforeunload event dynamically
+            if (isDirty) {
+                if (!window.beforeUnloadHandlerInstalled) {
+                    window.addEventListener('beforeunload', handleBeforeUnload);
+                    window.beforeUnloadHandlerInstalled = true;
+                }
+            } else {
+                removeBeforeUnloadHandler();
+            }
+            return isDirty;
+        }
+
+        function handleBeforeUnload(e) {
+            e.preventDefault();
+            e.returnValue = 'Hay cambios sin guardar. ¿Desea descartarlos?';
+            return e.returnValue;
+        }
+
+        function removeBeforeUnloadHandler() {
+            if (window.beforeUnloadHandlerInstalled) {
+                window.removeEventListener('beforeunload', handleBeforeUnload);
+                window.beforeUnloadHandlerInstalled = false;
+            }
+        }
+
+        function renderTemplateFields(tipo, data) {
+            const container = document.getElementById('template-fields-container');
+            container.innerHTML = '';
+            
+            const fields = TEMPLATES_CONFIG[tipo];
+            if (!fields) {
+                console.error("Tipo de informe desconocido:", tipo);
+                return;
+            }
+            
+            fields.forEach(field => {
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'grid';
+                wrapper.style.gap = '0.25rem';
+                
+                const labelWrapper = document.createElement('div');
+                labelWrapper.style.display = 'flex';
+                labelWrapper.style.justifyContent = 'space-between';
+                labelWrapper.style.alignItems = 'center';
+                
+                const label = document.createElement('label');
+                label.setAttribute('for', 'cr-' + field.id);
+                label.style.fontWeight = '600';
+                label.style.fontSize = '0.85rem';
+                label.style.color = '#4a5568';
+                label.textContent = field.label;
+                
+                const counter = document.createElement('span');
+                counter.id = 'counter-cr-' + field.id;
+                counter.style.fontSize = '0.75rem';
+                counter.style.color = '#a0aec0';
+                counter.textContent = `0 / ${field.max}`;
+                
+                labelWrapper.appendChild(label);
+                labelWrapper.appendChild(counter);
+                
+                const textarea = document.createElement('textarea');
+                textarea.id = 'cr-' + field.id;
+                textarea.className = 'form-input';
+                textarea.style.height = field.max > 5000 ? '150px' : '100px';
+                textarea.style.resize = 'vertical';
+                textarea.style.padding = '0.5rem';
+                textarea.style.border = '1px solid #cbd5e0';
+                textarea.style.borderRadius = '4px';
+                textarea.maxLength = field.max;
+                
+                textarea.setAttribute('aria-describedby', 'err-cr-' + field.id);
+                
+                const errorMsg = document.createElement('span');
+                errorMsg.id = 'err-cr-' + field.id;
+                errorMsg.style.fontSize = '0.75rem';
+                errorMsg.style.color = '#e53e3e';
+                errorMsg.style.display = 'none';
+                errorMsg.style.marginTop = '0.1rem';
+                
+                const val = data ? data[field.id] : '';
+                textarea.value = val || '';
+                
+                counter.textContent = `${textarea.value.length} / ${field.max}`;
+                
+                textarea.addEventListener('input', () => {
+                    counter.textContent = `${textarea.value.length} / ${field.max}`;
+                    errorMsg.style.display = 'none';
+                    checkDirtyState();
+                });
+                
+                wrapper.appendChild(labelWrapper);
+                wrapper.appendChild(textarea);
+                wrapper.appendChild(errorMsg);
+                
+                container.appendChild(wrapper);
+            });
+        }
+
+        async function abrirDetalleTurno(turnoId, event) {
+            if (!enableClinicalReports) return;
+            
+            if (isEditMode && checkDirtyState()) {
+                if (!confirm("Hay cambios sin guardar. ¿Desea descartarlos?")) {
+                    return;
+                }
+            }
+            
+            if (isSubmitting) return;
+
+            if (event) {
+                const targetTag = event.target.tagName.toLowerCase();
+                if (targetTag === 'button' || targetTag === 'a' || event.target.closest('button') || event.target.closest('a')) {
+                    return;
+                }
+                event.stopPropagation();
+            }
+
+            lastActiveElement = document.activeElement;
+            currentOpeningTurnoId = turnoId;
+            const myRequestTurnoId = turnoId;
+            
+            isEditMode = false;
+            removeBeforeUnloadHandler();
+
+            document.getElementById('turno-detail-content').style.display = 'none';
+            document.getElementById('turno-detail-edit').style.display = 'none';
+            document.getElementById('turno-detail-error').style.display = 'none';
+            document.getElementById('turno-detail-loading').style.display = 'block';
+
+            document.getElementById('btn-start-create').style.display = 'none';
+            document.getElementById('btn-start-edit').style.display = 'none';
+            document.getElementById('btn-view-report').style.display = 'none';
+            document.getElementById('btn-print-report').style.display = 'none';
+            document.getElementById('turno-detail-actions').style.display = 'none';
+            document.getElementById('informe-finalizado-panel').style.display = 'none';
+
+            const modal = document.getElementById('turnoDetailModal');
+            modal.classList.add('active');
+            document.getElementById('close-turno-detail-btn').focus();
+
+            try {
+                const [turnoRes, reportRes] = await Promise.all([
+                    fetch(`/turnos/${turnoId}/detalle`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch(`/turnos/${turnoId}/informe`, { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+
+                if (currentOpeningTurnoId !== myRequestTurnoId) {
+                    return;
+                }
+
+                if (!turnoRes.ok) {
+                    if (turnoRes.status === 403) {
+                        throw new Error("ACCESO_DENEGADO");
+                    } else if (turnoRes.status === 404) {
+                        throw new Error("TURNO_NO_ENCONTRADO");
+                    } else {
+                        throw new Error("CONEXION_ERROR");
+                    }
+                }
+
+                const turno = await turnoRes.json();
+                currentTurnoDetail = turno;
+                
+                let report = null;
+                if (reportRes.ok) {
+                    report = await reportRes.json();
+                } else if (reportRes.status === 403) {
+                    throw new Error("ACCESO_DENEGADO");
+                }
+
+                activeReport = report;
+
+                document.getElementById('td-paciente').textContent = `${turno.paciente.apellido}, ${turno.paciente.nombre}`;
+                document.getElementById('td-dni').textContent = turno.paciente.dni;
+                document.getElementById('td-fecha').textContent = new Date(turno.fecha).toLocaleDateString('es-AR');
+                document.getElementById('td-hora').textContent = turno.hora;
+                document.getElementById('td-agenda').textContent = turno.agenda ? turno.agenda.nombre : 'Sin agenda';
+                let medDer = '-';
+                if (turno.medico_derivante && turno.medico_derivante.nombre) {
+                    medDer = turno.medico_derivante.nombre;
+                } else if (turno.medico_derivante_nombre) {
+                    medDer = turno.medico_derivante_nombre;
+                } else {
+                    medDer = document.getElementById('p-medico')?.textContent || '-';
+                }
+                const tdDerivEl = document.getElementById('td-derivante');
+                if (tdDerivEl) tdDerivEl.textContent = medDer;
+                
+                let practicasStr = 'Consulta/Sin práctica asoc.';
+                if (turno.practicas && turno.practicas.length > 0) {
+                    practicasStr = turno.practicas.map(p => p.nombre).join('\n');
+                } else if (turno.practica) {
+                    practicasStr = turno.practica.nombre;
+                }
+                document.getElementById('td-practicas').textContent = practicasStr;
+
+                const stInfo = obtenerPresentacionEstado(turno.estado);
+                document.getElementById('td-estado-turno').innerHTML = `
+                    <span class="estado-badge ${stInfo.clase}">
+                        ${escapeHtml(stInfo.texto)}
+                    </span>
+                `;
+
+                const repState = report ? report.estado : null;
+                const repInfo = obtenerPresentacionInforme(repState);
+                document.getElementById('td-estado-informe').innerHTML = `
+                    <span class="estado-badge ${repInfo.clase}">
+                        ${escapeHtml(repInfo.texto)}
+                    </span>
+                `;
+
+                const isUserAuth = (loggedInUser && (loggedInUser.role === 'ADMIN' || loggedInUser.role === 'MEDICO'));
+                
+                if (isUserAuth) {
+                    if (!report) {
+                        document.getElementById('btn-start-create').style.display = 'inline-block';
+                        document.getElementById('turno-detail-actions').style.display = 'flex';
+                    } else if (report.estado === 'BORRADOR') {
+                        document.getElementById('btn-start-edit').style.display = 'inline-block';
+                        document.getElementById('turno-detail-actions').style.display = 'flex';
+                    } else if (report.estado === 'FINALIZADO') {
+                        document.getElementById('btn-view-report').style.display = 'inline-block';
+                        document.getElementById('btn-print-report').style.display = 'inline-flex';
+                        document.getElementById('turno-detail-actions').style.display = 'flex';
+                    }
+                }
+
+                document.getElementById('turno-detail-loading').style.display = 'none';
+                document.getElementById('turno-detail-content').style.display = 'grid';
+
+            } catch (err) {
+                console.error("Error loading turno detail:", err.message);
+                document.getElementById('turno-detail-loading').style.display = 'none';
+                
+                const errMsgEl = document.getElementById('turno-detail-error-message');
+                if (err.message === "ACCESO_DENEGADO") {
+                    errMsgEl.textContent = "Acceso no autorizado sin exponer detalles internos.";
+                } else if (err.message === "TURNO_NO_ENCONTRADO") {
+                    errMsgEl.textContent = "Turno no encontrado.";
+                } else {
+                    errMsgEl.textContent = "No se pudo cargar el detalle del turno. Intente nuevamente.";
+                }
+                document.getElementById('turno-detail-error').style.display = 'block';
+            }
+        }
+
+        function iniciarCreacion() {
+            if (!currentTurnoDetail) return;
+            const tipo = currentTurnoDetail.tipo_informe_permitido;
+            
+            if (!tipo || !TEMPLATES_CONFIG[tipo]) {
+                alert("Tipo de informe desconocido o no permitido para este turno: " + tipo);
+                return;
+            }
+            
+            isEditMode = true;
+            document.getElementById('edit-template-title').textContent = "Nuevo informe: " + escapeHtml(tipo);
+            
+            document.getElementById('turno-detail-content').style.display = 'none';
+            document.getElementById('turno-detail-edit').style.display = 'flex';
+            document.getElementById('turno-detail-edit-error').style.display = 'none';
+            
+            renderTemplateFields(tipo, null);
+            
+            originalFormContent = getNormalizedFormValues();
+            removeBeforeUnloadHandler();
+            
+            const firstInput = document.getElementById('template-fields-container').querySelector('textarea');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        }
+
+        function iniciarEdicion() {
+            if (!activeReport) return;
+            if (activeReport.estado !== 'BORRADOR') {
+                alert("El informe ya no se encuentra en estado borrador.");
+                return;
+            }
+            
+            const tipo = activeReport.tipo_informe;
+            if (!TEMPLATES_CONFIG[tipo]) {
+                alert("Tipo de informe no soportado: " + tipo);
+                return;
+            }
+            
+            isEditMode = true;
+            document.getElementById('edit-template-title').textContent = "Editar borrador: " + escapeHtml(tipo);
+            
+            document.getElementById('turno-detail-content').style.display = 'none';
+            document.getElementById('turno-detail-edit').style.display = 'flex';
+            document.getElementById('turno-detail-edit-error').style.display = 'none';
+            document.getElementById('informe-finalizado-panel').style.display = 'none';
+            
+            // Show Finalizar button for BORRADOR edit mode
+            const btnFin = document.getElementById('btn-finalize');
+            if (btnFin) {
+                btnFin.style.display = 'flex';
+            }
+            
+            renderTemplateFields(tipo, activeReport.contenido_json);
+            
+            originalFormContent = getNormalizedFormValues();
+            removeBeforeUnloadHandler();
+            
+            const firstInput = document.getElementById('template-fields-container').querySelector('textarea');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        }
+
+        async function guardarBorrador() {
+            if (isSubmitting) return;
+            if (!currentTurnoDetail) return;
+
+            const saveBtn = document.getElementById('btn-save-draft');
+            const saveText = document.getElementById('save-btn-text');
+            const errDiv = document.getElementById('turno-detail-edit-error');
+            const errMsg = document.getElementById('turno-detail-edit-error-message');
+            
+            errDiv.style.display = 'none';
+            // Clear any field validation errors
+            const fieldsContainer = document.getElementById('template-fields-container');
+            fieldsContainer.querySelectorAll('[id^="err-cr-"]').forEach(el => el.style.display = 'none');
+            
+            // Build content_json
+            const tipo = activeReport ? activeReport.tipo_informe : currentTurnoDetail.tipo_informe_permitido;
+            const fields = TEMPLATES_CONFIG[tipo];
+            const content_json = {};
+            
+            fields.forEach(f => {
+                const ta = document.getElementById('cr-' + f.id);
+                content_json[f.id] = ta ? ta.value : '';
+            });
+
+            isSubmitting = true;
+            saveBtn.disabled = true;
+            saveText.textContent = "⏳ Guardando...";
+
+            try {
+                let res;
+                let payload;
+                
+                if (!activeReport) {
+                    // CREATE mode (POST)
+                    payload = {
+                        tipo_informe: tipo,
+                        contenido_json: content_json
+                    };
+                    res = await fetch(`/turnos/${currentTurnoDetail.id}/informe`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    // EDIT mode (PUT)
+                    payload = {
+                        contenido_json: content_json,
+                        version: activeReport.version
+                    };
+                    res = await fetch(`/informes-clinicos/${activeReport.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                if (res.ok) {
+                    const savedReport = await res.json();
+                    activeReport = savedReport;
+                    
+                    // Reset dirty status
+                    originalFormContent = getNormalizedFormValues();
+                    isEditMode = false;
+                    removeBeforeUnloadHandler();
+                    
+                    // Update read-only details UI
+                    const repInfo = obtenerPresentacionInforme(savedReport.estado);
+                    document.getElementById('td-estado-informe').innerHTML = `
+                        <span class="estado-badge ${repInfo.clase}">
+                            ${escapeHtml(repInfo.texto)}
+                        </span>
+                    `;
+                    
+                    document.getElementById('btn-start-create').style.display = 'none';
+                    document.getElementById('btn-start-edit').style.display = 'inline-block';
+                    document.getElementById('btn-view-report').style.display = 'none';
+                    document.getElementById('btn-print-report').style.display = 'none';
+                    document.getElementById('turno-detail-actions').style.display = 'flex';
+                    
+                    // Show read-only panel, hide edit panel and finalized panel
+                    document.getElementById('turno-detail-edit').style.display = 'none';
+                    document.getElementById('turno-detail-content').style.display = 'grid';
+                    document.getElementById('informe-finalizado-panel').style.display = 'none';
+                    
+                    // Update visual state in the timeline card directly (Correction 9)
+                    const turnoId = currentTurnoDetail.id;
+                    const ev = originalTimelineEvents.find(e => e.tipo === 'TURNO' && e.id_referencia === turnoId);
+                    if (ev) {
+                        ev.informe_estado = savedReport.estado;
+                        ev.informe_id = savedReport.id;
+                        ev.version = savedReport.version;
+                    }
+                    filterTimelineEvents();
+                } else {
+                    const status = res.status;
+                    const errPayload = await res.json().catch(() => ({}));
+                    
+                    if (status === 409) {
+                        // Concurrency conflict
+                        errMsg.textContent = "Este informe fue modificado por otro usuario. Recargue la versión actual antes de continuar.";
+                        
+                        // Add Recargar button if not already present
+                        let reloadBtn = document.getElementById('btn-conflict-reload');
+                        if (!reloadBtn) {
+                            reloadBtn = document.createElement('button');
+                            reloadBtn.id = 'btn-conflict-reload';
+                            reloadBtn.type = 'button';
+                            reloadBtn.style.marginTop = '0.75rem';
+                            reloadBtn.style.padding = '0.4rem 0.8rem';
+                            reloadBtn.style.background = '#e53e3e';
+                            reloadBtn.style.color = '#fff';
+                            reloadBtn.style.border = 'none';
+                            reloadBtn.style.borderRadius = '4px';
+                            reloadBtn.style.cursor = 'pointer';
+                            reloadBtn.style.fontWeight = 'bold';
+                            reloadBtn.textContent = 'Recargar versión del servidor';
+                            reloadBtn.onclick = () => confirmarYRecargarServidor();
+                            errDiv.appendChild(reloadBtn);
+                        }
+                        errDiv.style.display = 'block';
+                    } else if (status === 422) {
+                        // Validation error
+                        let valMsg = "Error de validación.";
+                        if (errPayload.detail) {
+                            if (Array.isArray(errPayload.detail)) {
+                                errPayload.detail.forEach(valErr => {
+                                    const path = valErr.loc;
+                                    const field = path[path.length - 1];
+                                    const targetErr = document.getElementById('err-cr-' + field);
+                                    if (targetErr) {
+                                        targetErr.textContent = valErr.msg;
+                                        targetErr.style.display = 'inline-block';
+                                    }
+                                });
+                                valMsg = "Complete los campos requeridos correctamente.";
+                            } else {
+                                valMsg = errPayload.detail;
+                            }
+                        }
+                        errMsg.textContent = valMsg;
+                        errDiv.style.display = 'block';
+                    } else if (status === 403) {
+                        errMsg.textContent = "Acceso no autorizado para realizar esta operación.";
+                        errDiv.style.display = 'block';
+                    } else if (status === 404) {
+                        errMsg.textContent = "El turno o informe ya no se encuentra disponible.";
+                        errDiv.style.display = 'block';
+                    } else {
+                        errMsg.textContent = errPayload.detail || "Ocurrió un error inesperado en el servidor.";
+                        errDiv.style.display = 'block';
+                    }
+                }
+            } catch (netErr) {
+                console.error("Network error saving draft:", netErr);
+                errMsg.textContent = "Error de conexión. Verifique su red e intente nuevamente.";
+                errDiv.style.display = 'block';
+            } finally {
+                isSubmitting = false;
+                saveBtn.disabled = false;
+                saveText.textContent = "Guardar borrador";
+            }
+        }
+
+        async function confirmarYRecargarServidor() {
+            if (!confirm("Recargar el borrador descartará todos los cambios locales no guardados. ¿Desea continuar?")) {
+                return;
+            }
+            
+            const errDiv = document.getElementById('turno-detail-edit-error');
+            errDiv.style.display = 'none';
+            // Remove reload button if present
+            const reloadBtn = document.getElementById('btn-conflict-reload');
+            if (reloadBtn) reloadBtn.remove();
+            
+            try {
+                // Fetch fresh copy from backend
+                const reportRes = await fetch(`/turnos/${currentTurnoDetail.id}/informe`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (reportRes.ok) {
+                    const freshReport = await reportRes.json();
+                    activeReport = freshReport;
+                    
+                    if (!freshReport) {
+                        alert("El informe fue eliminado por otro usuario.");
+                        cancelarEdicion();
+                        return;
+                    }
+                    
+                    if (freshReport.estado !== 'BORRADOR') {
+                        alert(`El informe clínico cambió a estado: ${freshReport.estado}. No se puede editar.`);
+                        // Exit edit mode, show details in read-only
+                        isEditMode = false;
+                        removeBeforeUnloadHandler();
+                        
+                        const repInfo = obtenerPresentacionInforme(freshReport.estado);
+                        document.getElementById('td-estado-informe').innerHTML = `
+                            <span class="estado-badge ${repInfo.clase}">
+                                ${escapeHtml(repInfo.texto)}
+                            </span>
+                        `;
+                        document.getElementById('btn-start-create').style.display = 'none';
+                        document.getElementById('btn-start-edit').style.display = 'none';
+                        
+                        document.getElementById('turno-detail-edit').style.display = 'none';
+                        document.getElementById('turno-detail-content').style.display = 'grid';
+                        
+                        // Update timeline
+                        const turnoId = currentTurnoDetail.id;
+                        const ev = originalTimelineEvents.find(e => e.tipo === 'TURNO' && e.id_referencia === turnoId);
+                        if (ev) {
+                            ev.informe_estado = freshReport.estado;
+                            ev.informe_id = freshReport.id;
+                            ev.version = freshReport.version;
+                        }
+                        filterTimelineEvents();
+                        return;
+                    }
+                    
+                    // Repopulate form fields with server content
+                    const fields = TEMPLATES_CONFIG[freshReport.tipo_informe];
+                    fields.forEach(f => {
+                        const ta = document.getElementById('cr-' + f.id);
+                        if (ta) {
+                            ta.value = freshReport.contenido_json[f.id] || '';
+                            const counter = document.getElementById('counter-cr-' + f.id);
+                            if (counter) {
+                                counter.textContent = `${ta.value.length} / ${f.max}`;
+                            }
+                        }
+                    });
+                    
+                    // Reset dirty reference
+                    originalFormContent = getNormalizedFormValues();
+                    removeBeforeUnloadHandler();
+                    alert("Se recargó el borrador con la versión actual del servidor.");
+                } else {
+                    alert("No se pudo obtener el borrador actualizado del servidor.");
+                }
+            } catch (err) {
+                console.error("Error reloading report from server:", err);
+                alert("Error de red al recargar del servidor.");
+            }
+        }
+
+        function cancelarEdicion() {
+            if (checkDirtyState()) {
+                if (!confirm("Hay cambios sin guardar. ¿Desea descartarlos?")) {
+                    return;
+                }
+            }
+            
+            isEditMode = false;
+            removeBeforeUnloadHandler();
+            
+            document.getElementById('turno-detail-edit').style.display = 'none';
+            document.getElementById('turno-detail-content').style.display = 'grid';
+            
+            // Hide Finalizar button when canceling edit
+            const btnFinCnc = document.getElementById('btn-finalize');
+            if (btnFinCnc) btnFinCnc.style.display = 'none';
+            
+            const editBtn = document.getElementById('btn-start-edit');
+            const createBtn = document.getElementById('btn-start-create');
+            if (editBtn && editBtn.style.display !== 'none') {
+                editBtn.focus();
+            } else if (createBtn && createBtn.style.display !== 'none') {
+                createBtn.focus();
+            }
+        }
+
+        function cerrarDetalleTurno() {
+            if (isSubmitting) return;
+
+            if (checkDirtyState()) {
+                if (!confirm("Hay cambios sin guardar. ¿Desea descartarlos?")) {
+                    return;
+                }
+            }
+            
+            isEditMode = false;
+            removeBeforeUnloadHandler();
+
+            const modal = document.getElementById('turnoDetailModal');
+            modal.classList.remove('active');
+            
+            if (lastActiveElement) {
+                try {
+                    lastActiveElement.focus();
+                } catch (e) {}
+            }
+        }
+
+        function obtenerPresentacionInforme(estado) {
+            const val = String(estado || '').trim().toUpperCase();
+            if (!estado) {
+                return { texto: "Sin informe", clase: "estado-sin-informacion" };
+            } else if (val === "BORRADOR") {
+                return { texto: "Borrador", clase: "estado-pendiente" };
+            } else if (val === "FINALIZADO") {
+                return { texto: "Finalizado", clase: "estado-completado" };
+            } else if (val === "RECTIFICADO") {
+                return { texto: "Rectificado", clase: "estado-esperando" };
+            } else if (val === "ANULADO") {
+                return { texto: "Anulado", clase: "estado-ausente" };
+            }
+            return { texto: estado, clase: "estado-sin-informacion" };
+        }
+
+        // Handle ESC key to close modal
+        window.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('turnoDetailModal');
+                if (modal && modal.classList.contains('active')) {
+                    cerrarDetalleTurno();
+                }
+            }
+        });
+
+        // WAI-ARIA Focus Trap
+        document.getElementById('turnoDetailModal').addEventListener('keydown', function(e) {
+            const modal = document.getElementById('turnoDetailModal');
+            if (!modal || !modal.classList.contains('active')) return;
+            
+            if (e.key === 'Tab') {
+                const focusableElements = Array.from(modal.querySelectorAll(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                )).filter(el => el.offsetWidth > 0 && el.offsetHeight > 0);
+
+                if (focusableElements.length === 0) return;
+
+                const firstEl = focusableElements[0];
+                const lastEl = focusableElements[focusableElements.length - 1];
+
+                if (e.shiftKey) { // Shift + Tab
+                    if (document.activeElement === firstEl) {
+                        e.preventDefault();
+                        lastEl.focus();
+                    }
+                } else { // Tab
+                    if (document.activeElement === lastEl) {
+                        e.preventDefault();
+                        firstEl.focus();
+                    }
+                }
+            }
+        });
+
+        // --- PHASE 4: FINALIZATION LOGIC ---
+
+        function validarContenidoMinimo(tipo, content_json) {
+            // Returns null if valid, or an error message string if invalid.
+            // Frontend pre-validation only — backend validates again.
+            const hasValue = (key) => content_json[key] && String(content_json[key]).trim().length > 0;
+
+            if (tipo === 'IMAGENES' || tipo === 'ELECTROENCEFALOGRAMA') {
+                if (!hasValue('hallazgos') && !hasValue('conclusion')) {
+                    return 'Debe completar al menos los campos "Hallazgos" o "Conclusi\u00f3n" antes de finalizar.';
+                }
+            } else if (tipo === 'CONSULTA_MEDICA') {
+                if (!hasValue('evaluacion') && !hasValue('impresion_diagnostica') && !hasValue('conducta')) {
+                    return 'Debe completar al menos "Evaluaci\u00f3n", "Impresi\u00f3n diagn\u00f3stica" o "Conducta" antes de finalizar.';
+                }
+            } else if (tipo === 'TEXTO_LIBRE') {
+                if (!hasValue('informe')) {
+                    return 'El campo "Informe" no puede estar vac\u00edo antes de finalizar.';
+                }
+            }
+            return null;
+        }
+
+        async function finalizarInforme() {
+            if (isSubmitting) return;
+            if (!activeReport || activeReport.estado !== 'BORRADOR') return;
+
+            // Block if there are unsaved changes (dirty state)
+            if (checkDirtyState()) {
+                alert('Primero guarde los cambios del borrador antes de finalizar el informe.');
+                return;
+            }
+
+            // Minimum content validation (frontend pre-check — backend re-validates)
+            const tipo = activeReport.tipo_informe;
+            const contenido = activeReport.contenido_json || {};
+            const validationError = validarContenidoMinimo(tipo, contenido);
+            if (validationError) {
+                alert(validationError);
+                return;
+            }
+
+            // Explicit confirmation required by spec
+            const confirmed = confirm(
+                'Est\u00e1 por finalizar este informe. Una vez finalizado no podr\u00e1 editarse directamente. \u00bfDesea continuar?'
+            );
+            if (!confirmed) return;
+
+            const btnFin = document.getElementById('btn-finalize');
+            const btnFinText = document.getElementById('finalize-btn-text');
+            const btnSave = document.getElementById('btn-save-draft');
+            const btnCancel = document.getElementById('btn-cancel-edit');
+            const errDiv = document.getElementById('turno-detail-edit-error');
+            const errMsg = document.getElementById('turno-detail-edit-error-message');
+
+            errDiv.style.display = 'none';
+            isSubmitting = true;
+            if (btnFin) btnFin.disabled = true;
+            if (btnFinText) btnFinText.textContent = '\u23f3 Finalizando...';
+            if (btnSave) btnSave.disabled = true;
+            if (btnCancel) btnCancel.disabled = true;
+
+            try {
+                const res = await fetch(`/informes-clinicos/${activeReport.id}/finalizar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ version: activeReport.version })
+                });
+
+                if (res.ok) {
+                    const finalizedReport = await res.json();
+                    activeReport = finalizedReport;
+                    removeBeforeUnloadHandler();
+                    isEditMode = false;
+
+                    // Update status badge in read-only panel
+                    const repInfo = obtenerPresentacionInforme('FINALIZADO');
+                    document.getElementById('td-estado-informe').innerHTML =
+                        `<span class="estado-badge ${repInfo.clase}">${escapeHtml(repInfo.texto)}</span>`;
+
+                    // Switch from edit to read-only view
+                    document.getElementById('turno-detail-edit').style.display = 'none';
+                    document.getElementById('turno-detail-content').style.display = 'grid';
+
+                    // Update action buttons
+                    document.getElementById('btn-start-create').style.display = 'none';
+                    document.getElementById('btn-start-edit').style.display = 'none';
+                    if (btnFin) btnFin.style.display = 'none';
+                    document.getElementById('btn-view-report').style.display = 'inline-block';
+                    document.getElementById('btn-print-report').style.display = 'inline-flex';
+                    document.getElementById('turno-detail-actions').style.display = 'flex';
+
+                    // Render finalized view
+                    renderInformeFinalizado(finalizedReport);
+
+                    // Update matching timeline event (do NOT alter date, service, or turno estado)
+                    const turnoId = currentTurnoDetail.id;
+                    const ev = originalTimelineEvents.find(e => e.tipo === 'TURNO' && e.id_referencia === turnoId);
+                    if (ev) {
+                        ev.informe_estado = 'FINALIZADO';
+                        ev.informe_id = finalizedReport.id;
+                        ev.version = finalizedReport.version;
+                    }
+                    filterTimelineEvents(); // Preserves active filter
+
+                    // Move focus to finalized panel heading for accessibility
+                    const finalTitle = document.getElementById('informe-finalizado-title');
+                    if (finalTitle) finalTitle.focus();
+
+                } else {
+                    const status = res.status;
+                    const errPayload = await res.json().catch(() => ({}));
+                    let msg = 'Error al finalizar el informe.';
+
+                    if (status === 403) {
+                        msg = 'Acceso no autorizado: no tiene permiso para finalizar este informe.';
+                        // Remove button to prevent further unauthorized attempts
+                        if (btnFin) btnFin.style.display = 'none';
+                    } else if (status === 404) {
+                        msg = 'El informe no fue encontrado o el m\u00f3dulo est\u00e1 deshabilitado.';
+                    } else if (status === 409) {
+                        // Concurrency conflict — fetch current state before showing error
+                        try {
+                            const checkRes = await fetch(`/informes-clinicos/${activeReport.id}`, {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (checkRes.ok) {
+                                const currentReport = await checkRes.json();
+                                activeReport = currentReport;
+                                if (currentReport.estado === 'FINALIZADO') {
+                                    // Another session already finalized — show current state, no error
+                                    renderInformeFinalizado(currentReport);
+                                    document.getElementById('turno-detail-edit').style.display = 'none';
+                                    document.getElementById('turno-detail-content').style.display = 'grid';
+                                    document.getElementById('btn-start-edit').style.display = 'none';
+                                    if (btnFin) btnFin.style.display = 'none';
+                                    document.getElementById('btn-view-report').style.display = 'inline-block';
+                                    document.getElementById('btn-print-report').style.display = 'inline-flex';
+                                    document.getElementById('turno-detail-actions').style.display = 'flex';
+                                    const ev409 = originalTimelineEvents.find(e => e.tipo === 'TURNO' && e.id_referencia === currentTurnoDetail.id);
+                                    if (ev409) { ev409.informe_estado = 'FINALIZADO'; }
+                                    filterTimelineEvents();
+                                    return; // No error to show
+                                }
+                            }
+                        } catch (_) {}
+                        msg = 'El informe cambi\u00f3 en otra sesi\u00f3n. Recargue la versi\u00f3n actual antes de continuar.';
+                    } else if (status === 422) {
+                        const detail = errPayload.detail;
+                        msg = (typeof detail === 'string')
+                            ? detail
+                            : 'El contenido m\u00ednimo requerido no es v\u00e1lido. Verifique los campos obligatorios.';
+                    } else if (status >= 500) {
+                        msg = 'Error interno del servidor. El informe no fue finalizado. Intente nuevamente.';
+                    }
+
+                    errMsg.textContent = msg;
+                    errDiv.style.display = 'block';
+                }
+
+            } catch (networkErr) {
+                console.error('Network error finalizing report:', networkErr);
+                errMsg.textContent = 'Error de conexi\u00f3n. El informe no fue finalizado. Verifique su conexi\u00f3n e intente nuevamente.';
+                errDiv.style.display = 'block';
+            } finally {
+                isSubmitting = false;
+                // Restore button states (only if still in edit mode / error path)
+                if (btnFin && btnFin.style.display !== 'none') {
+                    btnFin.disabled = false;
+                    if (btnFinText) btnFinText.textContent = 'Finalizar informe';
+                }
+                if (btnSave) btnSave.disabled = false;
+                if (btnCancel) btnCancel.disabled = false;
+            }
+        }
+
+        function renderInformeFinalizado(report) {
+            // Populate metadata using safe textContent (never innerHTML for clinical data)
+            document.getElementById('if-tipo').textContent = report.tipo_informe || '-';
+            document.getElementById('if-estado').textContent = 'FINALIZADO';
+
+            // finalized_by_username is returned by backend if populated, else show user ID
+            const finBy = report.finalized_by_username
+                ? report.finalized_by_username
+                : (report.finalized_by ? 'Usuario #' + report.finalized_by : '-');
+            document.getElementById('if-finalizado-por').textContent = finBy;
+
+            // Show finalized_at in Argentina timezone (America/Argentina/Buenos_Aires)
+            if (report.finalized_at) {
+                try {
+                    const dt = new Date(report.finalized_at);
+                    const options = {
+                        timeZone: 'America/Argentina/Buenos_Aires',
+                        year: 'numeric', month: '2-digit', day: '2-digit',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    };
+                    document.getElementById('if-finalizado-at').textContent =
+                        dt.toLocaleString('es-AR', options);
+                } catch (_) {
+                    document.getElementById('if-finalizado-at').textContent = report.finalized_at;
+                }
+            } else {
+                document.getElementById('if-finalizado-at').textContent = '-';
+            }
+
+            // Render structured content fields as read-only (textContent only, no innerHTML)
+            const container = document.getElementById('if-contenido-container');
+            container.innerHTML = ''; // Safe: clearing container, not inserting user content
+
+            const tipo = report.tipo_informe;
+            const fields = TEMPLATES_CONFIG[tipo];
+            const contenido = report.contenido_json || {};
+
+            if (fields) {
+                fields.forEach(field => {
+                    const val = contenido[field.id];
+                    if (!val || !String(val).trim()) return; // skip empty fields
+
+                    const wrapper = document.createElement('div');
+                    wrapper.style.marginBottom = '0.75rem';
+                    wrapper.style.pageBreakInside = 'avoid';
+
+                    const labelEl = document.createElement('div');
+                    labelEl.style.fontSize = '0.75rem';
+                    labelEl.style.textTransform = 'uppercase';
+                    labelEl.style.color = '#276749';
+                    labelEl.style.fontWeight = '700';
+                    labelEl.style.marginBottom = '0.25rem';
+                    labelEl.textContent = field.label; // Safe
+
+                    const valueEl = document.createElement('div');
+                    valueEl.style.padding = '0.75rem';
+                    valueEl.style.background = '#fff';
+                    valueEl.style.border = '1px solid #c6f6d5';
+                    valueEl.style.borderRadius = '4px';
+                    valueEl.style.color = '#2d3748';
+                    valueEl.style.whiteSpace = 'pre-wrap';
+                    valueEl.style.fontSize = '0.9rem';
+                    valueEl.style.lineHeight = '1.6';
+                    valueEl.textContent = val; // Safe: textContent only, no innerHTML
+
+                    wrapper.appendChild(labelEl);
+                    wrapper.appendChild(valueEl);
+                    container.appendChild(wrapper);
+                });
+            }
+
+            // Show the panel
+            document.getElementById('informe-finalizado-panel').style.display = 'block';
+        }
+
+        function verInformeFinalizado() {
+            if (!activeReport || activeReport.estado !== 'FINALIZADO') return;
+            renderInformeFinalizado(activeReport);
+            const panel = document.getElementById('informe-finalizado-panel');
+            if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function imprimirInformeIndividual() {
+            if (!activeReport || activeReport.estado !== 'FINALIZADO') {
+                alert("No hay un informe finalizado cargado para imprimir.");
+                return;
+            }
+            const pl = document.getElementById('print-content-placeholder');
+            pl.innerHTML = '';
+
+            const printContainer = document.createElement('div');
+            printContainer.style.padding = '10px 0';
+            printContainer.style.color = '#1a202c';
+            printContainer.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+
+            // Get Practice / Práctica from Agenda or currentTurnoDetail
+            let practicasNombre = '';
+            if (typeof currentTurnoDetail !== 'undefined' && currentTurnoDetail) {
+                if (currentTurnoDetail.practicas && currentTurnoDetail.practicas.length > 0) {
+                    practicasNombre = currentTurnoDetail.practicas.map(p => p.nombre).join(' / ');
+                } else if (currentTurnoDetail.practica && currentTurnoDetail.practica.nombre) {
+                    practicasNombre = currentTurnoDetail.practica.nombre;
+                }
+            }
+            if (!practicasNombre) {
+                const tdPrac = document.getElementById('td-practicas')?.textContent || '';
+                if (tdPrac && tdPrac !== '-' && tdPrac !== 'Consulta/Sin práctica asoc.') {
+                    practicasNombre = tdPrac.replace(/\n/g, ' / ');
+                }
+            }
+
+            const tipo = activeReport.tipo_informe || '';
+
+            // Clean Title Box (Logo comes from print-layout thead automatically)
+            const titleBox = document.createElement('div');
+            titleBox.style.marginBottom = '20px';
+            titleBox.style.borderBottom = '2.5px solid #276749';
+            titleBox.style.paddingBottom = '10px';
+
+            const reportTitle = document.createElement('h2');
+            reportTitle.style.margin = '0';
+            reportTitle.style.fontSize = '15pt';
+            reportTitle.style.color = '#276749';
+            reportTitle.style.textTransform = 'uppercase';
+            reportTitle.style.letterSpacing = '0.5px';
+
+            if (practicasNombre && practicasNombre.trim() !== '' && practicasNombre !== '-') {
+                reportTitle.textContent = 'INFORME CLÍNICO: ' + practicasNombre.toUpperCase();
+            } else {
+                reportTitle.textContent = 'INFORME CLÍNICO — ' + tipo.replace(/_/g, ' ').toUpperCase();
+            }
+            titleBox.appendChild(reportTitle);
+            printContainer.appendChild(titleBox);
+
+            // Patient Info Table
+            const pName = document.getElementById('td-paciente')?.textContent || '-';
+            const pDni = document.getElementById('td-dni')?.textContent || '-';
+            const pFecha = (document.getElementById('td-fecha')?.textContent || '') + ' ' + (document.getElementById('td-hora')?.textContent || '');
+            const finBy = document.getElementById('if-finalizado-por')?.textContent || '-';
+            const finAt = document.getElementById('if-finalizado-at')?.textContent || '-';
+
+            const infoTable = document.createElement('table');
+            infoTable.style.width = '100%';
+            infoTable.style.borderCollapse = 'collapse';
+            infoTable.style.marginBottom = '25px';
+            infoTable.style.background = '#f7fafc';
+            infoTable.style.border = '1px solid #cbd5e0';
+            infoTable.style.fontSize = '10.5pt';
+
+            let medDerivante = '-';
+            if (typeof currentTurnoDetail !== 'undefined' && currentTurnoDetail) {
+                if (currentTurnoDetail.medico_derivante && currentTurnoDetail.medico_derivante.nombre) {
+                    medDerivante = currentTurnoDetail.medico_derivante.nombre;
+                } else if (currentTurnoDetail.medico_derivante_nombre) {
+                    medDerivante = currentTurnoDetail.medico_derivante_nombre;
+                }
+            }
+            if (medDerivante === '-' || !medDerivante) {
+                medDerivante = document.getElementById('td-derivante')?.textContent || document.getElementById('p-medico')?.textContent || '-';
+            }
+
+            infoTable.innerHTML = `
+                <tr>
+                    <td style="padding: 10px 14px; border: 1px solid #cbd5e0; width: 50%;"><strong>Paciente:</strong> ${pName}</td>
+                    <td style="padding: 10px 14px; border: 1px solid #cbd5e0; width: 50%;"><strong>Fecha Turno:</strong> ${pFecha}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 14px; border: 1px solid #cbd5e0;"><strong>DNI:</strong> ${pDni}</td>
+                    <td style="padding: 10px 14px; border: 1px solid #cbd5e0;"><strong>Práctica(s):</strong> ${practicasNombre || '-'}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 14px; border: 1px solid #cbd5e0;"><strong>Médico Solicitante:</strong> ${medDerivante}</td>
+                    <td style="padding: 10px 14px; border: 1px solid #cbd5e0;"><strong>Agenda/Servicio:</strong> ${document.getElementById('td-agenda')?.textContent || '-'}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding: 8px 14px; border: 1px solid #cbd5e0; background: #edf2f7; color: #2d3748;">
+                        <strong>Estado del Informe:</strong> FINALIZADO — <strong>Firmado por:</strong> ${finBy} (${finAt})
+                    </td>
+                </tr>
+            `;
+            printContainer.appendChild(infoTable);
+
+            // Report fields
+            const fields = TEMPLATES_CONFIG[tipo];
+            const contenido = activeReport.contenido_json || {};
+            if (fields) {
+                fields.forEach(field => {
+                    const val = contenido[field.id];
+                    if (!val || !String(val).trim()) return;
+                    const block = document.createElement('div');
+                    block.style.marginBottom = '18px';
+                    block.style.pageBreakInside = 'avoid';
+                    
+                    const lbl = document.createElement('div');
+                    lbl.style.fontSize = '10pt';
+                    lbl.style.fontWeight = 'bold';
+                    lbl.style.textTransform = 'uppercase';
+                    lbl.style.color = '#276749';
+                    lbl.style.borderBottom = '1px solid #e2e8f0';
+                    lbl.style.paddingBottom = '3px';
+                    lbl.style.marginBottom = '6px';
+                    lbl.textContent = field.label;
+                    
+                    const txt = document.createElement('div');
+                    txt.style.whiteSpace = 'pre-wrap';
+                    txt.style.fontSize = '11pt';
+                    txt.style.lineHeight = '1.6';
+                    txt.style.color = '#2d3748';
+                    txt.textContent = val; // Safe: textContent
+                    
+                    block.appendChild(lbl);
+                    block.appendChild(txt);
+                    printContainer.appendChild(block);
+                });
+            }
+
+            // Signature block
+            const sigDiv = document.createElement('div');
+            sigDiv.style.marginTop = '60px';
+            sigDiv.style.textAlign = 'right';
+            sigDiv.style.pageBreakInside = 'avoid';
+            sigDiv.innerHTML = `
+                <div style="display: inline-block; text-align: center; border-top: 1.5px solid #4a5568; padding-top: 8px; min-width: 250px;">
+                    <span style="font-weight: bold; display: block; font-size: 11pt; color: #2d3748;">${finBy !== '-' ? finBy : 'Firma del Profesional'}</span>
+                    <span style="color: #718096; display: block; font-size: 9pt;">Médico Especialista — Registro Clínico</span>
+                </div>
+            `;
+            printContainer.appendChild(sigDiv);
+
+            pl.appendChild(printContainer);
+            window.print();
+        }
+
+        // --- TIMELINE FILTER LOGIC ---
+        function filterTimelineEvents() {
+            const searchInput = document.getElementById('search-history-text');
+            const queryRaw = searchInput ? searchInput.value : '';
+            
+            const query = String(queryRaw || '')
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[̀-ͯ]/g, "")
+                .trim();
+                
+            if (!query) {
+                renderTimeline(originalTimelineEvents);
+                return;
+            }
+            
+            const filtered = originalTimelineEvents.filter(ev => {
+                const fieldsToSearch = [
+                    ev.tipo,
+                    ev.descripcion,
+                    ev.detalle,
+                    ev.medico_nombre,
+                    ev.creado_por,
+                    ev.firmado_por,
+                    ev.editado_por,
+                    ev.servicio,
+                    ev.estado,
+                    ev.informe_estado
+                ];
+                
+                if (ev.structured_content && typeof ev.structured_content === 'object') {
+                    const sc = ev.structured_content;
+                    for (const key in sc) {
+                        if (Object.prototype.hasOwnProperty.call(sc, key)) {
+                            const val = sc[key];
+                            if (val && typeof val !== 'object') {
+                                fieldsToSearch.push(val);
+                            }
+                        }
+                    }
+                }
+                
+                return fieldsToSearch.some(field => {
+                    if (field == null) return false;
+                    const normalizedField = String(field)
+                        .toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[̀-ͯ]/g, "");
+                    return normalizedField.includes(query);
+                });
+            });
+            
+            renderTimeline(filtered);
+        }
+
+        // Register filter input listener
+        const historySearchInput = document.getElementById('search-history-text');
+        if (historySearchInput) {
+            historySearchInput.addEventListener('input', filterTimelineEvents);
         }
 
         // --- AUTO-LOAD LOGIC ---
