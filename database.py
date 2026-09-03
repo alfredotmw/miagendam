@@ -15,9 +15,16 @@ connect_args = {}
 if "sqlite" in SQLALCHEMY_DATABASE_URL:
     connect_args = {"check_same_thread": False}
 
+engine_kwargs = {"connect_args": connect_args}
+if "sqlite" not in SQLALCHEMY_DATABASE_URL:
+    engine_kwargs.update({
+        "pool_pre_ping": True,
+        "pool_recycle": 1800,
+    })
+
 # Crea el motor de conexión
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args=connect_args
+    SQLALCHEMY_DATABASE_URL, **engine_kwargs
 )
 
 # Crea la sesión
@@ -34,3 +41,18 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# Enable SQLite Foreign Keys dynamically
+from sqlalchemy.engine import Engine
+from sqlalchemy import event
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if "sqlite" in str(type(dbapi_connection)):
+        try:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
+        except Exception:
+            pass

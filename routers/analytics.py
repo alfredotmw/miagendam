@@ -11,7 +11,7 @@ from models.practica import Practica
 from models.medico import MedicoDerivante
 from models.turno_practica import TurnoPractica
 from models.user import User
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 import pandas as pd
 from datetime import date
 
@@ -150,16 +150,21 @@ def get_excel_feed(
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    # Query all turns with Joins to optimize fetching
-    turnos = db.query(Turno).join(Paciente).join(Agenda)\
-        .outerjoin(Turno.medico_derivante)\
-        .outerjoin(User, Turno.creado_por_id == User.id)\
+    # Query all turns with eager loading to eliminate N+1 queries
+    turnos = db.query(Turno)\
+        .options(
+            joinedload(Turno.paciente).joinedload(Paciente.obra_social),
+            joinedload(Turno.agenda),
+            joinedload(Turno.medico_derivante),
+            joinedload(Turno.creado_por),
+            selectinload(Turno.practicas)
+        )\
         .order_by(Turno.fecha.desc()).all()
     
     data = []
     for t in turnos:
         # Calculate Age
-        edad = t.paciente.edad
+        edad = t.paciente.edad if t.paciente else None
         
         # Format Date and Time
         fecha_str = t.fecha.strftime("%Y-%m-%d") if t.fecha else ""
@@ -179,11 +184,11 @@ def get_excel_feed(
             "Semana": t.fecha.isocalendar()[1] if t.fecha else "",
             "Mes": t.fecha.month if t.fecha else "",
             "Año": t.fecha.year if t.fecha else "",
-            "Paciente": f"{t.paciente.apellido}, {t.paciente.nombre}",
-            "DNI": t.paciente.dni,
+            "Paciente": f"{t.paciente.apellido}, {t.paciente.nombre}" if t.paciente else "",
+            "DNI": t.paciente.dni if t.paciente else "",
             "Edad": edad,
-            "Obra_Social": t.paciente.obra_social.nombre if t.paciente.obra_social else "",
-            "Agenda_Servicio": t.agenda.nombre,
+            "Obra_Social": t.paciente.obra_social.nombre if (t.paciente and t.paciente.obra_social) else "",
+            "Agenda_Servicio": t.agenda.nombre if t.agenda else "",
             "Estado": estado,
             "Medico_Derivante": derivante,
             "Patologia": t.patologia or "",
