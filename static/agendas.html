@@ -189,7 +189,7 @@
     <div class="modal" id="confirmationModal">
         <div class="modal-content" style="max-width: 350px;">
             <div class="modal-header">Confirmar Acción</div>
-            <p id="confirmationMessage" style="margin-bottom: 2rem; color: #4a5568;">¿Está seguro?</p>
+            <p id="confirmationMessage" style="margin-bottom: 2rem; color: #4a5568; white-space: pre-line; line-height: 1.5;">¿Está seguro?</p>
             <div class="modal-actions">
                 <button class="action-btn btn-cancel" onclick="closeConfirmation()">Cancelar</button>
                 <button class="action-btn btn-confirm" id="btnConfirmAction" onclick="executeAction()">Sí,
@@ -292,6 +292,21 @@
                         <label>Patología</label>
                         <input type="text" id="edit-patologia" class="form-input" list="cancer-types-list"
                             placeholder="Buscar o ingresar Patología...">
+                    </div>
+                    <div class="form-group" id="group-edit-turno-estado" style="grid-column: 1 / -1; display: none; background: #f7fafc; padding: 0.85rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                        <label style="font-weight: 600; color: #2d3748; display: flex; align-items: center; justify-content: space-between;">
+                            <span>Estado del Turno (Gestión Admin)</span>
+                            <span id="badge-current-turno-estado" class="status-badge"></span>
+                        </label>
+                        <select id="edit-turno-estado" class="form-input" style="margin-top: 0.5rem;">
+                            <option value="PENDIENTE">PENDIENTE (Restablecer a Pendiente)</option>
+                            <option value="ESPERANDO">ESPERANDO (Presente)</option>
+                            <option value="COMPLETADO">COMPLETADO</option>
+                            <option value="AUSENTE">AUSENTE</option>
+                        </select>
+                        <small style="color: #718096; margin-top: 5px; display: block; line-height: 1.4;">
+                            ℹ️ Como administrador, puede corregir el estado del turno y restablecerlo a <strong>PENDIENTE</strong> si fue marcado por error por recepción.
+                        </small>
                     </div>
                 </div>
                 <div class="modal-actions">

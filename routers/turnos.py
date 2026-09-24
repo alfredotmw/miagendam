@@ -506,7 +506,7 @@ def eliminar_turno(turno_id: int, db: Session = Depends(get_db), current_user: d
         raise HTTPException(status_code=404, detail="Turno no encontrado")
     
     # 🛡️ SECURTY CHECK: Solo ADMIN puede borrar completados
-    if turno.estado == "COMPLETADO" and current_user.get("role") != "ADMIN":
+    if str(turno.estado or "").upper() == "COMPLETADO" and str(current_user.get("role") or "").upper() != "ADMIN":
         raise HTTPException(
             status_code=403, 
             detail="⚠️ ACCESO DENEGADO: No tiene permisos para eliminar un turno COMPLETADO. Contacte al administrador."
@@ -517,7 +517,7 @@ def eliminar_turno(turno_id: int, db: Session = Depends(get_db), current_user: d
         log_msg = f"[AUDIT] TURN DELETED | ID: {turno.id} | USER: {current_user.get('username')} ({current_user.get('role')}) | PACIENTE: {turno.paciente_id} | FECHA: {turno.fecha} | ESTADO_PREVIO: {turno.estado}"
         print(log_msg)
         # Opcional: Escribir a archivo si se desea persistencia simple
-        with open("audit_log.txt", "a") as f:
+        with open("audit_log.txt", "a", encoding="utf-8") as f:
             f.write(f"{datetime.now()} - {log_msg}\n")
     except Exception as e:
         print(f"Error logging audit: {e}")
@@ -536,8 +536,11 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
     if not turno:
         raise HTTPException(status_code=404, detail="Turno no encontrado")
     
-    # 🛡️ SECURITY CHECK: Si está COMPLETADO, solo ADMIN puede modificarlo (incluyendo pasarlo a AUSENTE)
-    if turno.estado == "COMPLETADO" and current_user.get("role") != "ADMIN":
+    current_estado = str(turno.estado or "").upper()
+    user_role = str(current_user.get("role") or "").upper()
+
+    # 🛡️ SECURITY CHECK: Si está COMPLETADO, solo ADMIN puede modificarlo (incluyendo pasarlo a AUSENTE o PENDIENTE)
+    if current_estado == "COMPLETADO" and user_role != "ADMIN":
         raise HTTPException(
             status_code=403, 
             detail="⚠️ ACCESO DENEGADO: No tiene permisos para modificar un turno COMPLETADO."
@@ -604,6 +607,23 @@ def actualizar_turno(turno_id: int, turno_in: TurnoUpdate, db: Session = Depends
         nuevo_estado = turno_in.estado.upper()
         if nuevo_estado not in ESTADOS_VALIDOS:
             raise HTTPException(status_code=400, detail=f"Estado inválido. Valores permitidos: {', '.join(ESTADOS_VALIDOS)}")
+        
+        # 🛡️ SECURITY CHECK: Solo ADMIN puede restablecer un turno a PENDIENTE si ya fue modificado (ej: COMPLETADO, ESPERANDO, AUSENTE)
+        if nuevo_estado == "PENDIENTE" and current_estado != "PENDIENTE" and user_role != "ADMIN":
+            raise HTTPException(
+                status_code=403,
+                detail="⚠️ ACCESO DENEGADO: Solo el administrador puede restablecer un turno al estado PENDIENTE."
+            )
+
+        if nuevo_estado != current_estado:
+            try:
+                log_msg = f"[AUDIT] ESTADO CHANGED | Turno ID: {turno.id} | {current_estado} -> {nuevo_estado} | USER: {current_user.get('username')} ({user_role})"
+                print(log_msg)
+                with open("audit_log.txt", "a", encoding="utf-8") as f:
+                    f.write(f"{datetime.now()} - {log_msg}\n")
+            except Exception as e:
+                print(f"Error logging status change audit: {e}")
+
         turno.estado = nuevo_estado
     if turno_in.duracion is not None:
         turno.duracion = turno_in.duracion

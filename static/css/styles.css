@@ -511,6 +511,11 @@ body {
     color: var(--blue-500);
 }
 
+.status-esperando {
+    background: #fefcbf;
+    color: #b7791f;
+}
+
 /* Action Buttons in Tables */
 .action-btn {
     padding: 0.5rem 0.75rem;
@@ -531,6 +536,26 @@ body {
 .btn-complete {
     background: #f0fff4;
     color: var(--green-500);
+}
+
+.btn-waiting {
+    background: #fefcbf;
+    color: #b7791f;
+}
+
+.btn-waiting:hover {
+    background: #faf089;
+}
+
+.btn-pending {
+    background: #ebf8ff;
+    color: #2b6cb0;
+    border: 1px solid #4299e1;
+}
+
+.btn-pending:hover {
+    background: #bee3f8;
+    color: #2c5282;
 }
 
 .btn-reschedule {

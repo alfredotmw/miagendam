@@ -402,6 +402,20 @@
             </div>
         </div>
     </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content" style="max-width: 350px;">
+            <div class="modal-header">Confirmar Acción</div>
+            <p id="confirmationMessage" style="margin-bottom: 2rem; color: #4a5568; white-space: pre-line; line-height: 1.5;">¿Está seguro?</p>
+            <div class="modal-actions">
+                <button class="action-btn btn-cancel" onclick="closeConfirmation()">Cancelar</button>
+                <button class="action-btn btn-confirm" id="btnConfirmAction" onclick="executeAction()">Sí,
+                    Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="/static/js/agendas_main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {

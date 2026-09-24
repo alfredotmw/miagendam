@@ -378,6 +378,11 @@ function renderSlots(slots) {
                     html += `<button class="action-btn btn-absent" onclick="requestUpdateStatus(${turno.id}, 'AUSENTE')" title="Ausente">❌</button>`;
                 }
 
+                // 🟢 ADMIN: Botón para volver a estado PENDIENTE si fue marcado por error (ej: completado, esperando/presente, ausente)
+                if (isAdmin && estado !== 'PENDIENTE') {
+                    html += `<button class="action-btn btn-pending" onclick="requestUpdateStatus(${turno.id}, 'PENDIENTE')" title="Volver a Pendiente (Admin)" style="background: #ebf8ff; border: 1px solid #4299e1; color: #2b6cb0;">↩️</button>`;
+                }
+
                 if (estado !== 'COMPLETADO' || isAdmin) {
                     html += `<button class="action-btn" onclick="deleteTurno(${turno.id}, '${estado}')" title="ELIMINAR TURNO" style="background: #FED7D7; border: 1px solid #F56565; color: #C53030;">🗑️</button>`;
                 }
@@ -655,9 +660,16 @@ window.requestUpdateStatus = function (id, status) {
     pendingStatus = status;
     pendingAction = 'UPDATE_STATUS';
 
-    const msg = status === 'COMPLETADO'
-        ? '¿Desea marcar este turno como COMPLETADO?'
-        : (status === 'ESPERANDO' ? '¿Desea marcar este turno como ESPERANDO?' : '¿Desea marcar este turno como AUSENTE?');
+    let msg = `¿Desea cambiar el estado de este turno a ${status}?`;
+    if (status === 'COMPLETADO') {
+        msg = '¿Desea marcar este turno como COMPLETADO?';
+    } else if (status === 'ESPERANDO') {
+        msg = '¿Desea marcar este turno como ESPERANDO (Presente)?';
+    } else if (status === 'AUSENTE') {
+        msg = '¿Desea marcar este turno como AUSENTE?';
+    } else if (status === 'PENDIENTE') {
+        msg = '⚠️ ¿Desea restablecer este turno al estado PENDIENTE?\n\nEl turno volverá a estar pendiente y disponible para su atención normal.';
+    }
 
     const modal = document.getElementById('confirmationModal');
     if (modal) {
@@ -665,7 +677,10 @@ window.requestUpdateStatus = function (id, status) {
         modal.classList.add('active');
         modal.style.display = 'flex'; // Force display
     } else {
-        console.error("Confirmation modal not found!");
+        console.warn("Confirmation modal not found, using window.confirm fallback");
+        if (confirm(msg)) {
+            performUpdateStatus(id, status);
+        }
     }
 }
 
@@ -1101,6 +1116,28 @@ window.openEditPatientModal = async function (patientId, turnoId = null) {
             if (foundTurno && foundTurno.patologia) {
                 document.getElementById('edit-patologia').value = foundTurno.patologia;
             }
+
+            // 🟢 ADMIN: Configurar selector de estado de turno
+            const groupEstado = document.getElementById('group-edit-turno-estado');
+            if (groupEstado) {
+                const isAdmin = window.currentUser && window.currentUser.role && window.currentUser.role.toLowerCase() === 'admin';
+                if (isAdmin) {
+                    groupEstado.style.display = 'block';
+                    const st = (foundTurno && foundTurno.estado ? foundTurno.estado : 'PENDIENTE').toUpperCase();
+                    const selEstado = document.getElementById('edit-turno-estado');
+                    if (selEstado) selEstado.value = st;
+                    const badgeEstado = document.getElementById('badge-current-turno-estado');
+                    if (badgeEstado) {
+                        badgeEstado.textContent = st;
+                        badgeEstado.className = `status-badge status-${st.toLowerCase()}`;
+                    }
+                } else {
+                    groupEstado.style.display = 'none';
+                }
+            }
+        } else {
+            const groupEstado = document.getElementById('group-edit-turno-estado');
+            if (groupEstado) groupEstado.style.display = 'none';
         }
 
         const editPatientModal = document.getElementById('editPatientModal');
@@ -1162,14 +1199,24 @@ async function submitEditPatient() {
 
         // 2. Update Turno (if context exists)
         if (currentTurnoIdEdit) {
+            const turnoPayload = { patologia: patologia };
+            const isAdmin = window.currentUser && window.currentUser.role && window.currentUser.role.toLowerCase() === 'admin';
+            const groupEstado = document.getElementById('group-edit-turno-estado');
+            const selEstado = document.getElementById('edit-turno-estado');
+            if (isAdmin && groupEstado && groupEstado.style.display !== 'none' && selEstado && selEstado.value) {
+                turnoPayload.estado = selEstado.value;
+            }
+
             const resTurno = await fetch(`/turnos/${currentTurnoIdEdit}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ patologia: patologia })
+                body: JSON.stringify(turnoPayload)
             });
 
             if (!resTurno.ok) {
-                console.warn("Patient updated but error updating Turno pathology");
+                const errTurno = await resTurno.json().catch(() => ({}));
+                console.warn("Patient updated but error updating Turno:", errTurno);
+                alert("Paciente actualizado, pero hubo un error con el turno: " + (errTurno.detail || "Error desconocido"));
             }
         }
 
@@ -1290,7 +1337,17 @@ window.openTurnoDetails = async function (turnoId) {
         
         // Populate agenda details
         document.getElementById('dt-agenda').textContent = turno.agenda ? turno.agenda.nombre.toUpperCase() : '-';
-        document.getElementById('dt-estado').textContent = turno.estado.toUpperCase();
+        
+        // 🟢 ADMIN: Estado con opción para volver a PENDIENTE desde el modal de detalle
+        const estadoUpper = (turno.estado || 'PENDIENTE').toUpperCase();
+        const estadoClass = estadoUpper.toLowerCase();
+        const isAdmin = window.currentUser && window.currentUser.role && window.currentUser.role.toLowerCase() === 'admin';
+        
+        let estadoHtml = `<span class="status-badge status-${estadoClass}">${estadoUpper}</span>`;
+        if (isAdmin && estadoUpper !== 'PENDIENTE') {
+            estadoHtml += ` <button type="button" class="action-btn btn-pending" onclick="requestUpdateStatus(${turno.id}, 'PENDIENTE'); closeDetalleTurnoModal();" title="Volver a Pendiente (Admin)" style="margin-left: 8px; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; cursor: pointer;">↩️ Volver a Pendiente</button>`;
+        }
+        document.getElementById('dt-estado').innerHTML = estadoHtml;
         
         // Format date
         let dateStr = '-';
