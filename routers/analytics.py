@@ -109,7 +109,7 @@ def get_live_data(db: Session = Depends(get_db)):
             "Edad": edad,
             "Estudio Solicitado": practica.nombre,
             "Servicio": turno.agenda.nombre,
-            "Médico Solicitante": turno.medico_derivante.nombre if turno.medico_derivante else "N/A",
+            "Médico Solicitante": turno.medico_derivante.nombre if turno.medico_derivante else (turno.paciente.medico_derivante.nombre if (turno.paciente and turno.paciente.medico_derivante) else "N/A"),
             "Estado": turno.estado,
             "creado_por": turno.creado_por.username if turno.creado_por else "N/A",
             "fecha_creacion": turno.fecha_creacion.strftime("%Y-%m-%d %H:%M:%S") if turno.fecha_creacion else "N/A"
@@ -154,6 +154,7 @@ def get_excel_feed(
     turnos = db.query(Turno)\
         .options(
             joinedload(Turno.paciente).joinedload(Paciente.obra_social),
+            joinedload(Turno.paciente).joinedload(Paciente.medico_derivante),
             joinedload(Turno.agenda),
             joinedload(Turno.medico_derivante),
             joinedload(Turno.creado_por),
@@ -173,8 +174,8 @@ def get_excel_feed(
         # Determine Status
         estado = t.estado
         
-        # Determine Referral
-        derivante = t.medico_derivante.nombre if t.medico_derivante else ""
+        # Determine Referral (Turno priority, fallback to Paciente)
+        derivante = t.medico_derivante.nombre if t.medico_derivante else (t.paciente.medico_derivante.nombre if (t.paciente and t.paciente.medico_derivante) else "")
         
         # Build Record
         record = {

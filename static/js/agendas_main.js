@@ -1113,8 +1113,19 @@ window.openEditPatientModal = async function (patientId, turnoId = null) {
                 }
             }
 
+            if (!foundTurno) {
+                try {
+                    const resT = await fetch(`/turnos/${currentTurnoIdEdit}/detalle`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (resT.ok) foundTurno = await resT.json();
+                } catch (_) {}
+            }
+
             if (foundTurno && foundTurno.patologia) {
                 document.getElementById('edit-patologia').value = foundTurno.patologia;
+            }
+
+            if (foundTurno && foundTurno.medico_derivante && foundTurno.medico_derivante.nombre) {
+                document.getElementById('edit-medico').value = foundTurno.medico_derivante.nombre;
             }
 
             // 🟢 ADMIN: Configurar selector de estado de turno
@@ -1199,7 +1210,10 @@ async function submitEditPatient() {
 
         // 2. Update Turno (if context exists)
         if (currentTurnoIdEdit) {
-            const turnoPayload = { patologia: patologia };
+            const turnoPayload = { 
+                patologia: patologia,
+                medico_derivante_nombre: medico_derivante_nombre
+            };
             const isAdmin = window.currentUser && window.currentUser.role && window.currentUser.role.toLowerCase() === 'admin';
             const groupEstado = document.getElementById('group-edit-turno-estado');
             const selEstado = document.getElementById('edit-turno-estado');
@@ -1357,6 +1371,17 @@ window.openTurnoDetails = async function (turnoId) {
         }
         document.getElementById('dt-fecha').textContent = dateStr;
         document.getElementById('dt-hora').textContent = turno.hora || '-';
+
+        // Populate Medico Derivante and Patologia
+        const medName = (turno.medico_derivante && turno.medico_derivante.nombre) 
+            ? turno.medico_derivante.nombre 
+            : (p && p.medico_derivante && p.medico_derivante.nombre ? p.medico_derivante.nombre : '-');
+        const dtMed = document.getElementById('dt-medico');
+        if (dtMed) dtMed.textContent = medName;
+
+        const patName = turno.patologia || (p && p.patologia ? p.patologia : '-');
+        const dtPat = document.getElementById('dt-patologia');
+        if (dtPat) dtPat.textContent = patName;
         
         // Populate practices list
         const practicasContainer = document.getElementById('dt-practicas');
