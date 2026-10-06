@@ -1386,10 +1386,46 @@ window.openTurnoDetails = async function (turnoId) {
         // Populate practices list
         const practicasContainer = document.getElementById('dt-practicas');
         practicasContainer.innerHTML = '';
+        const canEditPracticas = !(estadoUpper === 'COMPLETADO' && !isAdmin);
+        const hasMultiplePracticas = turno.practicas && turno.practicas.length > 1;
+
         if (turno.practicas && turno.practicas.length > 0) {
             turno.practicas.forEach(pr => {
                 const li = document.createElement('li');
-                li.textContent = pr.nombre;
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+                li.style.alignItems = 'center';
+                li.style.padding = '6px 0';
+                li.style.borderBottom = '1px dashed #e2e8f0';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = pr.nombre;
+                nameSpan.style.fontWeight = '500';
+                li.appendChild(nameSpan);
+
+                if (hasMultiplePracticas) {
+                    const btnQuitar = document.createElement('button');
+                    btnQuitar.type = 'button';
+                    btnQuitar.className = 'action-btn';
+                    btnQuitar.innerHTML = '✕ Quitar';
+                    btnQuitar.title = canEditPracticas 
+                        ? `Quitar práctica "${pr.nombre}" de este turno` 
+                        : 'No se puede modificar un turno completado';
+                    btnQuitar.style.cssText = 'background: #FED7D7; border: 1px solid #FEB2B2; color: #C53030; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; cursor: pointer; margin-left: 8px; font-weight: 600; white-space: nowrap;';
+                    
+                    if (!canEditPracticas) {
+                        btnQuitar.disabled = true;
+                        btnQuitar.style.opacity = '0.5';
+                        btnQuitar.style.cursor = 'not-allowed';
+                    } else {
+                        btnQuitar.onclick = (e) => {
+                            e.stopPropagation();
+                            removePracticaFromTurno(turno.id, pr.id, pr.nombre);
+                        };
+                    }
+                    li.appendChild(btnQuitar);
+                }
+
                 practicasContainer.appendChild(li);
             });
         } else {
@@ -1461,3 +1497,39 @@ window.saveTurnoObservaciones = async function () {
         btn.disabled = false;
     }
 }
+
+// 🟢 NEW: Remove single practice from turno
+window.removePracticaFromTurno = async function (turnoId, practicaId, practicaNombre) {
+    if (!confirm(`¿Está seguro de que desea quitar la práctica "${practicaNombre}" de este turno?\n\nLas demás prácticas del paciente se conservarán.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/turnos/${turnoId}/practicas/${practicaId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.detail || "Error al quitar la práctica");
+        }
+
+        const data = await response.json();
+        alert(data.mensaje || "Práctica eliminada correctamente del turno.");
+
+        // Refrescar el modal de detalle con los datos actualizados
+        await openTurnoDetails(turnoId);
+
+        // Refrescar la grilla de slots de la agenda en el fondo
+        if (typeof loadSlots === 'function') {
+            loadSlots();
+        }
+    } catch (err) {
+        console.error(err);
+        alert(err.message || "Error al quitar la práctica");
+    }
+};
+

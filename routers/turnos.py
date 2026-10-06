@@ -527,6 +527,92 @@ def eliminar_turno(turno_id: int, db: Session = Depends(get_db), current_user: d
     return {"mensaje": f"Turno {turno_id} eliminado correctamente"}
 
 
+# 🟢 Eliminar una práctica específica de un turno (cuando tiene múltiples prácticas)
+@router.delete("/{turno_id}/practicas/{practica_id}")
+def eliminar_practica_turno(
+    turno_id: int, 
+    practica_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
+):
+    turno = db.get(Turno, turno_id)
+    if not turno:
+        raise HTTPException(status_code=404, detail="Turno no encontrado")
+
+    current_estado = str(turno.estado or "").upper()
+    user_role = str(current_user.get("role") or "").upper()
+
+    # 🛡️ SECURITY CHECK: Si está COMPLETADO, solo ADMIN puede modificarlo
+    if current_estado == "COMPLETADO" and user_role != "ADMIN":
+        raise HTTPException(
+            status_code=403,
+            detail="⚠️ ACCESO DENEGADO: No tiene permisos para modificar un turno COMPLETADO."
+        )
+
+    # Validar que la práctica esté asociada al turno
+    practica_a_eliminar = next((p for p in turno.practicas if p.id == practica_id), None)
+    if not practica_a_eliminar:
+        raise HTTPException(
+            status_code=404, 
+            detail="La práctica no está asociada a este turno"
+        )
+
+    # 🛡️ REGLA: No dejar el turno sin prácticas (mínimo 1 práctica)
+    if len(turno.practicas) <= 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Esta es la única práctica del turno. Si desea anular el turno completo, utilice el botón Eliminar Turno."
+        )
+
+    # Eliminar registro en tabla intermedia turnos_practicas
+    tp_record = db.query(TurnoPractica).filter(
+        TurnoPractica.turno_id == turno_id,
+        TurnoPractica.practica_id == practica_id
+    ).first()
+
+    if tp_record:
+        db.delete(tp_record)
+
+    # Prácticas restantes
+    remaining_practicas = [p for p in turno.practicas if p.id != practica_id]
+
+    # Si en el modelo antiguo estaba asignado en practica_id, actualizarlo
+    if turno.practica_id == practica_id:
+        turno.practica_id = remaining_practicas[0].id if remaining_practicas else None
+
+    # Recalcular duración del turno si la agenda lo admite
+    if turno.agenda:
+        from services.turno_service import calculate_duration
+        try:
+            custom_dur = turno.duracion if (turno.agenda.tipo == "RADIOTERAPIA") else None
+            nueva_duracion = calculate_duration(turno.agenda.tipo, remaining_practicas, custom_dur)
+            turno.duracion = nueva_duracion
+        except Exception as e:
+            print(f"Nota: Duración conservada o error al recalcular duración: {e}")
+
+    # Auditoría
+    turno.modificado_por_id = current_user.get("id")
+    turno.fecha_modificacion = datetime.now()
+
+    try:
+        log_msg = f"[AUDIT] PRACTICE REMOVED | Turno ID: {turno.id} | Practica ID: {practica_id} ({practica_a_eliminar.nombre}) | USER: {current_user.get('username')} ({user_role})"
+        print(log_msg)
+        with open("audit_log.txt", "a", encoding="utf-8") as f:
+            f.write(f"{datetime.now()} - {log_msg}\n")
+    except Exception as e:
+        print(f"Error logging practice deletion audit: {e}")
+
+    db.commit()
+    db.refresh(turno)
+
+    return {
+        "mensaje": f"Práctica '{practica_a_eliminar.nombre}' eliminada correctamente del turno",
+        "turno_id": turno.id,
+        "duracion": turno.duracion,
+        "practicas_restantes": [{"id": p.id, "nombre": p.nombre} for p in turno.practicas]
+    }
+
+
 from schemas.turno import TurnoUpdate
 
 @router.patch("/{turno_id}", response_model=TurnoOut)
