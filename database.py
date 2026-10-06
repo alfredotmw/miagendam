@@ -7,9 +7,12 @@ import os
 # Nombre de tu base de datos (sqlite)
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agendas.db")
 
-# Si es PostgreSQL (Render usa postgres:// pero SQLAlchemy necesita postgresql://)
+# Si es PostgreSQL (Render usa postgres:// pero SQLAlchemy necesita postgresql+psycopg2://)
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+elif SQLALCHEMY_DATABASE_URL.startswith("postgresql://") and not SQLALCHEMY_DATABASE_URL.startswith("postgresql+psycopg2://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+
 
 connect_args = {}
 if "sqlite" in SQLALCHEMY_DATABASE_URL:
