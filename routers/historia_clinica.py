@@ -557,7 +557,8 @@ def get_timeline_by_dni(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user) # Pass user
 ):
-    paciente = db.query(Paciente).filter(Paciente.dni == dni).first()
+    dni_norm = dni.replace('.', '').replace(' ', '').replace('-', '').strip()
+    paciente = db.query(Paciente).filter(Paciente.dni == dni_norm).first()
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
     

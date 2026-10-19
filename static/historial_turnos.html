@@ -914,19 +914,23 @@
         function logout() { localStorage.removeItem('token'); window.location.href = '/static/login.html'; }
 
         async function searchHistory() {
-            const input = document.getElementById('search-dni').value.trim();
-            if (!input) { alert("Ingrese un DNI o Apellido"); return; }
+            const rawInput = document.getElementById('search-dni').value.trim();
+            if (!rawInput) { alert("Ingrese un DNI o Apellido"); return; }
             const btn = document.querySelector('.search-container button');
             const originalText = btn.textContent;
             btn.textContent = '...'; btn.disabled = true;
 
             try {
-                const isDni = /^\d+$/.test(input) && input.length > 5;
+                // Verificar si es un DNI (ignorando puntos, espacios y guiones)
+                const cleanDni = rawInput.replace(/[\.\-\s]/g, '');
+                const isDni = /^\d+$/.test(cleanDni) && cleanDni.length > 5;
                 if (isDni) {
-                    currentDni = input;
-                    await fetchAndRender(input);
+                    currentDni = cleanDni;
+                    await fetchAndRender(cleanDni);
                 } else {
-                    const res = await fetch(`/pacientes/?q=${encodeURIComponent(input)}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    // Limpiar coma final si el usuario puso por ejemplo "romero,"
+                    const cleanQuery = rawInput.replace(/[,;\s]+$/, '').trim() || rawInput;
+                    const res = await fetch(`/pacientes/?q=${encodeURIComponent(cleanQuery)}`, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (!res.ok) throw new Error("Error");
                     const patients = await res.json();
                     if (patients.length === 0) alert("No se encontraron pacientes.");

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_, and_
 from database import get_db
 from models.paciente import Paciente
 from models.obra_social import ObraSocial
@@ -8,6 +8,7 @@ from models.medico import MedicoDerivante # 👈 Import
 from schemas.paciente import PacienteCreate, PacienteUpdate, PacienteOut
 from typing import List, Optional
 from datetime import date
+import re
 
 router = APIRouter(
     prefix="/pacientes",
@@ -75,7 +76,7 @@ def crear_paciente(paciente: PacienteCreate, db: Session = Depends(get_db), curr
     return nuevo
 
 
-# 🟢 Listar pacientes con filtro
+# 🟢 Listar pacientes con filtro inteligente (soporta comas, 'apellido, nombre', DNI con puntos y palabras sueltas)
 @router.get("/", response_model=List[PacienteOut])
 def listar_pacientes(
     q: Optional[str] = Query(None, description="Buscar por DNI, nombre o apellido"),
@@ -84,13 +85,58 @@ def listar_pacientes(
     db: Session = Depends(get_db)
 ):
     query = db.query(Paciente)
-    if q:
-        query = query.filter(
-            (Paciente.dni.contains(q)) |
-            (Paciente.nombre.ilike(f"%{q}%")) |
-            (Paciente.apellido.ilike(f"%{q}%"))
-        )
-    pacientes = query.offset(offset).limit(limit).all()
+    if q and isinstance(q, str):
+        q_raw = q.strip()
+        if q_raw:
+            # 1. Candidato a DNI (quitando puntos, guiones, espacios y comas)
+            dni_candidate = q_raw.replace('.', '').replace('-', '').replace(' ', '').replace(',', '')
+            
+            # 2. Separar por palabras/tokens reemplazando comas y punto y comas por espacios
+            cleaned_text = q_raw.replace(',', ' ').replace(';', ' ')
+            tokens = [t.strip() for t in cleaned_text.split() if t.strip()]
+            
+            conditions = []
+            
+            # Si el texto es numérico (DNI con o sin formato), buscar por DNI
+            if dni_candidate and dni_candidate.isdigit():
+                conditions.append(Paciente.dni.contains(dni_candidate))
+            
+            # Si hay palabras/tokens (ej: 'romero', 'juan')
+            if tokens:
+                token_filters = []
+                for token in tokens:
+                    variations = {token}
+                    accented_chars = 'áéíóúÁÉÍÓÚñÑ'
+                    if any(c in accented_chars for c in token):
+                        wildcard_var = ''.join('_' if c in accented_chars else c for c in token)
+                        variations.add(wildcard_var)
+                    if 'n' in token.lower():
+                        n_var = re.sub(r'[nN]', '_', token)
+                        variations.add(n_var)
+                        
+                    token_variants = []
+                    for var in variations:
+                        token_variants.append(Paciente.apellido.ilike(f"%{var}%"))
+                        token_variants.append(Paciente.nombre.ilike(f"%{var}%"))
+                        token_variants.append(Paciente.dni.contains(var))
+                    token_filters.append(or_(*token_variants))
+                
+                # Todos los tokens deben coincidir en alguno de los campos
+                conditions.append(and_(*token_filters))
+                
+                # Búsqueda sobre nombre completo concatenado
+                full_name_ap_nom = func.concat(Paciente.apellido, ' ', Paciente.nombre)
+                full_name_nom_ap = func.concat(Paciente.nombre, ' ', Paciente.apellido)
+                full_text_search = ' '.join(tokens)
+                conditions.append(full_name_ap_nom.ilike(f"%{full_text_search}%"))
+                conditions.append(full_name_nom_ap.ilike(f"%{full_text_search}%"))
+            
+            if conditions:
+                query = query.filter(or_(*conditions))
+                
+    actual_limit = limit if isinstance(limit, int) else 100
+    actual_offset = offset if isinstance(offset, int) else 0
+    pacientes = query.order_by(Paciente.apellido, Paciente.nombre).offset(actual_offset).limit(actual_limit).all()
     return pacientes
 
 
