@@ -816,6 +816,72 @@
         </div>
     </div>
 
+    <!-- Plan Detail Modal -->
+    <div id="planDetailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="plan-detail-title">
+        <div class="modal-content" style="max-width: 820px; padding: 2.5rem; position: relative;">
+            <div class="modal-header" style="border-bottom: 1px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="plan-detail-title" class="modal-title" style="color: #2d3748; font-size: 1.5rem; margin: 0;">Detalle del Plan de Tratamiento</h3>
+                <span class="close-modal" id="close-plan-detail-btn" onclick="cerrarDetallePlan()" style="cursor: pointer; font-size: 1.8rem; font-weight: 700; color: #a0aec0; transition: color 0.2s;" tabindex="0" role="button" aria-label="Cerrar modal">&times;</span>
+            </div>
+
+            <div id="plan-detail-content" style="display: grid; gap: 1.25rem;">
+                <!-- Summary Card -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; background: #f7fafc; padding: 1.25rem; border-radius: 8px; border: 1px solid #edf2f7;">
+                    <div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">Paciente</div>
+                        <div id="pd-paciente" style="font-weight: 600; color: #2d3748;">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">DNI</div>
+                        <div id="pd-dni" style="color: #4a5568;">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">Servicio / Tratamiento</div>
+                        <div id="pd-servicio" style="font-weight: 600; color: #2b6cb0;">-</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.25rem;">Período del Plan</div>
+                        <div id="pd-periodo" style="color: #4a5568;">-</div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.5rem;">Progreso del Tratamiento</div>
+                        <div id="pd-progreso-badges" style="display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;"></div>
+                    </div>
+                </div>
+
+                <!-- Sessions List Section -->
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <h4 style="color: #2d3748; font-size: 1.1rem; font-weight: 700; margin: 0;">
+                            Sesiones del Tratamiento (<span id="pd-total-sesiones">0</span>)
+                        </h4>
+                        <span style="font-size: 0.8rem; color: #718096;">Hacé clic en cualquier sesión para ver su informe o detalle</span>
+                    </div>
+                    <div id="pd-sesiones-wrapper" style="max-height: 380px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+                            <thead style="background: #edf2f7; position: sticky; top: 0; z-index: 10;">
+                                <tr>
+                                    <th style="padding: 0.75rem 0.85rem; font-weight: 600; color: #4a5568; border-bottom: 1px solid #cbd5e0;">#</th>
+                                    <th style="padding: 0.75rem 0.85rem; font-weight: 600; color: #4a5568; border-bottom: 1px solid #cbd5e0;">Fecha y Hora</th>
+                                    <th style="padding: 0.75rem 0.85rem; font-weight: 600; color: #4a5568; border-bottom: 1px solid #cbd5e0;">Agenda / Sede</th>
+                                    <th style="padding: 0.75rem 0.85rem; font-weight: 600; color: #4a5568; border-bottom: 1px solid #cbd5e0;">Estado Turno</th>
+                                    <th style="padding: 0.75rem 0.85rem; font-weight: 600; color: #4a5568; border-bottom: 1px solid #cbd5e0;">Informe Clínico</th>
+                                    <th style="padding: 0.75rem 0.85rem; font-weight: 600; color: #4a5568; border-bottom: 1px solid #cbd5e0; text-align: right;">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pd-sesiones-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Footer Action Buttons -->
+                <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem; border-top: 1px solid #edf2f7; padding-top: 1rem;">
+                    <button type="button" class="btn-cancel" onclick="cerrarDetallePlan()" style="padding: 0.5rem 1.25rem; border-radius: 4px; border: 1px solid #cbd5e0; background: #fff; cursor: pointer; font-weight: 600; color: #4a5568;">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <datalist id="os-list"></datalist>
     <datalist id="medicos-list"></datalist>
 
@@ -900,6 +966,10 @@
                 },
                 ESPERANDO: {
                     texto: 'Esperando',
+                    clase: 'estado-esperando'
+                },
+                EN_CURSO: {
+                    texto: 'En curso',
                     clase: 'estado-esperando'
                 }
             };
@@ -1082,6 +1152,9 @@
                         actions = `<button onclick="openNoteModal(eventsMap[${ev.id_referencia}], true)" 
                          style="float:right;background:none;border:none;color:#2b6cb0;cursor:pointer;font-size:0.85rem">👁️ Ver Detalle</button>`;
                     }
+                } else if (isPlan) {
+                    actions = `<button type="button" onclick="abrirDetallePlan(${ev.id_referencia}, event)" 
+                     style="float:right;background:none;border:none;color:#2b6cb0;cursor:pointer;font-size:0.85rem;font-weight:600;">👁️ Ver Detalle del Plan</button>`;
                 }
 
                 let statusBadgeHtml = '';
@@ -1107,11 +1180,22 @@
                             ${badgeContent}
                         </span>
                     `;
+                } else if (tipoEvento === 'PLAN_TRATAMIENTO') {
+                    const statusInfo = obtenerPresentacionEstado(ev.estado);
+                    statusBadgeHtml = `
+                        <span class="status-badges-container">
+                            <span class="estado-badge ${statusInfo.clase}">
+                                ${escapeHtml(statusInfo.texto)}
+                            </span>
+                        </span>
+                    `;
                 }
 
                 let cardAttrs = `class="timeline-card"`;
                 if (tipoEvento === 'TURNO' && enableClinicalReports) {
                     cardAttrs = `class="timeline-card clickable-turno-card" tabindex="0" role="button" onclick="abrirDetalleTurno(${ev.id_referencia}, event)" onkeydown="if(event.key === 'Enter' || event.key === ' ') { abrirDetalleTurno(${ev.id_referencia}, event); event.preventDefault(); }" style="cursor: pointer;"`;
+                } else if (tipoEvento === 'PLAN_TRATAMIENTO') {
+                    cardAttrs = `class="timeline-card clickable-turno-card" tabindex="0" role="button" onclick="abrirDetallePlan(${ev.id_referencia}, event)" onkeydown="if(event.key === 'Enter' || event.key === ' ') { abrirDetallePlan(${ev.id_referencia}, event); event.preventDefault(); }" style="cursor: pointer;"`;
                 }
 
                 return `
@@ -2195,12 +2279,125 @@
             const modal = document.getElementById('turnoDetailModal');
             modal.classList.remove('active');
             
+            if (isOpenedFromPlan) {
+                isOpenedFromPlan = false;
+                const planModal = document.getElementById('planDetailModal');
+                if (planModal) planModal.classList.add('active');
+                return;
+            }
+
             if (lastActiveElement) {
                 try {
                     lastActiveElement.focus();
                 } catch (e) {}
             }
         }
+
+        let isOpenedFromPlan = false;
+
+        function abrirTurnoDesdePlan(turnoId) {
+            isOpenedFromPlan = true;
+            const planModal = document.getElementById('planDetailModal');
+            if (planModal) planModal.classList.remove('active');
+            abrirDetalleTurno(turnoId);
+        }
+
+        function abrirDetallePlan(refId, event) {
+            if (event) {
+                event.stopPropagation();
+            }
+
+            const ev = eventsMap[refId];
+            if (!ev) return;
+
+            const sc = ev.structured_content || {};
+            const sesiones = Array.isArray(sc.sesiones) ? sc.sesiones : [];
+
+            const pNombreEl = document.getElementById('p-nombre');
+            document.getElementById('pd-paciente').textContent = pNombreEl ? pNombreEl.textContent : '-';
+            document.getElementById('pd-dni').textContent = currentDni || '-';
+            document.getElementById('pd-servicio').textContent = ev.servicio || 'TRATAMIENTO';
+
+            const fIni = sc.fecha_inicio || '-';
+            const fFin = sc.fecha_fin || '-';
+            document.getElementById('pd-periodo').textContent = `Desde ${fIni} hasta ${fFin}`;
+            document.getElementById('pd-total-sesiones').textContent = sesiones.length || sc.total || 0;
+
+            const completadas = sc.completadas != null ? sc.completadas : sesiones.filter(s => ['COMPLETADO', 'ASISTIO', 'REALIZADO'].includes(String(s.estado).toUpperCase())).length;
+            const pendientes = sc.pendientes != null ? sc.pendientes : sesiones.filter(s => ['PENDIENTE', 'EN_CURSO', 'ESPERANDO'].includes(String(s.estado).toUpperCase())).length;
+            const ausentes = sc.ausentes != null ? sc.ausentes : sesiones.filter(s => ['AUSENTE', 'CANCELADO'].includes(String(s.estado).toUpperCase())).length;
+
+            const badgesContainer = document.getElementById('pd-progreso-badges');
+            badgesContainer.innerHTML = `
+                <span class="estado-badge estado-completado" style="font-size: 0.85rem; padding: 0.3rem 0.7rem;">
+                    ✓ ${completadas} Realizada(s)
+                </span>
+                <span class="estado-badge estado-pendiente" style="font-size: 0.85rem; padding: 0.3rem 0.7rem;">
+                    ⏳ ${pendientes} Pendiente(s)
+                </span>
+                ${ausentes > 0 ? `
+                <span class="estado-badge estado-ausente" style="font-size: 0.85rem; padding: 0.3rem 0.7rem;">
+                    ✗ ${ausentes} Ausente(s)
+                </span>` : ''}
+            `;
+
+            const tbody = document.getElementById('pd-sesiones-tbody');
+            if (sesiones.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2rem; color: #a0aec0;">No hay sesiones registradas en este plan.</td></tr>`;
+            } else {
+                tbody.innerHTML = sesiones.map((s, idx) => {
+                    const stInfo = obtenerPresentacionEstado(s.estado);
+                    const repInfo = obtenerPresentacionInforme(s.informe_estado);
+                    const horaStr = s.hora ? s.hora.substring(0, 5) : '';
+                    const fechaHora = `${s.fecha} ${horaStr}`.trim();
+
+                    return `
+                    <tr class="plan-session-row" onclick="abrirTurnoDesdePlan(${s.id})" style="border-bottom: 1px solid #edf2f7; cursor: pointer; transition: background-color 0.15s ease;" onmouseover="this.style.backgroundColor='#f7fafc'" onmouseout="this.style.backgroundColor='transparent'">
+                        <td style="padding: 0.7rem 0.85rem; font-weight: 700; color: #718096;">#${idx + 1}</td>
+                        <td style="padding: 0.7rem 0.85rem; font-weight: 600; color: #2d3748; white-space: nowrap;">
+                            📅 ${escapeHtml(fechaHora)}
+                        </td>
+                        <td style="padding: 0.7rem 0.85rem; color: #4a5568;">
+                            <div><strong>${escapeHtml(s.agenda || '-')}</strong></div>
+                            ${s.practica && s.practica !== s.agenda ? `<div style="font-size: 0.78rem; color: #718096;">${escapeHtml(s.practica)}</div>` : ''}
+                        </td>
+                        <td style="padding: 0.7rem 0.85rem;">
+                            <span class="estado-badge ${stInfo.clase}">
+                                ${escapeHtml(stInfo.texto)}
+                            </span>
+                        </td>
+                        <td style="padding: 0.7rem 0.85rem;">
+                            <span class="estado-badge ${repInfo.clase}">
+                                ${escapeHtml(repInfo.texto)}
+                            </span>
+                        </td>
+                        <td style="padding: 0.7rem 0.85rem; text-align: right; white-space: nowrap;">
+                            <button type="button" onclick="event.stopPropagation(); abrirTurnoDesdePlan(${s.id});" style="padding: 0.35rem 0.75rem; border-radius: 4px; border: 1px solid #3182ce; background: #ebf8ff; color: #2b6cb0; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                                👁️ Ver Detalle
+                            </button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+
+            const modal = document.getElementById('planDetailModal');
+            if (modal) {
+                modal.classList.add('active');
+                document.getElementById('close-plan-detail-btn').focus();
+            }
+        }
+
+        function cerrarDetallePlan() {
+            const modal = document.getElementById('planDetailModal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        window.addEventListener('click', function(e) {
+            const planModal = document.getElementById('planDetailModal');
+            if (e.target === planModal) {
+                cerrarDetallePlan();
+            }
+        });
 
         function obtenerPresentacionInforme(estado) {
             const val = String(estado || '').trim().toUpperCase();
@@ -2224,6 +2421,12 @@
                 const modal = document.getElementById('turnoDetailModal');
                 if (modal && modal.classList.contains('active')) {
                     cerrarDetalleTurno();
+                    return;
+                }
+                const planModal = document.getElementById('planDetailModal');
+                if (planModal && planModal.classList.contains('active')) {
+                    cerrarDetallePlan();
+                    return;
                 }
             }
         });

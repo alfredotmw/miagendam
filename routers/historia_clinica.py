@@ -529,6 +529,39 @@ def get_timeline(
             det = (f"<strong>Progreso:</strong> {completed}/{count} realizada(s).<br>"
                    f"<small>Inicio: {first['fecha'].strftime('%d/%m/%Y')} - Fin est: {last['fecha'].strftime('%d/%m/%Y')}</small>")
 
+            # Collect individual sessions in group for the plan detail modal
+            sesiones_list = []
+            for item in group:
+                t = item["turno"]
+                practica_desc = ""
+                if getattr(t, "practica", None) and t.practica:
+                    practica_desc = t.practica.nombre
+                if getattr(t, "practicas", None) and t.practicas:
+                    p_names = [p.nombre for p in t.practicas]
+                    if practica_desc and practica_desc not in p_names:
+                        p_names.insert(0, practica_desc)
+                    practica_desc = ", ".join(p_names)
+
+                rep_id, rep_estado = reports_map.get(t.id, (None, None))
+                med_deriv = "-"
+                if getattr(t, "medico_derivante", None) and t.medico_derivante:
+                    med_deriv = t.medico_derivante.nombre
+                elif getattr(t, "medico_derivante_nombre", None):
+                    med_deriv = t.medico_derivante_nombre
+
+                sesiones_list.append({
+                    "id": t.id,
+                    "fecha": t.fecha.strftime("%d/%m/%Y") if t.fecha else "",
+                    "hora": t.hora or "",
+                    "estado": t.estado or "PENDIENTE",
+                    "agenda": item.get("agenda_nombre", ""),
+                    "practica": practica_desc or first['servicio'],
+                    "medico_derivante": med_deriv,
+                    "observaciones": getattr(t, "observaciones", "") or "",
+                    "informe_id": rep_id,
+                    "informe_estado": rep_estado
+                })
+
             # Add to timeline (using last date to keep it top-relevant)
             timeline_events.append(TimelineEvent(
                 tipo="PLAN_TRATAMIENTO",
@@ -537,7 +570,17 @@ def get_timeline(
                 detalle=det,
                 id_referencia=first["turno"].id,
                 servicio=first["servicio"],
-                estado=plan_status
+                estado=plan_status,
+                structured_content={
+                    "servicio": first["servicio"],
+                    "total": count,
+                    "completadas": completed,
+                    "pendientes": pending,
+                    "ausentes": absent,
+                    "fecha_inicio": first["fecha"].strftime('%d/%m/%Y'),
+                    "fecha_fin": last["fecha"].strftime('%d/%m/%Y'),
+                    "sesiones": sesiones_list
+                }
             ))
 
     # Sort by Date DESC
