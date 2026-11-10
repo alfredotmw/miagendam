@@ -51,7 +51,8 @@ def generar_link_whatsapp(turno_id: int, db: Session = Depends(get_db), current_
         "CONSULTORIO DR. RUIZ FRANCHESCUTTI",
         "CONSULTORIO DR. FERNANDEZ CESPEDES",
         "CONSULTORIO DR. LANARI",
-        "CONSULTORIO DR. ALINEZ"
+        "CONSULTORIO DR. ALINEZ",
+        "CONSULTORIO LIC. ARREGIN"
     ]
 
     direccion = "Calle Colombia 1249"
@@ -59,7 +60,7 @@ def generar_link_whatsapp(turno_id: int, db: Session = Depends(get_db), current_
         direccion = "Calle San Martín Nº 2473"
 
     # 🟢 Custom Logic for Specific Doctors
-    if "MIÑO" in servicio_upper:
+    if "MIÑO" in servicio_upper or "ARREGIN" in servicio_upper or "ARREGÍN" in servicio_upper:
         direccion = "Calle San Martín Nº 2473"
     elif "DUARTE" in servicio_upper:
         direccion = "Calle Colombia 1249"
