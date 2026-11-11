@@ -13,7 +13,9 @@ from models.agenda import Agenda
 from models.practica import Practica
 from models.turno_practica import TurnoPractica
 
-from schemas.turno import TurnoCreate, TurnoOut
+from schemas.turno import TurnoCreate, TurnoOut, TurnoLinkEstudioUpdate
+import os
+import urllib.parse
 
 ESTADOS_VALIDOS = ["PENDIENTE", "AUSENTE", "ESPERANDO", "COMPLETADO"]
 
@@ -46,6 +48,147 @@ def obtener_detalle_turno(turno_id: int, db: Session = Depends(get_db), current_
     turno = db.get(Turno, turno_id)
     if not turno:
         raise HTTPException(status_code=404, detail="Turno no encontrado")
+    from routers.informe_clinico import determine_report_type
+    turno.tipo_informe_permitido = determine_report_type(turno)
+    return turno
+
+
+@router.patch("/{turno_id}/link-estudio", response_model=TurnoOut)
+def actualizar_link_estudio(
+    turno_id: int,
+    payload: TurnoLinkEstudioUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    user_role = str(current_user.get("role") or "").upper()
+    if user_role not in ["ADMIN", "RECEPCION"]:
+        raise HTTPException(
+            status_code=403,
+            detail="No tiene permisos para cargar o modificar el link del estudio."
+        )
+
+    turno = db.get(Turno, turno_id)
+    if not turno:
+        raise HTTPException(status_code=404, detail="Turno no encontrado")
+
+    # Control de permisos por agenda para roles no ADMIN
+    if user_role != "ADMIN":
+        from models.user import User
+        token_allowed = current_user.get("allowed_agendas")
+        if token_allowed is not None:
+            allowed_ids = [int(x.strip()) for x in str(token_allowed).split(",") if x.strip().isdigit()]
+            if turno.agenda_id not in allowed_ids:
+                raise HTTPException(
+                    status_code=403,
+                    detail="No tiene permiso sobre la agenda de este turno."
+                )
+
+        db_user = None
+        if current_user.get("id") is not None:
+            db_user = db.get(User, current_user.get("id"))
+        if not db_user and current_user.get("username"):
+            db_user = db.query(User).filter(User.username == current_user.get("username")).first()
+
+        if db_user:
+            if db_user.allowed_agendas is not None:
+                db_allowed_ids = [int(x.strip()) for x in str(db_user.allowed_agendas).split(",") if x.strip().isdigit()]
+                if turno.agenda_id not in db_allowed_ids:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="No tiene permiso sobre la agenda de este turno."
+                    )
+            if db_user.agendas:
+                m2m_ids = {a.id for a in db_user.agendas}
+                if turno.agenda_id not in m2m_ids:
+                    raise HTTPException(
+                        status_code=403,
+                        detail="No tiene permiso sobre la agenda de este turno."
+                    )
+
+    raw_link = payload.link_estudio
+    if raw_link is None or raw_link == "":
+        turno.link_estudio = None
+    else:
+        raw_domains = os.getenv("STUDY_LINK_DOMAINS")
+        if not raw_domains or not raw_domains.strip():
+            raise HTTPException(
+                status_code=422,
+                detail="La carga de links no está configurada"
+            )
+        allowed_domains = [
+            d.strip().lower().lstrip(".")
+            for d in raw_domains.split(",")
+            if d.strip().lstrip(".")
+        ]
+        if not allowed_domains:
+            raise HTTPException(
+                status_code=422,
+                detail="La carga de links no está configurada"
+            )
+
+        if any(c.isspace() for c in raw_link):
+            raise HTTPException(
+                status_code=422,
+                detail="El link no puede contener espacios."
+            )
+
+        if len(raw_link) > 500:
+            raise HTTPException(
+                status_code=422,
+                detail="El link no puede superar los 500 caracteres."
+            )
+
+        try:
+            parsed = urllib.parse.urlparse(raw_link)
+            port = parsed.port
+        except ValueError:
+            raise HTTPException(
+                status_code=422,
+                detail="El link ingresado no es una URL válida."
+            )
+
+        if parsed.scheme.lower() != "https" or raw_link[:8].lower() != "https://":
+            raise HTTPException(
+                status_code=422,
+                detail="El link debe comenzar con https://"
+            )
+
+        if parsed.username is not None or parsed.password is not None or "@" in (parsed.netloc or ""):
+            raise HTTPException(
+                status_code=422,
+                detail="El link no puede incluir usuario ni contraseña."
+            )
+
+        if port is not None and port != 443:
+            raise HTTPException(
+                status_code=422,
+                detail="El link no puede utilizar un puerto distinto de 443."
+            )
+
+        host = parsed.hostname.lower() if parsed.hostname else None
+        if not host:
+            raise HTTPException(
+                status_code=422,
+                detail="El link ingresado no tiene un dominio válido."
+            )
+
+        domain_ok = any(
+            host == d or host.endswith("." + d)
+            for d in allowed_domains
+        )
+        if not domain_ok:
+            raise HTTPException(
+                status_code=422,
+                detail="El dominio del link no corresponde a un portal de estudios habilitado."
+            )
+
+        turno.link_estudio = raw_link
+
+    turno.modificado_por_id = current_user.get("id")
+    turno.fecha_modificacion = datetime.now()
+    db.commit()
+    db.refresh(turno)
+
     from routers.informe_clinico import determine_report_type
     turno.tipo_informe_permitido = determine_report_type(turno)
     return turno

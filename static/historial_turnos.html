@@ -744,6 +744,19 @@
                         <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.5rem;">Estado del informe clínico</div>
                         <div id="td-estado-informe">-</div>
                     </div>
+                    <div style="flex: 1; min-width: 180px;">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.5rem;">Estudio en el portal</div>
+                        <div id="td-estudio-portal">-</div>
+                    </div>
+                </div>
+
+                <div id="td-link-estudio-editor" style="display: none; flex-direction: column; gap: 0.5rem; background: #f7fafc; padding: 0.85rem 1rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <input type="url" id="input-link-estudio" class="form-input" maxlength="500" placeholder="https://..." style="flex: 1; min-width: 220px; height: 2.25rem; font-size: 0.9rem; padding: 0.35rem 0.65rem;">
+                        <button type="button" id="btn-save-link-estudio" onclick="guardarLinkEstudio()" style="padding: 0.4rem 0.85rem; border-radius: 4px; border: none; background: #3182ce; color: #fff; font-weight: 600; font-size: 0.85rem; cursor: pointer;">Guardar</button>
+                        <button type="button" id="btn-cancel-link-estudio" onclick="cancelarEdicionLinkEstudio()" style="padding: 0.4rem 0.85rem; border-radius: 4px; border: 1px solid #cbd5e0; background: #fff; color: #4a5568; font-weight: 600; font-size: 0.85rem; cursor: pointer;">Cancelar</button>
+                    </div>
+                    <div id="err-link-estudio" style="display: none; font-size: 0.8rem; color: #c53030; font-weight: 500;"></div>
                 </div>
 
                 <!-- Botones de Acción Modo Lectura -->
@@ -909,7 +922,7 @@
 
         // Check User Role and Info
         let loggedInUser = null;
-        fetch('/users/me', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()).then(u => {
+        const userPromise = fetch('/users/me', { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()).then(u => {
             loggedInUser = u;
             if (u.role === 'ADMIN') {
                 const al = document.getElementById('admin-links');
@@ -1886,6 +1899,11 @@
                     </span>
                 `;
 
+                if (!loggedInUser) {
+                    await userPromise;
+                }
+                renderEstudioPortal(turno);
+
                 const isUserAuth = (loggedInUser && (loggedInUser.role === 'ADMIN' || loggedInUser.role === 'MEDICO'));
                 
                 if (isUserAuth) {
@@ -1918,6 +1936,179 @@
                     errMsgEl.textContent = "No se pudo cargar el detalle del turno. Intente nuevamente.";
                 }
                 document.getElementById('turno-detail-error').style.display = 'block';
+            }
+        }
+
+        function renderEstudioPortal(turno) {
+            const container = document.getElementById('td-estudio-portal');
+            const editor = document.getElementById('td-link-estudio-editor');
+            const errEl = document.getElementById('err-link-estudio');
+            if (editor) editor.style.display = 'none';
+            if (errEl) {
+                errEl.style.display = 'none';
+                errEl.textContent = '';
+            }
+            if (!container) return;
+            container.innerHTML = '';
+
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.gap = '0.5rem';
+            wrapper.style.flexWrap = 'wrap';
+
+            const canManageLink = Boolean(
+                loggedInUser && (loggedInUser.role === 'ADMIN' || loggedInUser.role === 'RECEPCION')
+            );
+            const currentLink = turno && turno.link_estudio ? String(turno.link_estudio).trim() : '';
+
+            if (!currentLink) {
+                const badge = document.createElement('span');
+                badge.className = 'estado-badge estado-sin-informacion';
+                badge.textContent = 'Sin link';
+                wrapper.appendChild(badge);
+
+                if (canManageLink) {
+                    const btnLoad = document.createElement('button');
+                    btnLoad.type = 'button';
+                    btnLoad.id = 'btn-cargar-link-estudio';
+                    btnLoad.textContent = 'Cargar link';
+                    btnLoad.style.cssText = 'padding: 0.25rem 0.6rem; font-size: 0.75rem; font-weight: 600; border-radius: 4px; border: 1px solid #3182ce; background: #ebf8ff; color: #2b6cb0; cursor: pointer;';
+                    btnLoad.onclick = () => mostrarEditorLinkEstudio('');
+                    wrapper.appendChild(btnLoad);
+                }
+            } else {
+                const linkEl = document.createElement('a');
+                linkEl.id = 'link-ver-estudio';
+                linkEl.href = currentLink;
+                linkEl.target = '_blank';
+                linkEl.rel = 'noopener noreferrer';
+                linkEl.textContent = 'Ver estudio';
+                linkEl.style.cssText = 'display: inline-flex; align-items: center; padding: 0.25rem 0.65rem; font-size: 0.75rem; font-weight: 600; border-radius: 9999px; background-color: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; text-decoration: none;';
+                wrapper.appendChild(linkEl);
+
+                if (canManageLink) {
+                    const btnChange = document.createElement('button');
+                    btnChange.type = 'button';
+                    btnChange.id = 'btn-cambiar-link-estudio';
+                    btnChange.textContent = 'Cambiar';
+                    btnChange.style.cssText = 'padding: 0.2rem 0.5rem; font-size: 0.75rem; font-weight: 600; border-radius: 4px; border: 1px solid #cbd5e0; background: #fff; color: #4a5568; cursor: pointer;';
+                    btnChange.onclick = () => mostrarEditorLinkEstudio(currentLink);
+                    wrapper.appendChild(btnChange);
+
+                    const btnRemove = document.createElement('button');
+                    btnRemove.type = 'button';
+                    btnRemove.id = 'btn-quitar-link-estudio';
+                    btnRemove.textContent = 'Quitar';
+                    btnRemove.style.cssText = 'padding: 0.2rem 0.5rem; font-size: 0.75rem; font-weight: 600; border-radius: 4px; border: 1px solid #feb2b2; background: #fff5f5; color: #c53030; cursor: pointer;';
+                    btnRemove.onclick = () => quitarLinkEstudio();
+                    wrapper.appendChild(btnRemove);
+                }
+            }
+
+            container.appendChild(wrapper);
+        }
+
+        function mostrarEditorLinkEstudio(valorInicial) {
+            const editor = document.getElementById('td-link-estudio-editor');
+            const input = document.getElementById('input-link-estudio');
+            const errEl = document.getElementById('err-link-estudio');
+            if (!editor || !input) return;
+            if (errEl) {
+                errEl.style.display = 'none';
+                errEl.textContent = '';
+            }
+            input.value = valorInicial || '';
+            editor.style.display = 'flex';
+            input.focus();
+        }
+
+        function cancelarEdicionLinkEstudio() {
+            const editor = document.getElementById('td-link-estudio-editor');
+            const errEl = document.getElementById('err-link-estudio');
+            if (editor) editor.style.display = 'none';
+            if (errEl) {
+                errEl.style.display = 'none';
+                errEl.textContent = '';
+            }
+        }
+
+        async function guardarLinkEstudio() {
+            if (!currentTurnoDetail) return;
+            const input = document.getElementById('input-link-estudio');
+            const errEl = document.getElementById('err-link-estudio');
+            const btnSave = document.getElementById('btn-save-link-estudio');
+            const btnCancel = document.getElementById('btn-cancel-link-estudio');
+            if (!input) return;
+
+            const rawVal = input.value;
+            if (errEl) {
+                errEl.style.display = 'none';
+                errEl.textContent = '';
+            }
+
+            if (btnSave) btnSave.disabled = true;
+            if (btnCancel) btnCancel.disabled = true;
+
+            try {
+                const res = await fetch(`/turnos/${currentTurnoDetail.id}/link-estudio`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ link_estudio: rawVal })
+                });
+
+                if (res.ok) {
+                    const updatedTurno = await res.json();
+                    currentTurnoDetail = updatedTurno;
+                    renderEstudioPortal(currentTurnoDetail);
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    let msg = 'No se pudo guardar el link.';
+                    if (typeof errData.detail === 'string') {
+                        msg = errData.detail;
+                    } else if (Array.isArray(errData.detail) && errData.detail.length > 0) {
+                        msg = errData.detail.map(e => e.msg).join(', ');
+                    }
+                    if (errEl) {
+                        errEl.textContent = msg;
+                        errEl.style.display = 'block';
+                    }
+                }
+            } catch (err) {
+                if (errEl) {
+                    errEl.textContent = 'Error de conexión al guardar el link.';
+                    errEl.style.display = 'block';
+                }
+            } finally {
+                if (btnSave) btnSave.disabled = false;
+                if (btnCancel) btnCancel.disabled = false;
+            }
+        }
+
+        async function quitarLinkEstudio() {
+            if (!currentTurnoDetail) return;
+            try {
+                const res = await fetch(`/turnos/${currentTurnoDetail.id}/link-estudio`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ link_estudio: null })
+                });
+                if (res.ok) {
+                    const updatedTurno = await res.json();
+                    currentTurnoDetail = updatedTurno;
+                    renderEstudioPortal(currentTurnoDetail);
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    alert(errData.detail || 'No se pudo quitar el link.');
+                }
+            } catch (err) {
+                alert('Error de conexión al quitar el link.');
             }
         }
 
