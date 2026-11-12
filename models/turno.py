@@ -26,7 +26,6 @@ class Turno(Base):
     estado = Column(String, default="pendiente")
     patologia = Column(String, nullable=True)
     observaciones = Column(String, nullable=True)
-    link_estudio = Column(String, nullable=True)
 
     # Campos para recordatorios de WhatsApp
     recordatorio_enviado = Column(Boolean, default=False)

@@ -35,9 +35,6 @@ class TurnoUpdate(BaseModel):
     crear_seguimiento: Optional[bool] = False
     observaciones: Optional[str] = Field(None, max_length=500)
 
-class TurnoLinkEstudioUpdate(BaseModel):
-    link_estudio: Optional[str] = None
-
 class TurnoOut(BaseModel):
     id: int
     fecha: datetime
@@ -49,7 +46,6 @@ class TurnoOut(BaseModel):
     medico_derivante_id: Optional[int]
     patologia: Optional[str]
     observaciones: Optional[str] = None
-    link_estudio: Optional[str] = None
     practicas: List[PracticaOut]
     
     # Notificaciones
