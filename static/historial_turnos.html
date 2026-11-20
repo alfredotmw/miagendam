@@ -756,6 +756,12 @@
                         <button type="button" id="btn-cancel-link-estudio" style="padding: 0.4rem 0.85rem; border-radius: 4px; border: 1px solid #cbd5e0; background: #fff; color: #4a5568; font-weight: 600; font-size: 0.85rem; cursor: pointer;">Cancelar</button>
                     </div>
                     <div id="err-link-estudio" style="display: none; font-size: 0.8rem; color: #c53030; font-weight: 500; margin-top: 0.35rem;"></div>
+                    <div id="td-pdf-estudio-section" style="display: none; margin-top: 0.9rem;">
+                        <div style="font-size: 0.75rem; text-transform: uppercase; color: #718096; font-weight: bold; margin-bottom: 0.5rem;">Informe en PDF (ecografía, EEG, otros)</div>
+                        <div id="td-pdf-estudio-view" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;"></div>
+                        <input type="file" id="input-pdf-estudio" accept="application/pdf,.pdf" style="display: none;">
+                        <div id="err-pdf-estudio" style="display: none; font-size: 0.8rem; color: #c53030; font-weight: 500; margin-top: 0.35rem;"></div>
+                    </div>
                 </div>
 
                 <!-- Botones de Acción Modo Lectura -->
@@ -1998,7 +2004,101 @@
                     editor.style.display = 'none'; errEl.style.display = 'none';
                 };
             }
+            renderPdfEstudio(data);
             box.style.display = 'block';
+        }
+
+        function renderPdfEstudio(data) {
+            const section = document.getElementById('td-pdf-estudio-section');
+            const view = document.getElementById('td-pdf-estudio-view');
+            const errEl = document.getElementById('err-pdf-estudio');
+            const input = document.getElementById('input-pdf-estudio');
+            if (!section || !view) return;
+            view.replaceChildren();
+            errEl.style.display = 'none';
+            if (data.pdf_disponible === false || (!data.pdf && !data.puede_editar)) {
+                section.style.display = data.pdf_disponible === false ? 'none' : 'block';
+                if (data.pdf_disponible !== false) {
+                    const span = document.createElement('span');
+                    span.textContent = 'Sin informe en PDF';
+                    span.style.cssText = 'font-size: 0.85rem; color: #718096;';
+                    view.appendChild(span);
+                }
+                return;
+            }
+            const btnStyle = 'padding: 0.25rem 0.6rem; font-size: 0.75rem; font-weight: 600; border-radius: 4px; cursor: pointer;';
+            if (data.pdf) {
+                const ver = document.createElement('button');
+                ver.type = 'button';
+                ver.textContent = 'Ver informe PDF';
+                ver.style.cssText = 'padding: 0.25rem 0.65rem; font-size: 0.8rem; font-weight: 600; border-radius: 9999px; background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; cursor: pointer;';
+                ver.onclick = () => abrirPdfEstudio(data.turno_id);
+                const info = document.createElement('span');
+                info.textContent = data.pdf.nombre + ' · ' + Math.max(1, Math.round(data.pdf.tamano_bytes / 1024)) + ' KB';
+                info.style.cssText = 'font-size: 0.8rem; color: #718096;';
+                view.append(ver, info);
+            } else {
+                const span = document.createElement('span');
+                span.textContent = 'Sin informe en PDF';
+                span.style.cssText = 'font-size: 0.85rem; color: #718096;';
+                view.appendChild(span);
+            }
+            if (data.puede_editar) {
+                const subir = document.createElement('button');
+                subir.type = 'button';
+                subir.textContent = data.pdf ? 'Reemplazar' : 'Cargar PDF';
+                subir.style.cssText = btnStyle + 'border: 1px solid #3182ce; background: #ebf8ff; color: #2b6cb0;';
+                subir.onclick = () => { input.value = ''; input.click(); };
+                input.onchange = () => { if (input.files && input.files[0]) subirPdfEstudio(data.turno_id, input.files[0]); };
+                view.appendChild(subir);
+                if (data.pdf) {
+                    const del = document.createElement('button');
+                    del.type = 'button';
+                    del.textContent = 'Quitar';
+                    del.style.cssText = btnStyle + 'border: 1px solid #feb2b2; background: #fff5f5; color: #c53030;';
+                    del.onclick = async () => {
+                        if (!confirm('¿Quitar el informe en PDF?')) return;
+                        const res = await fetch(`/turnos/${data.turno_id}/informe-pdf`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                        const d = await res.json().catch(() => ({}));
+                        if (res.ok) renderLinkEstudio(d); else mostrarErrorPdf(d.detail || 'No se pudo quitar el PDF.');
+                    };
+                    view.appendChild(del);
+                }
+            }
+            section.style.display = 'block';
+        }
+
+        function mostrarErrorPdf(msg) {
+            const errEl = document.getElementById('err-pdf-estudio');
+            errEl.textContent = typeof msg === 'string' ? msg : 'No se pudo procesar el PDF.';
+            errEl.style.display = 'block';
+        }
+
+        async function subirPdfEstudio(turnoId, file) {
+            if (file.size > 15 * 1024 * 1024) { mostrarErrorPdf('El PDF supera los 15 MB. Si es un electroencefalograma, cargá solo el informe.'); return; }
+            const fd = new FormData();
+            fd.append('archivo', file);
+            try {
+                const res = await fetch(`/turnos/${turnoId}/informe-pdf`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd });
+                const d = await res.json().catch(() => ({}));
+                if (res.ok) renderLinkEstudio(d); else mostrarErrorPdf(d.detail || 'No se pudo cargar el PDF.');
+            } catch (e) {
+                mostrarErrorPdf('Error de conexión al cargar el PDF.');
+            }
+        }
+
+        async function abrirPdfEstudio(turnoId) {
+            const win = window.open('', '_blank');
+            try {
+                const res = await fetch(`/turnos/${turnoId}/informe-pdf`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error();
+                const url = URL.createObjectURL(await res.blob());
+                if (win) win.location = url; else window.location = url;
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+            } catch (e) {
+                if (win) win.close();
+                mostrarErrorPdf('No se pudo abrir el PDF.');
+            }
         }
 
         async function enviarLinkEstudio(turnoId, link) {
