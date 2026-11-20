@@ -11,5 +11,4 @@ from .turno_practica import TurnoPractica  # 👈 NUEVO
 from .historia_clinica import HistoriaClinica # 👈 NUEVO HISTORIA CLINICA
 from .radioterapia import SeguimientoRadioterapia # 👈 NUEVO RADIOTERAPIA
 from .agenda_practica import AgendaPractica # 👈 NUEVO AGENDA PRACTICA
-
-
+from .turno_estudio_link import TurnoEstudioLink # 👈 LINK DE ESTUDIO (tabla separada)
