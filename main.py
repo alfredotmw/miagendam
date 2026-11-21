@@ -100,6 +100,14 @@ app.include_router(common.router)
 from routers import informe_clinico
 app.include_router(informe_clinico.router)
 
+# Link al estudio en Visual Médica: módulo aislado. Si fallara al importar,
+# la app arranca igual y solo queda sin esta función.
+try:
+    from routers import estudio_links
+    app.include_router(estudio_links.router)
+except Exception as e:
+    print(f"[LINK ESTUDIO DESHABILITADO]: {e}")
+
 from fastapi.responses import RedirectResponse
 
 @app.get("/")
