@@ -106,3 +106,36 @@ def test_limites(client):
             "practicas_ids": [client.ids["practica"]]}
     assert client.post("/turnos/plan-radioterapia", json={**base, "sesiones": 0}).status_code == 422
     assert client.post("/turnos/plan-radioterapia", json={**base, "sesiones": 61}).status_code == 422
+
+
+def test_timeline_informado_con_link(client):
+    from models.turno_estudio_link import TurnoEstudioLink
+    db = SessionLocal()
+    pa = db.query(Paciente).filter_by(dni="99000001").first()
+    ag = db.query(Agenda).first()
+    t = Turno(fecha=datetime(2026, 11, 10, 9, 0), hora="09:00:00", duracion=10, paciente_id=pa.id,
+              agenda_id=ag.id, estado="COMPLETADO")
+    t2 = Turno(fecha=datetime(2026, 11, 11, 9, 0), hora="09:00:00", duracion=10, paciente_id=pa.id,
+               agenda_id=ag.id, estado="COMPLETADO")
+    db.add_all([t, t2]); db.commit()
+    db.add(TurnoEstudioLink(turno_id=t.id, url="https://visualmedica.com/estudio/1", cargado_por_id=1))
+    db.commit()
+    ids = (t.id, t2.id)
+    db.close()
+    r = client.get("/historia-clinica/dni/99000001/timeline")
+    assert r.status_code == 200, r.text
+    eventos = r.json()
+    eventos = eventos.get("eventos", eventos.get("timeline", eventos)) if isinstance(eventos, dict) else eventos
+    def buscar(obj, tid):
+        if isinstance(obj, dict):
+            if obj.get("id_referencia") == tid and obj.get("tipo") == "TURNO":
+                return obj
+            for v in obj.values():
+                x = buscar(v, tid)
+                if x: return x
+        if isinstance(obj, list):
+            for v in obj:
+                x = buscar(v, tid)
+                if x: return x
+    assert buscar(eventos, ids[0])["informe_estado"] == "INFORMADO"
+    assert buscar(eventos, ids[1])["informe_estado"] is None
