@@ -108,6 +108,13 @@ try:
 except Exception as e:
     print(f"[LINK ESTUDIO DESHABILITADO]: {e}")
 
+# Feriados y plan de sesiones de radioterapia: módulo aislado.
+try:
+    from routers import feriados
+    app.include_router(feriados.router)
+except Exception as e:
+    print(f"[FERIADOS DESHABILITADO]: {e}")
+
 from fastapi.responses import RedirectResponse
 
 @app.get("/")

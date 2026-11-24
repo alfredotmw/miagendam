@@ -148,6 +148,14 @@
                     </svg>
                     Prácticas
                 </a>
+                <a href="/static/admin_feriados.html" class="nav-item">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm4-7h.01M12 14h.01M16 14h.01">
+                        </path>
+                    </svg>
+                    Feriados
+                </a>
             </div>
 
         </nav>
@@ -318,10 +326,32 @@
 
                             <!-- Multi Date Input (Radiotherapy) -->
                             <div id="multi_day_container" style="display: none;">
-                                <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #4a5568;">
-                                    Seleccione la fecha de inicio (se marcarán días hábiles automáticamente):
-                                </p>
-                                <div id="fechas_multi" class="checkbox-container" style="max-height: 150px;"></div>
+                                <!-- Plan de radioterapia: inicio + cantidad de sesiones (lunes a viernes, sin feriados) -->
+                                <div id="rt_plan_box">
+                                    <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+                                        <div>
+                                            <label for="rt_inicio" style="font-size:0.85rem;">Inicio del tratamiento</label>
+                                            <input type="date" id="rt_inicio">
+                                        </div>
+                                        <div>
+                                            <label for="rt_sesiones" style="font-size:0.85rem;">Cantidad de sesiones</label>
+                                            <input type="number" id="rt_sesiones" min="1" max="60" step="1" placeholder="Ej: 20" style="width:120px;">
+                                        </div>
+                                        <button type="button" class="search-btn" id="rt_calcular" onclick="calcularPlanRT()">Calcular sesiones</button>
+                                    </div>
+                                    <p style="margin:0.4rem 0 0; font-size:0.8rem; color:#4a5568;">
+                                        Se agendan de lunes a viernes y se saltean los feriados. Primero completá la práctica y la hora.
+                                    </p>
+                                    <div id="rt_plan_result" style="margin-top:0.75rem;"></div>
+                                    <a href="#" id="rt_manual_link" onclick="toggleManualRT(event)" style="font-size:0.8rem;">Elegir los días a mano</a>
+                                </div>
+                                <div id="rt_manual_box" style="display:none;">
+                                    <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #4a5568;">
+                                        Marque los días de tratamiento:
+                                        <a href="#" onclick="toggleManualRT(event)" style="font-size:0.8rem;">volver a cantidad de sesiones</a>
+                                    </p>
+                                    <div id="fechas_multi" class="checkbox-container" style="max-height: 150px;"></div>
+                                </div>
                             </div>
                         </div>
 
@@ -655,10 +685,120 @@
                 multiDayContainer.style.display = 'block';
                 singleDateContainer.style.display = 'none';
                 generateNextDays();
+                const ini = document.getElementById('rt_inicio');
+                if (!ini.value) { const t = new Date(); ini.value = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'); }
             } else {
                 multiDayContainer.style.display = 'none';
                 singleDateContainer.style.display = 'block';
             }
+        }
+
+        // ===== Plan de radioterapia por cantidad de sesiones =====
+        window.rtPlan = null; window.rtManual = false;
+        const DIAS_SEMANA = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+        function fechaLarga(iso) {
+            const [y, m, d] = iso.split('-').map(Number);
+            const dt = new Date(y, m - 1, d);
+            return DIAS_SEMANA[dt.getDay()] + ' ' + String(d).padStart(2, '0') + '/' + String(m).padStart(2, '0') + '/' + y;
+        }
+        function invalidarPlanRT() {
+            if (!window.rtPlan) return;
+            window.rtPlan = null;
+            document.getElementById('rt_plan_result').innerHTML =
+                '<p style="color:#b7791f; font-size:0.85rem;">Cambiaron los datos: tocá "Calcular sesiones" de nuevo.</p>';
+        }
+        function toggleManualRT(ev) {
+            if (ev) ev.preventDefault();
+            window.rtManual = !window.rtManual;
+            document.getElementById('rt_manual_box').style.display = window.rtManual ? 'block' : 'none';
+            document.getElementById('rt_plan_box').style.display = window.rtManual ? 'none' : 'block';
+        }
+        ['rt_inicio', 'rt_sesiones', 'hora', 'agenda_id'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', invalidarPlanRT);
+        });
+        document.addEventListener('change', ev => { if (ev.target && ev.target.name === 'practicas_ids') invalidarPlanRT(); });
+
+        async function calcularPlanRT() {
+            const out = document.getElementById('rt_plan_result');
+            const agendaId = document.getElementById('agenda_id').value;
+            const inicio = document.getElementById('rt_inicio').value;
+            const sesiones = parseInt(document.getElementById('rt_sesiones').value, 10);
+            const hora = document.getElementById('hora').value;
+            const practicasIds = Array.from(document.querySelectorAll('input[name="practicas_ids"]:checked')).map(cb => parseInt(cb.value));
+            const pacienteId = parseInt(document.getElementById('paciente_id').value) || null;
+            if (!agendaId) return alert('Elegí la agenda.');
+            if (!practicasIds.length) return alert('Elegí la práctica.');
+            if (!hora) return alert('Elegí la hora de las sesiones.');
+            if (!inicio) return alert('Elegí la fecha de inicio.');
+            if (!sesiones || sesiones < 1 || sesiones > 60) return alert('La cantidad de sesiones va de 1 a 60.');
+            const btn = document.getElementById('rt_calcular');
+            btn.disabled = true; btn.textContent = 'Calculando...';
+            try {
+                const res = await fetch('/turnos/plan-radioterapia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ agenda_id: parseInt(agendaId), fecha_inicio: inicio, sesiones: sesiones,
+                        hora: hora.slice(0, 5), practicas_ids: practicasIds, paciente_id: pacienteId, duracion: 10 })
+                });
+                if (!res.ok) { const t = await res.text(); throw new Error(t || 'No se pudo calcular'); }
+                const plan = await res.json();
+                window.rtPlan = plan.sesiones;
+                renderPlanRT(plan, agendaId, practicasIds, pacienteId);
+            } catch (e) {
+                window.rtPlan = null;
+                out.innerHTML = '<p style="color:#c53030;">No se pudo calcular el plan: ' + (e.message || '') + '</p>';
+            } finally {
+                btn.disabled = false; btn.textContent = 'Calcular sesiones';
+            }
+        }
+
+        function renderPlanRT(plan, agendaId, practicasIds, pacienteId) {
+            const out = document.getElementById('rt_plan_result');
+            let html = '<div style="background:#ebf8ff; border:1px solid #bee3f8; border-radius:8px; padding:0.6rem 0.8rem; font-size:0.9rem;">' +
+                '<b>' + plan.sesiones.length + ' sesiones</b> · del <b>' + fechaLarga(plan.desde) + '</b> al <b>' + fechaLarga(plan.hasta) + '</b>';
+            if (plan.feriados_salteados.length) {
+                html += '<br><span style="font-size:0.8rem;">Feriados salteados: ' +
+                    plan.feriados_salteados.map(f => fechaLarga(f.fecha) + ' (' + f.nombre + ')').join(', ') + '</span>';
+            }
+            if (plan.ocupados) {
+                html += '<br><span style="color:#c53030; font-weight:600;">' + plan.ocupados +
+                    ' día(s) sin lugar a esa hora: elegí otra hora en la lista.</span>';
+            }
+            if (plan.anios_sin_feriados && plan.anios_sin_feriados.length) {
+                html += '<br><span style="color:#b7791f; font-size:0.8rem;">Atención: todavía no están cargados los feriados de ' +
+                    plan.anios_sin_feriados.join(', ') + '. Pedile a administración que los actualice.</span>';
+            }
+            html += '</div><div style="max-height:260px; overflow:auto; margin-top:0.5rem; border:1px solid #e2e8f0; border-radius:8px;">' +
+                '<table style="width:100%; border-collapse:collapse; font-size:0.85rem;"><thead><tr style="background:#f7fafc;">' +
+                '<th style="text-align:left; padding:4px 8px;">N°</th><th style="text-align:left; padding:4px 8px;">Fecha</th>' +
+                '<th style="text-align:left; padding:4px 8px;">Hora</th><th style="text-align:left; padding:4px 8px;">Estado</th></tr></thead><tbody>';
+            plan.sesiones.forEach(s => {
+                const rojo = !s.disponible;
+                html += '<tr style="border-top:1px solid #edf2f7;' + (rojo ? 'background:#fff5f5;' : '') + '">' +
+                    '<td style="padding:4px 8px;">' + s.numero + '</td><td style="padding:4px 8px;">' + fechaLarga(s.fecha) + '</td>' +
+                    '<td style="padding:4px 8px;">' + (rojo ? '<select data-fecha="' + s.fecha + '" class="rt-hora-alt"><option value="">Elegir hora…</option></select>' : s.hora) + '</td>' +
+                    '<td style="padding:4px 8px;" id="rt_estado_' + s.fecha + '">' + (rojo ? '<span style="color:#c53030;">Ocupado a las ' + s.hora + '</span>' : '<span style="color:#2f855a;">Libre</span>') + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+            out.innerHTML = html;
+            out.querySelectorAll('select.rt-hora-alt').forEach(async sel => {
+                const fecha = sel.dataset.fecha;
+                try {
+                    // Mismos horarios libres que muestra "Ver Disponibles".
+                    const r = await fetch(`/agendas/${agendaId}/slots?fecha=${fecha}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const libres = r.ok ? (await r.json()).filter(x => !x.turno).map(x => String(x.hora).slice(0, 5)) : [];
+                    if (!libres.length) sel.innerHTML = '<option value="">Sin horarios libres</option>';
+                    libres.forEach(h => { const o = document.createElement('option'); o.value = h; o.textContent = h; sel.appendChild(o); });
+                } catch (e) { sel.innerHTML = '<option value="">No se pudieron cargar</option>'; }
+                sel.addEventListener('change', () => {
+                    const s = window.rtPlan && window.rtPlan.find(x => x.fecha === fecha);
+                    if (!s) return;
+                    s.horaElegida = sel.value || null;
+                    document.getElementById('rt_estado_' + fecha).innerHTML = sel.value ?
+                        '<span style="color:#2f855a;">Libre a las ' + sel.value + '</span>' : '<span style="color:#c53030;">Ocupado a las ' + s.hora + '</span>';
+                });
+            });
         }
 
         function generateNextDays() {
@@ -715,7 +855,10 @@
             const tipo = selectedOption.dataset.tipo;
             let fecha = document.getElementById('fecha').value;
 
-            if (tipo === 'RADIOTERAPIA') {
+            if (tipo === 'RADIOTERAPIA' && !window.rtManual) {
+                fecha = document.getElementById('rt_inicio').value;
+                if (!fecha) return alert('Elegí la fecha de inicio del tratamiento.');
+            } else if (tipo === 'RADIOTERAPIA') {
                 const checkedDates = Array.from(document.querySelectorAll('input[name="fechas_multi"]:checked')).map(cb => cb.value);
                 if (checkedDates.length > 0) {
                     checkedDates.sort();
@@ -794,7 +937,14 @@
 
             // Dates
             const selectedDates = [];
-            if (document.getElementById('multi_day_container').style.display !== 'none') {
+            window.rtHoraPorFecha = null;
+            if (document.getElementById('multi_day_container').style.display !== 'none' && !window.rtManual) {
+                if (!window.rtPlan) return alert('Calculá las sesiones del tratamiento (inicio y cantidad de sesiones).');
+                const sinLugar = window.rtPlan.filter(s => !s.disponible && !s.horaElegida);
+                if (sinLugar.length) return alert('Hay ' + sinLugar.length + ' día(s) sin lugar a esa hora. Elegí otra hora para esos días en la lista.');
+                window.rtHoraPorFecha = {};
+                window.rtPlan.forEach(s => { selectedDates.push(s.fecha); window.rtHoraPorFecha[s.fecha] = s.horaElegida || s.hora; });
+            } else if (document.getElementById('multi_day_container').style.display !== 'none') {
                 const checkboxes = document.querySelectorAll('input[name="fechas_multi"]:checked');
                 checkboxes.forEach(cb => selectedDates.push(cb.value));
             } else {
@@ -914,7 +1064,7 @@
                         paciente_id: parseInt(pacienteId),
                         agenda_id: parseInt(agendaId),
                         fecha: fecha,
-                        hora: hora + ":00",
+                        hora: ((window.rtHoraPorFecha && window.rtHoraPorFecha[fecha]) || hora) + ":00",
                         practicas_ids: practicasIds,
                         medico_derivante_nombre: medicoDerivante,
                         patologia: patologia,

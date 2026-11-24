@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feriados - Centro Oncológico Corrientes</title>
+    <link rel="stylesheet" href="/static/css/styles.css?v=4">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
+            <h3>Agenda Médica</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/static/dashboard.html" class="nav-item">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                    </path>
+                </svg>
+                Dashboard
+            </a>
+            <a href="/static/radioterapia.html" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
+                    </path>
+                </svg>
+                Radioterapia
+            </a>
+            <a href="/static/admin_users.html" class="nav-item">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                    </path>
+                </svg>
+                Usuarios
+            </a>
+            <a href="/static/admin_agendas.html" class="nav-item">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Agendas
+            </a>
+            <a href="/static/admin_practicas.html" class="nav-item">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                    </path>
+                </svg>
+                Prácticas
+            </a>
+            <a href="/static/admin_feriados.html" class="nav-item active">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2zm4-7h.01M12 14h.01M16 14h.01">
+                    </path>
+                </svg>
+                Feriados
+            </a>
+            <button onclick="logout()" class="logout-btn">
+                Cerrar Sesión
+            </button>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+        <div class="main-content">
+        <header class="top-header">
+            <h1 class="page-title">Feriados</h1>
+            <div id="user-info" style="font-weight: 500; display: flex; align-items: center; gap: 0.5rem;"></div>
+        </header>
+        <div class="turnos-container" style="padding:1rem 1.25rem;">
+            <p style="color:#4a5568; margin:0 0 1rem;">
+                Los turnos de radioterapia por cantidad de sesiones se agendan de lunes a viernes y saltean estos días.
+                Los feriados nacionales salen del calendario oficial. También podés cargar días sin servicio
+                (por ejemplo, mantenimiento del acelerador). Nada se borra: si el centro atiende un feriado, desactivalo.
+            </p>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:1rem;">
+                <div><label style="font-size:0.85rem;">Año</label><br>
+                    <select id="anio" class="form-input" onchange="cargar()"></select></div>
+                <button class="search-btn" id="btn-nac" onclick="actualizarNacionales()">Actualizar feriados nacionales del año</button>
+            </div>
+            <form id="form-nuevo" onsubmit="agregar(event)" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end; margin-bottom:1rem; padding:0.75rem; background:#f7fafc; border-radius:8px;">
+                <div><label style="font-size:0.85rem;">Fecha</label><br><input type="date" id="f-fecha" class="form-input" required></div>
+                <div style="flex:1; min-width:220px;"><label style="font-size:0.85rem;">Motivo</label><br>
+                    <input type="text" id="f-nombre" class="form-input" required maxlength="200" placeholder="Feriado provincial / Mantenimiento del acelerador" style="width:100%;"></div>
+                <div><label style="font-size:0.85rem;">Tipo</label><br>
+                    <select id="f-tipo" class="form-input"><option value="sin_servicio">Día sin servicio</option><option value="provincial">Feriado provincial</option><option value="feriado">Feriado nacional</option></select></div>
+                <button class="search-btn" type="submit">Agregar</button>
+            </form>
+            <p id="msg" style="font-size:0.9rem; margin:0 0 0.5rem;"></p>
+            <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                <thead><tr style="background:#f7fafc; text-align:left;">
+                    <th style="padding:6px 8px;">Fecha</th><th style="padding:6px 8px;">Motivo</th><th style="padding:6px 8px;">Tipo</th>
+                    <th style="padding:6px 8px;">Origen</th><th style="padding:6px 8px;">Estado</th><th></th></tr></thead>
+                <tbody id="lista"></tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/static/login.html';
+        const H = () => ({ 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' });
+        const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        function msg(t, err) { const m = document.getElementById('msg'); m.textContent = t || ''; m.style.color = err ? '#c53030' : '#2f855a'; }
+        function esc(t) { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
+        async function loadUser() {
+            const res = await fetch('/users/me', { headers: H() });
+            if (!res.ok) { window.location.href = '/static/login.html'; return; }
+            const user = await res.json();
+            if (user.role !== 'ADMIN') { alert('Acceso no autorizado.'); window.location.href = '/static/dashboard.html'; return; }
+            document.getElementById('user-info').innerHTML = '<span>' + esc(user.username) + '</span>';
+        }
+        function initAnios() {
+            const sel = document.getElementById('anio'), y = new Date().getFullYear();
+            for (let a = y - 1; a <= y + 2; a++) { const o = document.createElement('option'); o.value = a; o.textContent = a; if (a === y) o.selected = true; sel.appendChild(o); }
+        }
+        async function cargar() {
+            const anio = document.getElementById('anio').value;
+            const res = await fetch('/feriados?anio=' + anio, { headers: H() });
+            const tb = document.getElementById('lista');
+            if (!res.ok) { tb.innerHTML = '<tr><td colspan="6" style="padding:8px; color:#c53030;">No se pudieron cargar los feriados.</td></tr>'; return; }
+            const filas = await res.json();
+            if (!filas.length) { tb.innerHTML = '<tr><td colspan="6" style="padding:8px; color:#b7791f;">No hay feriados cargados para ' + anio + '. Tocá "Actualizar feriados nacionales del año".</td></tr>'; return; }
+            tb.innerHTML = filas.map(f => {
+                const [y, m, d] = f.fecha.split('-').map(Number), dia = DIAS[new Date(y, m - 1, d).getDay()];
+                return '<tr style="border-top:1px solid #edf2f7;' + (f.activo ? '' : 'color:#a0aec0;') + '">' +
+                    '<td style="padding:6px 8px;">' + dia + ' ' + String(d).padStart(2, '0') + '/' + String(m).padStart(2, '0') + '/' + y + '</td>' +
+                    '<td style="padding:6px 8px;">' + esc(f.nombre) + '</td><td style="padding:6px 8px;">' + esc(f.tipo) + '</td>' +
+                    '<td style="padding:6px 8px;">' + (f.origen === 'manual' ? 'Cargado a mano' : 'Nacional') + '</td>' +
+                    '<td style="padding:6px 8px;">' + (f.activo ? 'Se saltea' : 'Se atiende') + '</td>' +
+                    '<td style="padding:6px 8px;"><button class="search-btn" style="padding:4px 10px; font-size:0.8rem;" onclick="cambiar(' + f.id + ',' + (!f.activo) + ')">' +
+                    (f.activo ? 'Desactivar' : 'Activar') + '</button></td></tr>';
+            }).join('');
+        }
+        async function cambiar(id, activo) {
+            const res = await fetch('/feriados/' + id + '/activo', { method: 'PUT', headers: H(), body: JSON.stringify({ activo }) });
+            if (!res.ok) return msg('No se pudo cambiar.', true);
+            msg(activo ? 'Feriado activado: se saltea al agendar.' : 'Feriado desactivado: ese día se agenda normalmente.'); cargar();
+        }
+        async function agregar(ev) {
+            ev.preventDefault();
+            const body = { fecha: document.getElementById('f-fecha').value, nombre: document.getElementById('f-nombre').value.trim(), tipo: document.getElementById('f-tipo').value };
+            const res = await fetch('/feriados', { method: 'POST', headers: H(), body: JSON.stringify(body) });
+            if (!res.ok) return msg('No se pudo agregar: ' + (await res.text()), true);
+            msg('Agregado.'); document.getElementById('form-nuevo').reset();
+            document.getElementById('anio').value = body.fecha.slice(0, 4); cargar();
+        }
+        async function actualizarNacionales() {
+            const anio = document.getElementById('anio').value, btn = document.getElementById('btn-nac');
+            btn.disabled = true; btn.textContent = 'Actualizando...';
+            try {
+                const res = await fetch('/feriados/actualizar-nacionales?anio=' + anio, { method: 'POST', headers: H() });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) msg(data.detail || 'No se pudo actualizar.', true);
+                else msg(data.agregados ? 'Se agregaron ' + data.agregados + ' feriados de ' + anio + '.' : 'Los feriados nacionales de ' + anio + ' ya estaban cargados (o todavía no están publicados).');
+                cargar();
+            } finally { btn.disabled = false; btn.textContent = 'Actualizar feriados nacionales del año'; }
+        }
+        function logout() { localStorage.removeItem('token'); window.location.href = '/static/login.html'; }
+        initAnios(); loadUser().then(cargar);
+    </script>
+</body>
+</html>
