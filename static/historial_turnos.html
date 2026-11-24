@@ -1898,6 +1898,7 @@
                 `;
 
                 const repState = report ? report.estado : null;
+                window.__estudioTurno = { id: turnoId, reporte: repState, link: false, pdf: false };
                 const repInfo = obtenerPresentacionInforme(repState);
                 document.getElementById('td-estado-informe').innerHTML = `
                     <span class="estado-badge ${repInfo.clase}">
@@ -1957,7 +1958,27 @@
             }
         }
 
+        // Si el turno no tiene informe clínico pero ya se cargó el link de Visual Médica
+        // o el PDF, la leyenda pasa de "Sin informe" a "Informado" (modal y línea de tiempo).
+        function refrescarLeyendaInforme(turnoId, cambios) {
+            const st = window.__estudioTurno;
+            if (!st || String(st.id) !== String(turnoId)) return;
+            Object.assign(st, cambios);
+            if (st.reporte) return;
+            const info = obtenerPresentacionInforme((st.link || st.pdf) ? 'INFORMADO' : null);
+            const html = `<span class="estado-badge ${info.clase}">${escapeHtml(info.texto)}</span>`;
+            const modal = document.getElementById('td-estado-informe');
+            if (modal) modal.innerHTML = html;
+            const cont = document.getElementById('status-badges-' + turnoId);
+            const badges = cont ? cont.querySelectorAll('.estado-badge') : [];
+            if (badges.length > 1) {
+                badges[1].className = 'estado-badge ' + info.clase;
+                badges[1].textContent = info.texto;
+            }
+        }
+
         function renderLinkEstudio(data) {
+            if (data && data.turno_id) refrescarLeyendaInforme(data.turno_id, { link: !!data.link });
             const box = document.getElementById('td-link-estudio-box');
             const view = document.getElementById('td-link-estudio-view');
             const editor = document.getElementById('td-link-estudio-editor');
@@ -2010,6 +2031,7 @@
         }
 
         function renderPdfEstudio(data) {
+            if (data && data.turno_id) refrescarLeyendaInforme(data.turno_id, { pdf: !!data.pdf });
             const section = document.getElementById('td-pdf-estudio-section');
             const view = document.getElementById('td-pdf-estudio-view');
             const errEl = document.getElementById('err-pdf-estudio');
@@ -2610,6 +2632,8 @@
             const val = String(estado || '').trim().toUpperCase();
             if (!estado) {
                 return { texto: "Sin informe", clase: "estado-sin-informacion" };
+            } else if (val === "INFORMADO") {
+                return { texto: "Informado", clase: "estado-completado" };
             } else if (val === "BORRADOR") {
                 return { texto: "Borrador", clase: "estado-pendiente" };
             } else if (val === "FINALIZADO") {

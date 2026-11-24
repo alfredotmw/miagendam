@@ -363,6 +363,24 @@ def get_timeline(
             .filter(InformeClinico.turno_id.in_(turno_ids)).all()
         reports_map = {r.turno_id: (r.id, r.estado) for r in reports}
 
+    # Estudios cargados por recepción (link de Visual Médica o informe en PDF):
+    # si el turno no tiene informe clínico, se muestra como "Informado".
+    # Tablas separadas; si no existen o fallan, la línea de tiempo sigue igual.
+    if turnos:
+        try:
+            from models.turno_estudio_link import TurnoEstudioLink
+            from models.turno_estudio_archivo import TurnoEstudioArchivo
+            ids_turnos = [t.id for t in turnos]
+            con_estudio = {r[0] for r in db.query(TurnoEstudioLink.turno_id)
+                           .filter(TurnoEstudioLink.turno_id.in_(ids_turnos)).all()}
+            con_estudio |= {r[0] for r in db.query(TurnoEstudioArchivo.turno_id)
+                            .filter(TurnoEstudioArchivo.turno_id.in_(ids_turnos)).all()}
+            for tid in con_estudio:
+                if tid not in reports_map:
+                    reports_map[tid] = (None, "INFORMADO")
+        except Exception:
+            db.rollback()
+
     timeline_events = []
 
     # Process Notes
