@@ -13,3 +13,4 @@ from .radioterapia import SeguimientoRadioterapia # 👈 NUEVO RADIOTERAPIA
 from .agenda_practica import AgendaPractica # 👈 NUEVO AGENDA PRACTICA
 from .turno_estudio_link import TurnoEstudioLink # 👈 LINK DE ESTUDIO (tabla separada)
 from .turno_estudio_archivo import TurnoEstudioArchivo # 👈 INFORME PDF (tabla separada)
+from .feriado import Feriado # 👈 FERIADOS (tabla separada)
