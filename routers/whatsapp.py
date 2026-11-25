@@ -64,6 +64,9 @@ def generar_link_whatsapp(turno_id: int, db: Session = Depends(get_db), current_
         direccion = "Calle San Martín Nº 2473"
     elif "DUARTE" in servicio_upper:
         direccion = "Calle Colombia 1249"
+    elif es_dr_gustavo_martinez(servicio_upper):
+        # Consultorio del Dr. Gustavo Martínez: calle San Martín (25/11/2026).
+        direccion = "Calle San Martín Nº 2473"
 
     mensaje = f"Hola {paciente.nombre}, le recordamos su turno para {servicio} en Centro Oncológico Corrientes ({direccion}) el día {fecha_str} a las {hora_str}."
     mensaje_encoded = urllib.parse.quote(mensaje)
@@ -71,6 +74,21 @@ def generar_link_whatsapp(turno_id: int, db: Session = Depends(get_db), current_
     link = f"https://wa.me/{numero}?text={mensaje_encoded}"
     
     return {"link": link, "mensaje": mensaje, "numero": numero}
+
+def _sin_acentos(texto: str) -> str:
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", str(texto or "").upper())
+                   if unicodedata.category(c) != "Mn")
+
+
+def es_dr_gustavo_martinez(nombre_agenda: str) -> bool:
+    """Agenda del Dr. Gustavo Martínez (no la de la Dra. Miriam Martínez)."""
+    n = _sin_acentos(nombre_agenda)
+    if "MARTINEZ" not in n or "MIRIAM" in n or "DRA" in n.replace(".", " ").split():
+        return False
+    palabras = n.replace(".", " ").split()
+    return "GUSTAVO" in palabras or "DR" in palabras
+
 
 @router.post("/mark-sent/{turno_id}")
 def marcar_como_enviado(turno_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
