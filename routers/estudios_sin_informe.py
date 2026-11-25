@@ -40,6 +40,7 @@ router = APIRouter(prefix="/estudios", tags=["Estudios sin informe"])
 TIPOS_POR_DEFECTO = "TOMOGRAFIA,ECOGRAFIA,ELECTRO_MAPEO,PET,CAMARA_GAMMA,QUIMIOTERAPIA"
 INFORME_CERRADO = ("FINALIZADO", "RECTIFICADO")
 MAX_FILAS = 2000
+INICIO_CARGA_ESTUDIOS = date(2026, 11, 21)  # empezó la carga de link/PDF por turno
 NO_DISPONIBLE = "La consulta de estudios sin informe no está disponible en este momento."
 
 
@@ -107,7 +108,9 @@ def estudios_sin_informe(
 ):
     hoy = date.today()
     hasta = hasta or hoy
-    desde = desde or (hasta - timedelta(days=30))
+    # Por defecto, desde el inicio de la carga de links/PDF en miagendam (21/11/2026),
+    # sin superar el máximo de un año.
+    desde = desde or max(INICIO_CARGA_ESTUDIOS, hasta - timedelta(days=365))
     if desde > hasta:
         raise HTTPException(422, "La fecha 'desde' no puede ser posterior a 'hasta'.")
     if (hasta - desde).days > 366:
