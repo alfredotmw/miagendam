@@ -190,10 +190,13 @@
             return 'alto';
         }
 
-        // Fechas por defecto: últimos 30 días hasta hoy.
+        // Fechas por defecto: desde el 21/11/2026 (inicio de la carga de link/PDF) hasta hoy,
+        // con un máximo de un año hacia atrás.
         (function initFechas() {
             const hoy = new Date();
-            const desde = new Date(); desde.setDate(hoy.getDate() - 30);
+            const haceUnAnio = new Date(); haceUnAnio.setDate(hoy.getDate() - 365);
+            const inicio = new Date(2026, 10, 21);
+            const desde = inicio > haceUnAnio ? inicio : haceUnAnio;
             document.getElementById('f-hasta').value = isoLocal(hoy);
             document.getElementById('f-desde').value = isoLocal(desde);
         })();
