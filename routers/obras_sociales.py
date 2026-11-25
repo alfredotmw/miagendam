@@ -41,7 +41,7 @@ def actualizar_obra_social(obra_id: int, datos: ObraSocialUpdate, db: Session = 
     return obra
 
 @router.delete("/{obra_id}")
-def eliminar_obra_social(obra_id: int, db: Session = Depends(get_db)):
+def eliminar_obra_social(obra_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     obra = db.query(ObraSocial).filter(ObraSocial.id == obra_id).first()
     if not obra:
         raise HTTPException(status_code=404, detail="Obra social no encontrada")

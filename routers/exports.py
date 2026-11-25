@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, Response
+from auth.jwt import get_current_user_header_or_query
 from sqlalchemy.orm import Session
 from typing import Optional
 from database import get_db
@@ -17,7 +18,8 @@ def export_turnos(
     desde: Optional[date] = Query(None, description="Fecha desde (YYYY-MM-DD)"),
     hasta: Optional[date] = Query(None, description="Fecha hasta (YYYY-MM-DD)"),
     formato: str = Query("json", description="Formato de salida: json o csv"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user_header_or_query)
 ):
     """
     Exporta turnos. Si se indican fechas, filtra por rango. Si no, trae todo.

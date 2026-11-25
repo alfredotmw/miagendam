@@ -55,6 +55,7 @@ def actualizar_practica(
     practica_id: int,
     data: PracticaUpdate,
     db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     practica = db.query(Practica).get(practica_id)
     if not practica:
@@ -71,7 +72,7 @@ def actualizar_practica(
 
 
 @router.delete("/{practica_id}", status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_practica(practica_id: int, db: Session = Depends(get_db)):
+def eliminar_practica(practica_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     practica = db.query(Practica).get(practica_id)
     if not practica:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")

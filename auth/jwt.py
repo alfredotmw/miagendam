@@ -76,3 +76,38 @@ def require_roles(allowed_roles: List[str]):
         # 🔹 devolvemos el usuario autenticado
         return current_user
     return _require
+
+
+# 🔒 Variante para enlaces/planillas externas: acepta "Authorization: Bearer ..."
+# o ?token=... en la dirección (como /analytics/excel_feed y /radioterapia/feed).
+from fastapi import Query as _Query
+from fastapi.security import HTTPBearer as _HTTPBearer
+_optional_security = _HTTPBearer(auto_error=False)
+
+
+def _payload_from_token(token: str) -> Dict[str, Any]:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido o expirado")
+    if "sub" not in payload or "role" not in payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido: faltan campos requeridos")
+    return payload
+
+
+def get_current_user_header_or_query(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_optional_security),
+    token: Optional[str] = _Query(default=None, description="Token de sesión (alternativa al encabezado)"),
+) -> Dict[str, Any]:
+    raw = credentials.credentials if credentials else token
+    if not raw:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Falta iniciar sesión")
+    payload = _payload_from_token(raw)
+    return {"id": payload.get("id"), "username": payload["sub"], "role": payload["role"],
+            "allowed_agendas": payload.get("allowed_agendas")}
+
+
+def require_admin(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    if str(current_user.get("role") or "").upper() != "ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo administradores")
+    return current_user
