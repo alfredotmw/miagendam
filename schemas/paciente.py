@@ -22,6 +22,12 @@ class PacienteCreate(PacienteBase):
     medico_derivante_nombre: Optional[str] = None # 👈 Nuevo
 
 class PacienteUpdate(PacienteBase):
+    # En una edición se mandan solo los datos que cambian: nombre, apellido y DNI
+    # dejan de ser obligatorios (antes "Editar Datos" fallaba con "Field required"
+    # porque no enviaba el DNI).
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
+    dni: Optional[str] = None
     obra_social_nombre: Optional[str] = None
     medico_derivante_nombre: Optional[str] = None # 👈 Nuevo
 
