@@ -10,6 +10,8 @@ Reglas (definidas por administración, 25/11/2026):
   - Servicios que llevan informe: TOMOGRAFIA (TAC y RX), ECOGRAFIA, ELECTRO_MAPEO,
     PET, CAMARA_GAMMA y QUIMIOTERAPIA (cada sesión). RADIOTERAPIA no lleva informe
     por sesión y no se lista. Configurable con la variable ESTUDIO_AGENDA_TIPOS.
+  - La TAC DE MARCACIÓN no lleva informe (se usa para planificar radioterapia):
+    un turno cuyas prácticas son todas de marcación no se lista.
   - Varios estudios del mismo paciente, mismo servicio, mismo día y mismo horario
     llevan UN solo informe: se muestran en una fila y, si cualquiera de esos turnos
     ya tiene informe, el grupo entero cuenta como informado.
@@ -90,11 +92,31 @@ def _clave(paciente_id, agenda_id, fecha, hora) -> tuple:
     return (paciente_id, agenda_id, _dia(fecha), _hora(hora))
 
 
-def _nombre_practicas(turno: Turno) -> str:
+def _sin_acentos(texto: str) -> str:
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", str(texto or "").upper())
+                   if unicodedata.category(c) != "Mn")
+
+
+def es_marcacion(nombre: str) -> bool:
+    """TAC de marcación: planifica radioterapia, no lleva informe."""
+    return "MARCACION" in _sin_acentos(nombre)
+
+
+def _todas_las_practicas(turno: Turno) -> list:
     nombres = [p.nombre for p in (turno.practicas or []) if p and p.nombre]
     if not nombres and turno.practica and turno.practica.nombre:
         nombres = [turno.practica.nombre]
-    return ", ".join(nombres)
+    return nombres
+
+
+def solo_marcacion(turno: Turno) -> bool:
+    nombres = _todas_las_practicas(turno)
+    return bool(nombres) and all(es_marcacion(n) for n in nombres)
+
+
+def _nombre_practicas(turno: Turno) -> str:
+    return ", ".join(n for n in _todas_las_practicas(turno) if not es_marcacion(n))
 
 
 @router.get("/sin-informe")
@@ -123,7 +145,7 @@ def estudios_sin_informe(
         agendas_q = db.query(Agenda).filter(func.upper(Agenda.tipo).in_(tipos))
         if permitidas is not None:
             agendas_q = agendas_q.filter(Agenda.id.in_(permitidas or {-1}))
-        agendas = agendas_q.order_by(Agenda.nombre).all()
+        agendas = [a for a in agendas_q.order_by(Agenda.nombre).all() if not es_marcacion(a.nombre)]
         ids_agendas = [a.id for a in agendas]
         if agenda_id is not None:
             if agenda_id not in ids_agendas:
@@ -161,6 +183,7 @@ def estudios_sin_informe(
         turnos = query.order_by(Turno.fecha.asc(), Turno.hora.asc()).limit(MAX_FILAS + 1).all()
         truncado = len(turnos) > MAX_FILAS
         turnos = turnos[:MAX_FILAS]
+        turnos = [t for t in turnos if not solo_marcacion(t)]
 
         # Mismo paciente + servicio + día + horario lleva un solo informe: si cualquiera
         # de esos turnos ya tiene link, PDF o informe cerrado, el grupo cuenta como informado.
