@@ -108,6 +108,13 @@ try:
 except Exception as e:
     print(f"[LINK ESTUDIO DESHABILITADO]: {e}")
 
+# Estudios sin informe: módulo aislado y de solo lectura (únicamente SELECT).
+try:
+    from routers import estudios_sin_informe
+    app.include_router(estudios_sin_informe.router)
+except Exception as e:
+    print(f"[ESTUDIOS SIN INFORME DESHABILITADO]: {e}")
+
 # Feriados y plan de sesiones de radioterapia: módulo aislado.
 try:
     from routers import feriados
