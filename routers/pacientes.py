@@ -18,6 +18,24 @@ router = APIRouter(
 # 🟢 Crear paciente
 from auth.jwt import get_current_user
 
+def _validar_fecha_nacimiento(fecha):
+    """Fecha de nacimiento posible: no futura y no mayor a 120 años."""
+    from datetime import date as _date
+    if fecha is None:
+        return
+    hoy = _date.today()
+    if fecha > hoy:
+        raise HTTPException(status_code=400, detail="La fecha de nacimiento no puede ser futura")
+    if hoy.year - fecha.year > 120:
+        raise HTTPException(status_code=400, detail="Revisá la fecha de nacimiento (más de 120 años)")
+
+
+# Datos que, si llegan vacíos en una actualización, NO deben borrar lo ya cargado.
+# (Nuevo turno manda null cuando el formulario no se completó con los datos del
+# paciente existente: antes eso borraba fecha de nacimiento, sexo, teléfono, etc.)
+CAMPOS_QUE_NO_SE_BORRAN = {"fecha_nacimiento", "sexo", "telefono", "celular", "email", "direccion", "patologia"}
+
+
 @router.post("/", response_model=PacienteOut)
 def crear_paciente(paciente: PacienteCreate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     # 🟢 Normalize DNI: Remove dots, spaces, dashes
@@ -31,6 +49,11 @@ def crear_paciente(paciente: PacienteCreate, db: Session = Depends(get_db), curr
     # Manejo de Obra Social dinámica (OBLIGATORIO)
     if not paciente.obra_social_id and not paciente.obra_social_nombre:
         raise HTTPException(status_code=400, detail="La Obra Social es obligatoria")
+
+    # Fecha de nacimiento (OBLIGATORIA): de ella se calcula la edad.
+    if not paciente.fecha_nacimiento:
+        raise HTTPException(status_code=400, detail="La fecha de nacimiento es obligatoria")
+    _validar_fecha_nacimiento(paciente.fecha_nacimiento)
 
     if paciente.obra_social_nombre:
         nombre_os = paciente.obra_social_nombre.strip().upper() # FORCE UPPERCASE
@@ -217,6 +240,13 @@ def actualizar_paciente(paciente_id: int, datos: PacienteUpdate, db: Session = D
     
     if datos.medico_derivante_id:
         update_data['medico_derivante_id'] = datos.medico_derivante_id
+
+    # Un dato vacío no borra lo que ya estaba cargado (ver CAMPOS_QUE_NO_SE_BORRAN).
+    for campo in CAMPOS_QUE_NO_SE_BORRAN:
+        if campo in update_data and (update_data[campo] is None or
+                                     (isinstance(update_data[campo], str) and not update_data[campo].strip())):
+            del update_data[campo]
+    _validar_fecha_nacimiento(update_data.get("fecha_nacimiento"))
 
     for key, value in update_data.items():
         if isinstance(value, str): # FORCE UPPERCASE & STRIP

@@ -194,7 +194,8 @@
                             <label>DNI *</label>
                             <div class="search-group">
                                 <input type="text" id="dni" required placeholder="Ingrese DNI"
-                                    onkeypress="if(event.key === 'Enter') { event.preventDefault(); buscarPaciente(); }">
+                                    onkeypress="if(event.key === 'Enter') { event.preventDefault(); buscarPaciente(); }"
+                                    onchange="buscarPaciente(true)">
                                 <button type="button" class="search-btn" onclick="buscarPaciente()">Buscar</button>
                             </div>
                         </div>
@@ -211,8 +212,8 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Fecha de Nacimiento</label>
-                            <input type="date" id="fecha_nacimiento" onchange="calcularEdad()">
+                            <label>Fecha de Nacimiento *</label>
+                            <input type="date" id="fecha_nacimiento" required onchange="calcularEdad()">
                         </div>
 
                         <div class="form-group">
@@ -500,9 +501,13 @@
             }
         }
 
-        async function buscarPaciente() {
-            const dni = document.getElementById('dni').value;
-            if (!dni) return alert('Ingrese un DNI');
+        // auto=true: búsqueda al salir del campo DNI (sin avisos y sin borrar lo ya escrito
+        // si el paciente no existe). Así los datos del paciente existente se cargan
+        // aunque no se toque "Buscar".
+        async function buscarPaciente(auto) {
+            const dni = document.getElementById('dni').value.trim();
+            if (!dni) { if (auto) return; return alert('Ingrese un DNI'); }
+            if (auto && dni.replace(/\D/g, '').length < 6) return;
 
             const btn = document.querySelector('.search-group .search-btn');
             const originalText = btn.textContent;
@@ -530,6 +535,9 @@
                         document.getElementById('obra_social_input').value = p.obra_social.nombre;
                     }
                     calcularEdad();
+                } else if (auto) {
+                    // Búsqueda automática: paciente nuevo; no se borra lo que ya se escribió.
+                    document.getElementById('paciente_id').value = '';
                 } else {
                     // Si no encuentra, asumimos nuevo sin preguntar (evitar confirm bloqueante)
                     // alert('Paciente no encontrado. Ingrese los datos para crearlo.');
@@ -549,7 +557,7 @@
                 }
             } catch (error) {
                 console.error(error);
-                alert('Error al buscar paciente');
+                if (!auto) alert('Error al buscar paciente');
             } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;
@@ -930,6 +938,14 @@
 
             if (!dni || !nombre || !apellido || !agendaId || !hora || !medicoDerivante || !obraSocial || !celular) {
                 return alert('Por favor complete todos los campos obligatorios (*). Incluyendo Celular y Obra Social.');
+            }
+            const fechaNac = document.getElementById('fecha_nacimiento').value;
+            if (!fechaNac) {
+                document.getElementById('fecha_nacimiento').focus();
+                return alert('Completá la fecha de nacimiento del paciente (se usa para calcular la edad).');
+            }
+            if (fechaNac > new Date().toISOString().slice(0, 10)) {
+                return alert('La fecha de nacimiento no puede ser futura.');
             }
 
             const practicasIds = Array.from(document.querySelectorAll('input[name="practicas_ids"]:checked')).map(cb => parseInt(cb.value));
