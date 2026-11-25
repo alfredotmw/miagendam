@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estudios sin informe - Centro Oncológico Corrientes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css?v=4">
+    <style>
+        .esi-filters { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1.25rem; }
+        .esi-filters .form-group { margin-bottom: 0; min-width: 150px; }
+        .esi-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .esi-chip { background: #edf2f7; color: #2d3748; border-radius: 999px; padding: 0.3rem 0.8rem; font-size: 0.85rem; font-weight: 500; }
+        .esi-chip.total { background: #fed7d7; color: #9b2c2c; font-weight: 700; }
+        .esi-dias { font-weight: 700; }
+        .esi-dias.ok { color: #2f855a; }
+        .esi-dias.medio { color: #b7791f; }
+        .esi-dias.alto { color: #c53030; }
+        .esi-borrador { background: #fefcbf; color: #975a16; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.75rem; font-weight: 600; }
+        .esi-link { color: #3182ce; font-weight: 600; text-decoration: none; }
+        .esi-link:hover { text-decoration: underline; }
+        .esi-aviso { color: #718096; font-size: 0.85rem; margin-top: 0.75rem; }
+        .esi-wrap { overflow-x: auto; }
+        .esi-multi { background: #ebf8ff; color: #2b6cb0; border-radius: 4px; padding: 0.1rem 0.45rem; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+        .esi-filters .btn-primary, .esi-filters .btn-secondary { width: auto; margin: 0; padding: 0.6rem 1.25rem; height: 2.6rem; }
+        .esi-filters .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .turnos-table td { vertical-align: middle; }
+        .esi-acciones { display: flex; gap: 0.35rem; align-items: center; white-space: nowrap; }
+        .esi-btn { padding: 0.3rem 0.6rem; border-radius: 4px; border: 1px solid #3182ce; background: #fff; color: #2b6cb0; font-weight: 600; font-size: 0.8rem; cursor: pointer; }
+        .esi-btn:hover { background: #ebf8ff; }
+        .esi-btn.solid { background: #3182ce; color: #fff; }
+        .esi-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .esi-modal-bg { position: fixed; inset: 0; background: rgba(26, 32, 44, 0.55); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .esi-modal { background: #fff; border-radius: 10px; width: min(560px, 92vw); padding: 1.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
+        .esi-modal h3 { margin: 0 0 0.75rem; font-size: 1.15rem; color: #1a202c; }
+        .esi-ficha { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.9rem; line-height: 1.55; margin-bottom: 1rem; }
+        .esi-ficha b { color: #2d3748; }
+        .esi-modal .err { color: #c53030; font-size: 0.85rem; margin-top: 0.5rem; display: none; }
+        .esi-modal .pie { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem; }
+        .esi-ok { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #2f855a; color: #fff; padding: 0.75rem 1.1rem; border-radius: 6px; font-weight: 600; display: none; z-index: 1001; box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="/static/logo_ccm_coc.jpg" alt="Logo" class="sidebar-logo">
+                <h3>Agenda Médica</h3>
+            </div>
+            <nav class="nav-menu">
+                <a href="/static/dashboard.html" class="nav-item">Dashboard</a>
+                <a href="/static/radioterapia.html" class="nav-item">Radioterapia</a>
+                <a href="/static/agendas.html" class="nav-item">Agendas</a>
+                <a href="/static/historial_turnos.html" class="nav-item">Historial</a>
+                <a href="/static/estudios_sin_informe.html" class="nav-item active">Estudios sin informe</a>
+                <a href="/static/reporte_notificaciones.html" class="nav-item">Notificaciones</a>
+            </nav>
+            <button class="logout-btn" onclick="logout()"
+                style="margin-top: auto; margin-bottom: 1rem; padding: 0.75rem; background: #f56565; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%;">
+                Cerrar Sesión
+            </button>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <h1 class="page-title">Estudios sin informe</h1>
+            </header>
+
+            <div class="form-container" style="max-width: 100%;">
+                <div class="esi-filters">
+                    <div class="form-group">
+                        <label for="f-desde">Desde</label>
+                        <input type="date" id="f-desde" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="f-hasta">Hasta</label>
+                        <input type="date" id="f-hasta" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="f-agenda">Servicio</label>
+                        <select id="f-agenda" class="form-input">
+                            <option value="">Todos los servicios</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label for="f-q">Paciente</label>
+                        <input type="text" id="f-q" class="form-input" maxlength="100" placeholder="DNI o apellido">
+                    </div>
+                    <button class="btn-primary" id="btn-buscar">Buscar</button>
+                    <button class="btn-secondary" id="btn-csv" disabled>Exportar CSV</button>
+                </div>
+
+                <div class="esi-chips" id="chips"></div>
+
+                <div class="esi-wrap">
+                    <table class="turnos-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Días</th>
+                                <th>Paciente</th>
+                                <th>DNI</th>
+                                <th>Servicio</th>
+                                <th>Práctica</th>
+                                <th>Obra social</th>
+                                <th>Médico derivante</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody">
+                            <tr><td colspan="9" style="text-align: center;">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="esi-aviso" id="aviso">
+                    Turnos completados de TAC/RX, ecografías, electro, PET, cámara gamma y quimioterapia (cada sesión) sin informe cargado.
+                    Radioterapia no se lista. Varios estudios del mismo paciente, mismo día y mismo horario llevan un solo informe y se muestran en una fila.
+                    Para cargarlo usá "Link" o "PDF" en la fila (o abrí el paciente con "Ver").
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Carga del informe: usa los mismos endpoints que el detalle del turno en Historia Clínica -->
+    <div class="esi-modal-bg" id="modal-bg">
+        <div class="esi-modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+            <h3 id="modal-titulo">Cargar informe</h3>
+            <div class="esi-ficha" id="modal-ficha"></div>
+            <div id="modal-link" style="display: none;">
+                <label for="input-link" style="font-weight: 600; font-size: 0.9rem;">Link del estudio en Visual Médica</label>
+                <input type="url" id="input-link" class="form-input" maxlength="500" placeholder="https://..." style="width: 100%; margin-top: 0.35rem;">
+            </div>
+            <div id="modal-pdf" style="display: none;">
+                <label for="input-pdf" style="font-weight: 600; font-size: 0.9rem;">Informe en PDF (máx. 15 MB)</label>
+                <input type="file" id="input-pdf" accept="application/pdf,.pdf" style="display: block; margin-top: 0.5rem;">
+            </div>
+            <div class="err" id="modal-err"></div>
+            <div class="pie">
+                <button class="esi-btn" id="modal-cancelar">Cancelar</button>
+                <button class="esi-btn solid" id="modal-guardar">Guardar</button>
+            </div>
+        </div>
+    </div>
+    <div class="esi-ok" id="toast-ok"></div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/static/login.html';
+        let ultimosItems = [];
+        let ultimaData = null;
+        let puedeEditar = false;
+        let actual = null; // { item, tipo: 'link' | 'pdf' }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/static/login.html';
+        }
+
+        function esc(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        function fechaAR(iso) {
+            if (!iso) return '';
+            const [y, m, d] = iso.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function isoLocal(d) {
+            const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+            return z.toISOString().slice(0, 10);
+        }
+
+        function claseDias(n) {
+            if (n == null) return '';
+            if (n <= 2) return 'ok';
+            if (n <= 7) return 'medio';
+            return 'alto';
+        }
+
+        // Fechas por defecto: últimos 30 días hasta hoy.
+        (function initFechas() {
+            const hoy = new Date();
+            const desde = new Date(); desde.setDate(hoy.getDate() - 30);
+            document.getElementById('f-hasta').value = isoLocal(hoy);
+            document.getElementById('f-desde').value = isoLocal(desde);
+        })();
+
+        async function buscar() {
+            const tbody = document.getElementById('tbody');
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Cargando...</td></tr>';
+            document.getElementById('btn-csv').disabled = true;
+            const params = new URLSearchParams();
+            const desde = document.getElementById('f-desde').value;
+            const hasta = document.getElementById('f-hasta').value;
+            const agenda = document.getElementById('f-agenda').value;
+            const q = document.getElementById('f-q').value.trim();
+            if (desde) params.set('desde', desde);
+            if (hasta) params.set('hasta', hasta);
+            if (agenda) params.set('agenda_id', agenda);
+            if (q) params.set('q', q);
+            try {
+                const res = await fetch('/estudios/sin-informe?' + params.toString(), {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401) { logout(); return; }
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Error');
+                cargarAgendas(data.agendas);
+                render(data);
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: #c53030;">${esc(e.message || 'No se pudo cargar la consulta.')}</td></tr>`;
+                document.getElementById('chips').innerHTML = '';
+            }
+        }
+
+        function cargarAgendas(agendas) {
+            const sel = document.getElementById('f-agenda');
+            if (sel.dataset.cargado) return;
+            (agendas || []).forEach(a => {
+                const o = document.createElement('option');
+                o.value = a.id; o.textContent = a.nombre;
+                sel.appendChild(o);
+            });
+            sel.dataset.cargado = '1';
+        }
+
+        function render(data) {
+            ultimaData = data;
+            ultimosItems = data.items || [];
+            const chips = [`<span class="esi-chip total">${data.total} sin informe</span>`]
+                .concat((data.por_agenda || []).map(a => `<span class="esi-chip">${esc(a.agenda)}: ${a.cantidad}</span>`));
+            document.getElementById('chips').innerHTML = chips.join('');
+            const tbody = document.getElementById('tbody');
+            if (!ultimosItems.length) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #2f855a; font-weight: 600;">No hay estudios sin informe en este período.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = ultimosItems.map((it, idx) => `
+                <tr>
+                    <td>${fechaAR(it.fecha)} ${esc(it.hora)}${it.cantidad_turnos > 1 ? `<br><span class="esi-multi">${it.cantidad_turnos} turnos · 1 informe</span>` : ''}</td>
+                    <td><span class="esi-dias ${claseDias(it.dias)}">${it.dias ?? ''}</span></td>
+                    <td>${esc(it.paciente)} ${it.borrador ? '<span class="esi-borrador">Borrador</span>' : ''}</td>
+                    <td>${esc(it.dni)}</td>
+                    <td>${esc(it.agenda)}</td>
+                    <td>${esc(it.practicas)}</td>
+                    <td>${esc(it.obra_social)}</td>
+                    <td>${esc(it.medico_derivante)}</td>
+                    <td><div class="esi-acciones">
+                        ${puedeEditar ? `<button class="esi-btn" data-accion="link" data-idx="${idx}">Link</button>
+                        <button class="esi-btn" data-accion="pdf" data-idx="${idx}">PDF</button>` : ''}
+                        <a class="esi-link" href="/static/historial_turnos.html?dni=${encodeURIComponent(it.dni)}" target="_blank" rel="noopener">Ver</a>
+                    </div></td>
+                </tr>`).join('');
+            if (data.truncado) {
+                tbody.insertAdjacentHTML('beforeend', '<tr><td colspan="9" style="text-align: center; color: #b7791f;">Se muestran los primeros 2000. Acotá el rango de fechas.</td></tr>');
+            }
+            document.getElementById('btn-csv').disabled = false;
+        }
+
+        function exportarCSV() {
+            const cols = [['fecha', 'Fecha'], ['hora', 'Hora'], ['dias', 'Días'], ['paciente', 'Paciente'], ['dni', 'DNI'],
+                ['celular', 'Celular'], ['agenda', 'Servicio'], ['practicas', 'Práctica'], ['obra_social', 'Obra social'],
+                ['medico_derivante', 'Médico derivante'], ['borrador', 'Borrador']];
+            const celda = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+            const lineas = [cols.map(c => celda(c[1])).join(';')].concat(
+                ultimosItems.map(it => cols.map(([k]) => celda(k === 'fecha' ? fechaAR(it[k]) : (k === 'borrador' ? (it[k] ? 'Sí' : '') : it[k]))).join(';')));
+            const blob = new Blob(['﻿' + lineas.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `estudios_sin_informe_${document.getElementById('f-desde').value}_a_${document.getElementById('f-hasta').value}.csv`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        // ===== Carga del link / PDF desde el listado =====
+        // Mismos endpoints, permisos y validaciones que Historia Clínica:
+        //   PUT  /turnos/{id}/link-estudio   y   POST /turnos/{id}/informe-pdf
+        // En un grupo (varios turnos mismo día y horario) se carga en el primer turno:
+        // un solo informe para todos.
+        function abrirModal(item, tipo) {
+            actual = { item, tipo };
+            document.getElementById('modal-titulo').textContent = tipo === 'link' ? 'Cargar link del estudio' : 'Subir informe en PDF';
+            document.getElementById('modal-ficha').innerHTML =
+                `<b>Paciente:</b> ${esc(item.paciente)} — DNI ${esc(item.dni)}<br>` +
+                `<b>Estudio:</b> ${esc(item.agenda)} — ${esc(item.practicas) || 'sin práctica'}<br>` +
+                `<b>Fecha:</b> ${fechaAR(item.fecha)} ${esc(item.hora)}` +
+                (item.cantidad_turnos > 1 ? `<br><b>${item.cantidad_turnos} turnos, un solo informe</b>` : '');
+            document.getElementById('modal-link').style.display = tipo === 'link' ? 'block' : 'none';
+            document.getElementById('modal-pdf').style.display = tipo === 'pdf' ? 'block' : 'none';
+            document.getElementById('input-link').value = '';
+            document.getElementById('input-pdf').value = '';
+            document.getElementById('modal-err').style.display = 'none';
+            document.getElementById('modal-guardar').disabled = false;
+            document.getElementById('modal-bg').style.display = 'flex';
+            if (tipo === 'link') setTimeout(() => document.getElementById('input-link').focus(), 50);
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-bg').style.display = 'none';
+            actual = null;
+        }
+
+        function errorModal(msg) {
+            const el = document.getElementById('modal-err');
+            el.textContent = msg; el.style.display = 'block';
+        }
+
+        function mensajeError(data, porDefecto) {
+            if (typeof data.detail === 'string') return data.detail;
+            if (Array.isArray(data.detail) && data.detail.length) return data.detail.map(e => e.msg).join(', ');
+            return porDefecto;
+        }
+
+        async function guardarModal() {
+            if (!actual) return;
+            const { item, tipo } = actual;
+            const turnoId = item.turno_id;
+            const btn = document.getElementById('modal-guardar');
+            document.getElementById('modal-err').style.display = 'none';
+            let res;
+            try {
+                if (tipo === 'link') {
+                    const link = document.getElementById('input-link').value.trim();
+                    if (!link) { errorModal('Pegá el link del estudio.'); return; }
+                    btn.disabled = true;
+                    res = await fetch(`/turnos/${turnoId}/link-estudio`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ link })
+                    });
+                } else {
+                    const archivo = document.getElementById('input-pdf').files[0];
+                    if (!archivo) { errorModal('Elegí el archivo PDF.'); return; }
+                    if (archivo.size > 15 * 1024 * 1024) { errorModal('El PDF supera los 15 MB.'); return; }
+                    btn.disabled = true;
+                    const fd = new FormData();
+                    fd.append('archivo', archivo);
+                    res = await fetch(`/turnos/${turnoId}/informe-pdf`, {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd
+                    });
+                }
+                if (res.status === 401) { logout(); return; }
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    errorModal(mensajeError(data, tipo === 'link' ? 'No se pudo guardar el link.' : 'No se pudo subir el PDF.'));
+                    btn.disabled = false;
+                    return;
+                }
+                quitarDelListado(item);
+                cerrarModal();
+                aviso(`${tipo === 'link' ? 'Link guardado' : 'PDF cargado'}: ${item.paciente}`);
+            } catch (e) {
+                errorModal('Error de conexión. No se guardó nada; probá de nuevo.');
+                btn.disabled = false;
+            }
+        }
+
+        function quitarDelListado(item) {
+            if (!ultimaData) return;
+            ultimaData.items = ultimaData.items.filter(x => x !== item);
+            ultimaData.total = ultimaData.items.length;
+            ultimaData.por_agenda = (ultimaData.por_agenda || [])
+                .map(a => a.agenda === item.agenda ? { ...a, cantidad: a.cantidad - 1 } : a)
+                .filter(a => a.cantidad > 0);
+            render(ultimaData);
+        }
+
+        function aviso(texto) {
+            const el = document.getElementById('toast-ok');
+            el.textContent = texto; el.style.display = 'block';
+            clearTimeout(aviso._t); aviso._t = setTimeout(() => { el.style.display = 'none'; }, 3500);
+        }
+
+        document.getElementById('tbody').addEventListener('click', e => {
+            const b = e.target.closest('button[data-accion]');
+            if (!b) return;
+            const item = ultimosItems[Number(b.dataset.idx)];
+            if (item) abrirModal(item, b.dataset.accion);
+        });
+        document.getElementById('modal-cancelar').addEventListener('click', cerrarModal);
+        document.getElementById('modal-guardar').addEventListener('click', guardarModal);
+        document.getElementById('modal-bg').addEventListener('click', e => { if (e.target.id === 'modal-bg') cerrarModal(); });
+        document.getElementById('input-link').addEventListener('keydown', e => { if (e.key === 'Enter') guardarModal(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+
+        // Solo ADMIN y RECEPCION ven los botones (el servidor igual lo valida).
+        async function cargarRol() {
+            try {
+                const r = await fetch('/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (r.ok) {
+                    const u = await r.json();
+                    puedeEditar = ['ADMIN', 'RECEPCION'].includes(String(u.role || '').toUpperCase());
+                }
+            } catch (e) { puedeEditar = false; }
+        }
+
+        document.getElementById('btn-buscar').addEventListener('click', buscar);
+        document.getElementById('btn-csv').addEventListener('click', exportarCSV);
+        document.getElementById('f-q').addEventListener('keydown', e => { if (e.key === 'Enter') buscar(); });
+        cargarRol().then(buscar);
+    </script>
+</body>
+
+</html>
