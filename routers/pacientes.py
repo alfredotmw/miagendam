@@ -33,7 +33,7 @@ def _validar_fecha_nacimiento(fecha):
 # Datos que, si llegan vacíos en una actualización, NO deben borrar lo ya cargado.
 # (Nuevo turno manda null cuando el formulario no se completó con los datos del
 # paciente existente: antes eso borraba fecha de nacimiento, sexo, teléfono, etc.)
-CAMPOS_QUE_NO_SE_BORRAN = {"fecha_nacimiento", "sexo", "telefono", "celular", "email", "direccion", "patologia"}
+CAMPOS_QUE_NO_SE_BORRAN = {"nombre", "apellido", "dni", "fecha_nacimiento", "sexo", "telefono", "celular", "email", "direccion", "patologia"}
 
 
 @router.post("/", response_model=PacienteOut)

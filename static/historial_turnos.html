@@ -1595,10 +1595,18 @@
             const medico_derivante_nombre = document.getElementById('edit-medico').value;
             const patologia = document.getElementById('edit-patologia').value;
 
+            const dni = (document.getElementById('edit-dni').value || '').trim();
+            if (!nombre.trim() || !apellido.trim()) {
+                return alert('Completá nombre y apellido.');
+            }
+            if (fecha_nacimiento && fecha_nacimiento > new Date().toISOString().slice(0, 10)) {
+                return alert('La fecha de nacimiento no puede ser futura.');
+            }
             const payload = {
                 nombre, apellido, fecha_nacimiento, telefono,
                 obra_social_nombre, medico_derivante_nombre, patologia
             };
+            if (dni) payload.dni = dni;
 
             try {
                 const res = await fetch(`/pacientes/${currentPatientId}`, {
