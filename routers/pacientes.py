@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 # 🟢 Crear paciente
-from auth.jwt import get_current_user
+from auth.jwt import get_current_user, get_current_user_header_or_query, require_admin
 
 def _validar_fecha_nacimiento(fecha):
     """Fecha de nacimiento posible: no futura y no mayor a 120 años."""
@@ -105,7 +105,8 @@ def listar_pacientes(
     q: Optional[str] = Query(None, description="Buscar por DNI, nombre o apellido"),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     query = db.query(Paciente)
     if q and isinstance(q, str):
@@ -165,7 +166,7 @@ def listar_pacientes(
 
 # 🟢 Obtener un paciente por ID
 @router.get("/{paciente_id}", response_model=PacienteOut)
-def obtener_paciente(paciente_id: int, db: Session = Depends(get_db)):
+def obtener_paciente(paciente_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
@@ -174,7 +175,7 @@ def obtener_paciente(paciente_id: int, db: Session = Depends(get_db)):
 
 # 🟢 Obtener un paciente por DNI
 @router.get("/dni/{dni}", response_model=PacienteOut)
-def obtener_paciente_por_dni(dni: str, db: Session = Depends(get_db)):
+def obtener_paciente_por_dni(dni: str, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     dni_norm = dni.replace('.', '').replace(' ', '').replace('-', '').strip()
     paciente = db.query(Paciente).filter(Paciente.dni == dni_norm).first()
     if not paciente:
@@ -260,7 +261,7 @@ def actualizar_paciente(paciente_id: int, datos: PacienteUpdate, db: Session = D
 
 # 🟢 Eliminar paciente
 @router.delete("/{paciente_id}")
-def eliminar_paciente(paciente_id: int, db: Session = Depends(get_db)):
+def eliminar_paciente(paciente_id: int, db: Session = Depends(get_db), current_user: dict = Depends(require_admin)):
     paciente = db.query(Paciente).filter(Paciente.id == paciente_id).first()
     if not paciente:
         raise HTTPException(status_code=404, detail="Paciente no encontrado")
@@ -271,7 +272,7 @@ def eliminar_paciente(paciente_id: int, db: Session = Depends(get_db)):
 
 # 🟢 Vista combinada: Detalle de pacientes
 @router.get("/detalle/", summary="Lista pacientes con obra social y edad calculada")
-def detalle_pacientes(db: Session = Depends(get_db)):
+def detalle_pacientes(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user_header_or_query)):
     pacientes = (
         db.query(
             Paciente.id,

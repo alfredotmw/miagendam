@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from auth.jwt import SECRET_KEY, ALGORITHM, get_current_user
+from auth.jwt import SECRET_KEY, ALGORITHM, get_current_user, get_current_user_header_or_query
 from typing import Optional
 from models.medico import MedicoDerivante
 from sqlalchemy.orm import Session
@@ -66,7 +66,7 @@ def normalize_service(agenda_name, practices_names=None):
     return "OTROS"
 
 @router.get("/live_data")
-def get_live_data(db: Session = Depends(get_db)):
+def get_live_data(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user_header_or_query)):
     """
     Retorna un JSON plano optimizado para Excel Power Query (Datos -> Desde Web).
     Formato solicitado:
@@ -119,7 +119,7 @@ def get_live_data(db: Session = Depends(get_db)):
     return data
 
 @router.get("/download")
-def download_excel(db: Session = Depends(get_db)):
+def download_excel(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user_header_or_query)):
     """
     Genera y descarga un archivo Excel con los datos actuales.
     """

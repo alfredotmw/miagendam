@@ -4,7 +4,10 @@ from sqlalchemy import text, inspect
 from sqlalchemy.orm import Session
 from database import get_db, engine
 
-router = APIRouter(prefix="/debug", tags=["Debug"])
+from auth.jwt import require_admin
+
+# Operaciones de mantenimiento: SOLO administradores (antes no pedían login).
+router = APIRouter(prefix="/debug", tags=["Debug"], dependencies=[Depends(require_admin)])
 
 @router.get("/db-info")
 def get_db_info(db: Session = Depends(get_db)):

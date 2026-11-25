@@ -2,7 +2,8 @@ import shutil
 import os
 import uuid
 from pathlib import Path
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
+from auth.jwt import get_current_user
 
 router = APIRouter(prefix="/uploads", tags=["Uploads"])
 
@@ -12,7 +13,7 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 
 @router.post("/image")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     # 1. Validate Extension
     file_ext = Path(file.filename).suffix.lower()
     if file_ext not in ALLOWED_EXTENSIONS:
